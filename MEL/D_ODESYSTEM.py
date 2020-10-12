@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from scipy.optimize import curve_fit
 import shutil
-import C_preprocessing as preproc
+from . import C_preprocessing as preproc
 
 def dWi_dt(t,W,k_ij):
        '''

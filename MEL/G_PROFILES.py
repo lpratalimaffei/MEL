@@ -1,6 +1,6 @@
 import shutil
 import os
-import D_ODESYSTEM as odesys
+from . import D_ODESYSTEM as odesys
 import numpy as np
 
 class PROFILES_FROM_CKI:
