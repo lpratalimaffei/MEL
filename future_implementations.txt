@@ -1,3 +1,12 @@
 1. high pressure limit rate constants
 2. automatic fits of arrhenius duplicates when 1 arrhenius provides bad fitting
 3. automatic selection of isomers to lump and list of names
+4. automatic check on BFs of reactant composition and automatic detection of inconsistent isomers
+5. completely remove reactions if they are irrelevant
+6. processing of CKI mechanism with reversible reactions and chebyshev polynomials
+7. Species with the same color in plots?
+
+put in the input parameters which can be changed:
+ - cutoff
+ - tolerance to species composition (0.03 for BFs, and 0.05 for bimolecular species)
+ - last step: put together the lumped mechanism automatically
