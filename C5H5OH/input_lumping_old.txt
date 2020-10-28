@@ -1,0 +1,29 @@
+###############################################################################
+                     input for lumping code
+###############################################################################
+opensmoke_folder = %OPENSMOKEPP_EXE_FOLDER%    #  absolute pathway to OS folder NB if environment variable: include in % symbols. There should be no spaces   C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin    C:\Users\lpratalimaffei\OpenSMOKE++Suite\bin 
+input_type = MESS                    # OPTIONS: MESS or CKI. MESS file must be me_ktp.inp and rate.out; CKI must be kin.CKI,therm.txt (if therm file is present)
+P_vect = [1]        # vector of pressures (for MESS input type: may be empty)
+T_range = [300 2500]                # range of temperatures (for MESS input type: may be empty)
+T_skip = []                        # temperatures to possibly skip (e.g. if you find out they give problems in the code)
+
+# reactivity options
+Prods_sinks = 0                # 1: products are not reactive (only irreversible reactions); necessary for first-guess fitting. 0: reactivity of products is preserved
+                                # if 0: you will have no fitting of the mechanism
+Stoichiometry = [C2 H4 O2]      # Stoichiometry in the order C,H,O (for now: the only species available)
+Reac = [Pr2]                    # Name of the selected reactant
+Prod = [W1 Pr1 Pr3]                # Name of the selected products - space: separate the blocks of species , +: indicating lumped species
+Isomer_equilibrium = 0        # 1: only isomers in the inlet; in "Branchings", the equilibrium composition is saved. all bimolecular reactions are deleted. only for unimolecular species
+
+# for non-MESS input
+units_bimol =        # options: molec or mol (for arrhenius input type)  , default: molec for mess
+
+# Plot options
+plot_compare = NO       # YES: plot also the solution obtained with the fitted rate constants
+opt_mech =              # relative path of the optimized mech (optional)  : files to be called "kin.txt", "therm.txt"
+
+
+
+
+
+

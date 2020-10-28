@@ -1,3 +1,43 @@
+a. delete all the "too verbose" things of the code (put them in files?)
+b. restructure:
+
+    main tasks called by a run.py script that checks at each step that there are the required files.
+    otherwise: error message
+    always print license :)
+    
+    inp/run.dat file : tasks to perform --> for instance:
+    
+        - single simulation: similar to what you do now, because you don't loop over anything and you just read the input_lumping.txt      
+                    do subdictionaries with the names of the species           
+                         
+        - species prescreening (not complete yet)
+            generate 2 subfolders
+                equilibrium : NB if you can't find all the rate constants of the isomer pool, skip the associated T/P
+                    if you have a subdictionary with the list of pseudospecies: do it for only a subset
+                prescreening : do it for each pseudospecies separately
+                
+        - composition selection
+                requires pseudospecies.txt with the list of pseudospecies
+                
+        - species lumping: needs in input_lumping.txt file the groups of pseudospecies (later: automatic)
+                output_to_optismoke
+                --> at the end, if all things are fine (you have all the requested files): generate the final_mech folder with all the mechs of the single folders
+                
+        - validation: needs an optimized mechanism or a final mechanism generated
+        
+        each task: look for existing folders; if they don't exist; perform the task from where you were;
+        
+                
+    inp/input_lumping.txt file
+        with these 2 steps: no need to have the "bimol_active", "prodsink" in the set of keywords
+        
+    inp/pseudospecies.txt : list of pseudospecies (just composition). in the future: remove this file.
+
+per optismoke nel futuro:
+- se negli output hai più di 1000 righe, tieni tipo 100 punti
+- togli dagli output le specie sotto una certa concentrazione
+
+
 1. high pressure limit rate constants
 2. automatic fits of arrhenius duplicates when 1 arrhenius provides bad fitting
 3. automatic selection of isomers to lump and list of names

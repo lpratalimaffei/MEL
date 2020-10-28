@@ -1,7 +1,7 @@
 README.md
 setup.py
 MEL/A_read_input.py
-MEL/B_extract_rates_mess.py
+MEL/B_extract_rates.py
 MEL/C_preprocessing.py
 MEL/D_ODESYSTEM.py
 MEL/E_PLOTTING.py
@@ -9,6 +9,8 @@ MEL/F_FITS.py
 MEL/G_PROFILES.py
 MEL/__init__.py
 MEL/extract_RATES_V0.py
+MEL/license_message.py
+MEL/run.py
 MEL.egg-info/PKG-INFO
 MEL.egg-info/SOURCES.txt
 MEL.egg-info/dependency_links.txt

@@ -7,7 +7,7 @@ setup(name='MEL',
   author='Luna Pratali Maffei',
   author_email= 'luna.pratali@polimi.it',
   packages =['MEL'],
-  entry_points={'console_scripts':['MEL = MEL.extract_RATES_V0:main']
+  entry_points={'console_scripts':['MEL = MEL.run:main']
   },
   keywords = ['Master Equation', 'Lumping', 'PES', 'Rate Constants'])
 

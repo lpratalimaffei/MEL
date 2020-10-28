@@ -6,13 +6,272 @@ import os
 
 class READ_INPUT:
 
-    def __init__(self,cwd):
-        self.filename = cwd + '/input_lumping.txt'
+    def __init__(self,cwd,inputfile):
+        self.filename = os.path.join(cwd,inputfile)
         self.cwd = cwd
         # the main variable is the name of the file
 
-
     def read_file_lines(self):
+
+
+        readinput = 0
+        readjobs = 0
+        readsubdict = 0
+        jobid = []  # empty list
+        read_prescreen_equil = 0
+        read_prescreen_allreactive = 0
+        read_comp_sel = 0
+        read_single_simul = 0
+
+        with open(self.filename) as myfile:
+            for line in myfile:
+                # skip empty lines
+                if len(line.split()) > 0:
+                    # if it starts with "#": do not read
+                    if line.split()[0][0] != '#':
+
+                        if line.find('input') != -1:
+                            readinput = 1
+                        if line.find('jobs') != -1:
+                            readjobs = 1
+
+                        # read the input section
+                        if readinput == 1:
+                            # find OS folder
+                            if line.find('opensmoke_folder') != -1:
+                                OS_folder = '"'+line.split()[2] + '"'
+
+                            # select the type of input
+                            if line.find('mech_type') != -1:
+                                self.inp_type = line.split()[2]
+
+                            if line.find('P_vect') != -1:
+                                # select things in between square brackets
+                                line_Pvect = re.split('\[|\]',line)[1]
+                                #get the list of pressures and turn it into an array
+                                list_Pvect = line_Pvect.split()
+                                self.Pvect = np.array(list_Pvect,dtype=np.float32)
+
+                            if line.find('T_range') != -1:
+                                line_Tvect = re.split('\[|\]',line)[1]
+                                list_Tvect = line_Tvect.split()
+                                T_range = np.array(list_Tvect,dtype=np.int16)
+                                self.Tvect = np.arange(T_range[0],T_range[1]+100,100)
+
+                            if line.find('T_skip') != -1:
+                                line_Tvect_skip = re.split('\[|\]',line)[1]
+                                list_Tvect_skip = line_Tvect_skip.split()
+                                Tvect_skip = np.array(list_Tvect_skip,dtype=np.int16)
+
+                            if line.find('units_bimol') != -1:
+                                self.units_bimol = line.split()[2]
+
+                            if line.find('Stoichiometry ') != -1:
+                                line_stoich = re.split('\[|\]',line)[1]
+                                self.stoich = line_stoich.split() 
+
+                            if line.find('cutoff') != -1:
+                                line_cutoff = line.split()[2]
+                                lower_cutoff = re.split('-',line_cutoff)[0] 
+                                upper_cutoff = re.split('-',line_cutoff)[1] 
+
+                            if line.find('end') != -1:
+                                readinput = 0
+
+                        if readjobs == 1:
+                            # read the list of jobs
+                            if line.find('single_simulation') != -1:
+                                jobid.append('single_simulation')
+
+                            if line.find('prescreening_equilibrium') != -1:
+                                jobid.append('prescreening_equilibrium')
+
+                            if line.find('prescreening_allreactive') != -1:
+                                jobid.append('prescreening_allreactive')
+
+                            if line.find('composition_selection') != -1:
+                                jobid.append('composition_selection')
+
+                            if line.find('lumping') != -1:
+                                jobid.append('lumping')
+
+                            if line.find('validation') != -1:
+                                jobid.append('validation')
+
+                            if line.find('end') != -1:
+                                readjobs = 0
+                                readsubdict = 1
+                                # generate the job_list dictionary
+                                job_list = dict.fromkeys(jobid)
+
+                        if readsubdict == 1:
+                            # read the subdictionaries of the tasks you perform
+
+                            ############### subdictionaries for the prescreening ################
+                            if line.find('prescreening_equilibrium') != -1 and any('prescreening_equilibrium'==x for x in jobid) :
+                                read_prescreen_equil = 1
+
+                            if line.find('prescreening_allreactive') != -1 and any('prescreening_allreactive'==x for x in jobid) :
+                                read_prescreen_allreactive = 1
+
+                            if line.find('pseudospecies') != -1 and (read_prescreen_equil == 1 or read_prescreen_allreactive == 1):
+                                
+                                line_pseudospecies = re.split('\[|\]',line)[1]
+                                pseudospecies = line_pseudospecies.split()
+                                # generate the list of psudospecies
+                                pseudospecies_names = []           # names of the lumped products, including the single products
+                                pseudospecies_components = []     # list of arrays with the set of products contained in each species of Prods_Lumped
+                                
+                                for PS in pseudospecies:
+                                    if len(PS.split('+')) == 1 and read_prescreen_equil == 1:
+                                        # error: you cannot have single pseudospecies for isomer equilibrium simulations
+                                        print(ValueError('subdictionary prescreening_equilibrium: cannot have single isomers'))
+                                    elif len(PS.split('+')) == 1 and read_prescreen_allreactive == 1:
+                                        # append it also in the lumped products
+                                        pseudospecies_names.append(PS)
+                                        pseudospecies_components.append(PS)
+
+                                    elif len(PS.split('+')) > 1:
+                                        # append the first name, modified, to the list of pseudospecies
+                                        pseudospecies_names.append(PS.split('+')[0] + '_L')
+                                        # append the array of products to Prods_Lumped_array:
+                                        pseudospecies_components.append(np.array(PS.split('+'),dtype=str))
+
+                                # dataframe with pseudospecies
+                                pseudospecies_df = pd.Series(pseudospecies_components,index=pseudospecies_names)
+
+                            if line.find('end') != -1 and read_prescreen_equil == 1:
+                                # store values in dictionary
+                                job_list['prescreening_equilibrium'] = pseudospecies_df
+                                # exit from reading this portion
+                                read_prescreen_equil = 0
+
+                            if line.find('end') != -1 and read_prescreen_allreactive == 1:
+                                # store values in dictionary
+                                job_list['prescreening_allreactive'] = pseudospecies_df
+                                # exit from reading this portion
+                                read_prescreen_allreactive = 0
+
+                            ############# subdictionaries for composition selection ################
+                            if line.find('composition_selection') != -1 and any('composition_selection'==x for x in jobid) :
+                                read_comp_sel = 1
+
+                            if read_comp_sel == 1:
+                                if line.find('BF_tolerance') != -1 :
+                                    BF_tol = float(line.split()[2])
+
+                                    if BF_tol >= 1:
+                                        print('error in composition_selection subdictionary: BF tolerance should be below 1')
+                                        exit()
+
+                                if line.find('maxiter') != -1 :
+                                    maxiter = line.split()[2]
+
+                                if line.find('end') != -1:
+                                    # save variabile in series
+                                    try:
+                                        subdict_comp_sel = dict(zip(['BF_tol','maxiter'],[BF_tol,maxiter]))
+                                        job_list['composition_selection'] = subdict_comp_sel
+                                    except NameError as e:
+                                        print('\nmissing subdictionary specification in composition_selection: \n {}'.format(e))
+                                        exit()
+                                    # exit from reading this portion
+                                    read_comp_sel = 0
+
+                            if line.find('single_simulation') != -1 and any('single_simulation'==x for x in jobid) :
+                                read_single_simul = 1
+
+                            if read_single_simul == 1:
+
+                                simul_type= ''
+                                if line.find('simul_type') != -1 :
+                                    simul_type = line.split()[2]
+
+                                if line.find('maxiter') != -1 and simul_type == 'composition_selection':
+                                    maxiter = line.split()[2]
+
+                                if line.find('BF_tolerance') != -1 and simul_type == 'composition_selection':
+                                    BF_tol = line.split()[2]
+                                    if BF_tol >= 1:
+                                        print('error in composition_selection subdictionary: BF tolerance should be below 1')
+                                        exit()
+
+                                # read reactants and products
+                                if line.find('Reac ') != -1:
+                                    Reac = re.split('\[|\]',line)[1]
+                                    # if the reactant is lumped: generate an array
+                                    if len(Reac.split('+')) > 1: 
+                                        self.Reac = np.array(Reac.split('+'),dtype=str)
+                                        reaclumped = Reac[0] + '_L'
+                                    else:
+                                        # the reactant is just 1 so you don't need to do anything
+                                        self.Reac = Reac
+                                        reaclumped = Reac
+
+                                if line.find('Prod ') != -1:
+                                    line_Prod = re.split('\[|\]',line)[1]
+                                    Prod = line_Prod.split()
+                                    # generate the list of products: if you have lumped products, allocate them too
+                                    self.Prod = []              # list of single species
+                                    Prods_Lumped = []           # names of the lumped products, including the single products
+                                    Prods_Lumped_array = []     # list of arrays with the set of products contained in each species of Prods_Lumped
+                                    # if you have lumped products: generate a series and allocate the products to a new list
+                                    for Pr in Prod:
+                                        if len(Pr.split('+')) == 1:
+                                            # single product: append it directly to the list
+                                            self.Prod.append(Pr)
+                                            # append it also in the lumped products
+                                            Prods_Lumped.append(Pr)
+                                            Prods_Lumped_array.append(Pr)
+
+                                        elif len(Pr.split('+')) > 1:
+                                            # append the first name, modified, to the list of lumped species
+                                            Prods_Lumped.append(Pr.split('+')[0] + '_L')
+                                            # append the array of products to Prods_Lumped_array:
+                                            Prods_Lumped_array.append(np.array(Pr.split('+'),dtype=str))
+                                            for Pr_L in Pr.split('+'):
+                                                # append the products to the array of products
+                                                self.Prod.append(Pr_L)
+
+                                if line.find('end') != -1:
+                                    # subdictionaries
+                                    job_list['single_simulation'] = dict.fromkeys(['main_spec','additional_spec'])
+                                    if simul_type == 'composition_selection':
+                                        # build subdictionary if needed
+                                        try:
+                                            subdict_comp_sel = dict(zip(['BF_tol','maxiter'],[BF_tol,maxiter]))
+                                            job_list['single_simulation']['additional_spec'] = subdict_comp_sel
+                                        except NameError as e:
+                                            print('\nmissing subdictionary specification in composition_selection: \n {}'.format(e))
+                                            exit()
+
+                                    # subdictionary storing reactant and products
+                                    # series of reactant/products lumped
+                                    try:
+                                        prodslumped = pd.Series(Prods_Lumped_array,index=Prods_Lumped)
+                                        reaclumped = pd.Series([self.Reac],index=[reaclumped])
+                                        job_list['single_simulation']['main_spec'] = dict(zip(['REAC','REACLUMPED','PRODS','PRODSLUMPED'],[self.Reac,reaclumped,self.Prod,prodslumped]))
+                                    except NameError as e:
+                                        print('\nmissing reactant/product specifications in single_simulation subdictionary: \n {}'.format(e))
+                                        exit()
+
+                                    # exit from reading this portion
+                                    read_single_simul = 0
+        myfile.close()
+
+        # units bimol: if the input is MESS, set molec by default
+        if self.inp_type=='MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
+            self.units_bimol = 'molec'
+
+        # input_parameters dictionary
+        keys_inputpar = ['opensmoke_folder','mech_type','P_vect','T_vect','T_skip','units_bimol','stoich','cutoff'] 
+        values_inputpar = [OS_folder,self.inp_type,self.Pvect,self.Tvect,Tvect_skip,self.units_bimol,self.stoich]
+        input_parameters = dict(zip(keys_inputpar,values_inputpar))
+
+
+        return input_parameters,job_list
+
+    def read_file_lines_old(self):
         """
         read the file line by line and sort it into the variables you need
         """
@@ -22,41 +281,6 @@ class READ_INPUT:
         with open(self.filename) as myfile:
             for line in myfile:
                 # find OS folder
-                if line.find('opensmoke_folder') != -1:
-                    self.OS_folder = '"'+line.split()[2] + '"'
-
-                # select the type of input
-                if line.find('input_type') != -1:
-                    self.inp_type = line.split()[2]
-
-                if line.find('N_init') != -1:
-                    try:
-                        self.moles_init = float(line.split()[2])
-                        # check if the mole fraction 
-                        if self.moles_init > 1:
-                            print('Initial mole fraction of the reactant cannot exceed 1')
-                            return None
-                    except:
-                        print('Initial number of moles is not a number. Please put a number instead')
-                        return None
-
-                if line.find('P_vect') != -1:
-                    # select things in between square brackets
-                    line_Pvect = re.split('\[|\]',line)[1]
-                    #get the list of pressures and turn it into an array
-                    list_Pvect = line_Pvect.split()
-                    self.Pvect = np.array(list_Pvect,dtype=np.float32)
-
-                if line.find('T_range') != -1:
-                    line_Tvect = re.split('\[|\]',line)[1]
-                    list_Tvect = line_Tvect.split()
-                    T_range = np.array(list_Tvect,dtype=np.int16)
-                    self.Tvect = np.arange(T_range[0],T_range[1]+100,100)
-
-                if line.find('T_skip') != -1:
-                    line_Tvect_skip = re.split('\[|\]',line)[1]
-                    list_Tvect_skip = line_Tvect_skip.split()
-                    self.Tvect_skip = np.array(list_Tvect_skip,dtype=np.int16)
 
                 if line.find('Prods_sinks') != -1:
                     try:
@@ -68,61 +292,9 @@ class READ_INPUT:
                         print('The Prods_sinks option must be 0 or 1')
                         return None
 
-                if line.find('Bimol_activate') != -1:
-                    try:
-                        self.bimol_activate = int(line.split()[2])
-                        if self.bimol_activate != 1 and self.bimol_activate != 0:
-                            print('The Bimol_activate option must be 0 or 1')
-                            return None
-                    except:
-                        print('The Bimol_activate option must be 0 or 1')
-                        return None
-
-                if line.find('Stoichiometry ') != -1:
-                    line_stoich = re.split('\[|\]',line)[1]
-                    self.stoich = line_stoich.split() 
-
-                if line.find('Reac ') != -1:
-                    Reac = re.split('\[|\]',line)[1]
-                    # if the reactant is lumped: generate an array
-                    if len(Reac.split('+')) > 1: 
-                        self.Reac = np.array(Reac.split('+'),dtype=str)
-                        reaclumped = self.Reac[0] + '_L'
-                    else:
-                        # the reactant is just 1 so you don't need to do anything
-                        self.Reac = Reac
-                        reaclumped = Reac
-
-                if line.find('Prod ') != -1:
-                    line_Prod = re.split('\[|\]',line)[1]
-                    Prod = line_Prod.split()
-                    # generate the list of products: if you have lumped products, allocate them too
-                    self.Prod = []              # list of single species
-                    Prods_Lumped = []           # names of the lumped products, including the single products
-                    Prods_Lumped_array = []     # list of arrays with the set of products contained in each species of Prods_Lumped
-                    # if you have lumped products: generate a series and allocate the products to a new list
-                    for Pr in Prod:
-                        if len(Pr.split('+')) == 1:
-                            # single product: append it directly to the list
-                            self.Prod.append(Pr)
-                            # append it also in the lumped products
-                            Prods_Lumped.append(Pr)
-                            Prods_Lumped_array.append(Pr)
-
-                        elif len(Pr.split('+')) > 1:
-                            # append the first name, modified, to the list of lumped species
-                            Prods_Lumped.append(Pr.split('+')[0] + '_L')
-                            # append the array of products to Prods_Lumped_array:
-                            Prods_Lumped_array.append(np.array(Pr.split('+'),dtype=str))
-                            for Pr_L in Pr.split('+'):
-                                # append the products to the array of products
-                                self.Prod.append(Pr_L)
 
                 if line.find('Isomer_equilibrium') != -1:
                     self.isom_equil = int(line.split()[2])                             
-
-                if line.find('units_bimol') != -1:
-                    self.units_bimol = line.split()[2]
 
                 # read plotting options
                 if line.find('plot_compare') != -1:
@@ -135,15 +307,11 @@ class READ_INPUT:
         # optimized mech: substitute with '' if no path was found 
         if self.opt_mech == '#':
             self.opt_mech = ''
-        # units bimol: if the input is MESS, set molec by default
-        if self.inp_type=='MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
-            self.units_bimol = 'molec'
 
-        # series of prodslumped
-        prodslumped = pd.Series(Prods_Lumped_array,index=Prods_Lumped)
-        reaclumped = pd.Series([self.Reac],index=[reaclumped])
+
+
         print(self.OS_folder)
-        return self.OS_folder,self.inp_type,self.moles_init,self.Pvect,self.Tvect,self.Tvect_skip,self.stoich,self.Reac,reaclumped,self.Prod,prodslumped,self.isom_equil,self.units_bimol,self.bimol_activate,self.Prods_sinks,self.plot_cmp,self.opt_mech
+        return self.OS_folder,self.inp_type,self.Pvect,self.Tvect,self.Tvect_skip,self.stoich,self.Reac,reaclumped,self.Prod,prodslumped,self.isom_equil,self.units_bimol,self.Prods_sinks,self.plot_cmp,self.opt_mech
 
     
     def CHECK_INPUT(self):
@@ -191,8 +359,6 @@ class READ_INPUT:
         # check that isomer_equilibrium and prod_sinks are compatible
         if self.isom_equil ==1 and self.Prods_sinks == 1:
             error_list = error_list + ' The products are set as infinite sinks, but Isomer_equilibium keyword is active: incompatible \n'
-        if self.isom_equil ==1 and self.bimol_activate == 0:
-            error_list = error_list + ' Isom_equil requires Bimol_activate = 1 otherwise bimolecular reactions are not recognized \n'
         # check if the path to optimized mech. exists
         if os.path.exists(self.cwd + '/' + self.opt_mech) == False and self.opt_mech != '':
             error_list = error_list + ' The path to the optimized mechanism does not exist \n'
@@ -250,7 +416,7 @@ class READ_INPUT:
             raise RuntimeError('Errors detected when comparing the input with MESS file: \n' + str(error_list))
 
 
-
+# functions to create the input of each type of simulation
         
         
             

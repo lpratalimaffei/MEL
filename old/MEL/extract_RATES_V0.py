@@ -18,7 +18,7 @@ import copy
 
 # import custom modules
 from . import A_read_input as readinp
-from . import B_extract_rates as extr
+from . import B_extract_rates_mess as extr
 from . import C_preprocessing as preproc 
 from . import D_ODESYSTEM as odesys # I call the function without the need of pre-pending anything
 from . import E_PLOTTING as mine_plt
@@ -26,7 +26,7 @@ from . import F_FITS as fitall
 from . import G_PROFILES as prof_CKImech
 from time import perf_counter as clock
 
-def main_simul():
+def main():
 
     # cwd = os.path.dirname(os.path.abspath(__file__)) # get the path of the script directory
     cwd = os.path.abspath(os.getcwd()) # current working directory
@@ -40,8 +40,7 @@ def main_simul():
 
     input = readinp.READ_INPUT(cwd) # object: input
     tic = clock()
-    OS_folder,input_type,P_VECT,T_VECT,T_VECT_SKIP,STOICH,REAC,REACLUMPED,PRODS,PRODSLUMPED,ISOM_EQUIL,UNITS_BIMOL,PRODSINKS,PLOT_CMP,OPT_MECH = input.read_file_lines()
-    # N_INIT = 1; removed, always set to 1
+    OS_folder,input_type,N_INIT,P_VECT,T_VECT,T_VECT_SKIP,STOICH,REAC,REACLUMPED,PRODS,PRODSLUMPED,ISOM_EQUIL,UNITS_BIMOL,BIMOL_ACTIVATE,PRODSINKS,PLOT_CMP,OPT_MECH = input.read_file_lines()
     toc = clock()
     Dt[0]=(toc-tic)
     # check the input and exit in case of exceptions
@@ -98,8 +97,9 @@ def main_simul():
         print('input type not supported. Please select MESS or CKI')
         exit()
 
-    # produce vector of secondary species
-    SPECIES_BIMOL = np.zeros(SPECIES_BIMOL.shape,dtype=str)
+    # if bimol_activate is 0 : pretend that all species are unimolecular
+    if BIMOL_ACTIVATE == 0:
+        SPECIES_BIMOL = np.zeros(SPECIES_BIMOL.shape,dtype=str)
     # PROCESSING OF SPECIES NAMES AND REACTANT:
     # assign indices to variable with pandas
     print(SPECIES,SPECIES_BIMOL)
@@ -115,7 +115,7 @@ def main_simul():
     print('writing therm.txt for OS preprocessor ...'),preproc.WRITE_THERM(cwd + '/mech_tocompile',STOICH,SPECIES_SERIES,SPECIES_BIMOL_SERIES)
 
     # ASSIGN THE INITIAL NUMBER OF MOLES
-    N_INIT_REAC = preproc.INITIALMOLES(REAC,SPECIES_BIMOL_SERIES,1)
+    N_INIT_REAC = preproc.INITIALMOLES(REAC,SPECIES_BIMOL_SERIES,N_INIT)
 
     # reduce T range if necessary
     # skip the temperature selected in the input
@@ -247,7 +247,7 @@ def main_simul():
             
             ################### WRITE OPENSMOKE INPUT ##################################################
             try:
-                OS_write = preproc.WRITE_OS_INPUT(cwd,T,P,SPECIES,REACLUMPED,1,SPECIES_BIMOL_SERIES,BR_L_REAC)
+                OS_write = preproc.WRITE_OS_INPUT(cwd,T,P,SPECIES,REACLUMPED,N_INIT,SPECIES_BIMOL_SERIES,BR_L_REAC)
             except RuntimeError as e:
                 print(str(e))
                 exit()
@@ -288,7 +288,7 @@ def main_simul():
                 if Ti == 1:
                     kfit_P = fitall.FITTING(T_VECT,REAC_L,PRODS_L)
                 # then do the fits
-                k_prods_T,fit_error_T = kfit_P.fit_profiles(tW_DF,i_REAC_L,SPECIES_SERIES_L,T,PV,SPECIES_BIMOL_SERIES_L,1)
+                k_prods_T,fit_error_T = kfit_P.fit_profiles(tW_DF,i_REAC_L,SPECIES_SERIES_L,T,PV,SPECIES_BIMOL_SERIES_L,N_INIT)
             # I think I need to do something with this fit_error_T, save it somewhere
             # maybe I can do a 3D plot with the fitting error at a certain T,P or with the difference between the sum(ki) and k of the reactant
             # and finally the plot with the branching among different channels with the lumped rates
@@ -297,7 +297,7 @@ def main_simul():
             print('Writing profiles for Optismoke ...'),postproc.WRITE_PROFILES(PRODS_L)
 
             # GENERATE THE NEW OS INPUT AND WRITE IT TO THE FOLDERS
-            print('Generate OS input for the lumped mech and copy to the folder'),postproc.WRITE_NEW_OSINPUT(1)
+            print('Generate OS input for the lumped mech and copy to the folder'),postproc.WRITE_NEW_OSINPUT(N_INIT)
 
             ############################### GENERATE RANDOM PROFILES AND SAVE THEM IN OUTPUT_TO_OPTISMOKE_RANDOM
 
@@ -387,4 +387,5 @@ def main_simul():
     times_Pi.to_excel('clock_Pi.xlsx',sheet_name='times_Pi')
 
     #times.to_csv('clock_check.csv',sep=':',float_format="%.5f")
-
+if __name__ == "__main__":
+    main()
