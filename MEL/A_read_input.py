@@ -13,7 +13,6 @@ class READ_INPUT:
 
     def read_file_lines(self):
 
-
         readinput = 0
         readjobs = 0
         readsubdict = 0
@@ -142,13 +141,13 @@ class READ_INPUT:
 
                             if line.find('end') != -1 and read_prescreen_equil == 1:
                                 # store values in dictionary
-                                job_list['prescreening_equilibrium'] = pseudospecies_df
+                                job_list['prescreening_equilibrium'] = dict.fromkeys(['pseudospecies'],pseudospecies_df)
                                 # exit from reading this portion
                                 read_prescreen_equil = 0
 
                             if line.find('end') != -1 and read_prescreen_allreactive == 1:
                                 # store values in dictionary
-                                job_list['prescreening_allreactive'] = pseudospecies_df
+                                job_list['prescreening_allreactive'] = dict.fromkeys(['pseudospecies'],pseudospecies_df)
                                 # exit from reading this portion
                                 read_prescreen_allreactive = 0
 
@@ -178,15 +177,39 @@ class READ_INPUT:
                                     # exit from reading this portion
                                     read_comp_sel = 0
 
+                            ########## subdictionaries for single simulation ####################
                             if line.find('single_simulation') != -1 and any('single_simulation'==x for x in jobid) :
                                 read_single_simul = 1
+                                simul_type= ''
 
                             if read_single_simul == 1:
-
-                                simul_type= ''
+                                
                                 if line.find('simul_type') != -1 :
                                     simul_type = line.split()[2]
 
+                                if line.find('pseudospecies') != -1 and (simul_type == 'prescreening_allreactive' or simul_type == 'prescreening_equilibrium'):
+                                    line_pseudospecies = re.split('\[|\]',line)[1]
+                                    pseudospecies = line_pseudospecies.split()
+
+                                    # generate the list of psudospecies
+                                    pseudospecies_names = []           # names of the lumped products, including the single products
+                                    pseudospecies_components = []     # list of arrays with the set of products contained in each species of Prods_Lumped
+                                    
+                                    for PS in pseudospecies:
+                                        if len(PS.split('+')) == 1 and simul_type == 'prescreening_equilibrium':
+                                            # error: you cannot have single pseudospecies for isomer equilibrium simulations
+                                            print(ValueError('subdictionary prescreening_equilibrium: cannot have single isomers'))
+                                        elif len(PS.split('+')) == 1 and simul_type == 'prescreening_allreactive':
+                                            # append it also in the lumped products
+                                            pseudospecies_names.append(PS)
+                                            pseudospecies_components.append(PS)
+
+                                        elif len(PS.split('+')) > 1:
+                                            # append the first name, modified, to the list of pseudospecies
+                                            pseudospecies_names.append(PS.split('+')[0] + '_L')
+                                            # append the array of products to Prods_Lumped_array:
+                                            pseudospecies_components.append(np.array(PS.split('+'),dtype=str))
+                                            
                                 if line.find('maxiter') != -1 and simul_type == 'composition_selection':
                                     maxiter = line.split()[2]
 
@@ -235,25 +258,42 @@ class READ_INPUT:
 
                                 if line.find('end') != -1:
                                     # subdictionaries
-                                    job_list['single_simulation'] = dict.fromkeys(['main_spec','additional_spec'])
+
+                                    job_list['single_simulation'] = dict.fromkeys(['simul_type'],simul_type)
+
                                     if simul_type == 'composition_selection':
                                         # build subdictionary if needed
                                         try:
-                                            subdict_comp_sel = dict(zip(['BF_tol','maxiter'],[BF_tol,maxiter]))
-                                            job_list['single_simulation']['additional_spec'] = subdict_comp_sel
+                                            job_list['single_simulation']['BF_tol'] = BF_tol
+                                            job_list['single_simulation']['maxiter'] = maxiter
+                                            job_list['single_simulation']['pseudospecies'] = pseudospecies_df
                                         except NameError as e:
                                             print('\nmissing subdictionary specification in composition_selection: \n {}'.format(e))
                                             exit()
 
-                                    # subdictionary storing reactant and products
-                                    # series of reactant/products lumped
-                                    try:
-                                        prodslumped = pd.Series(Prods_Lumped_array,index=Prods_Lumped)
-                                        reaclumped = pd.Series([self.Reac],index=[reaclumped])
-                                        job_list['single_simulation']['main_spec'] = dict(zip(['REAC','REACLUMPED','PRODS','PRODSLUMPED'],[self.Reac,reaclumped,self.Prod,prodslumped]))
-                                    except NameError as e:
-                                        print('\nmissing reactant/product specifications in single_simulation subdictionary: \n {}'.format(e))
-                                        exit()
+                                    elif simul_type == 'prescreening_equilibrium' or simul_type == 'prescreening_allreactive':
+                                        # check for pseudospecies keyword
+                                        try:
+                                            job_list['single_simulation']['pseudospecies'] = pseudospecies_df
+                                        except NameError as e:
+                                            print('\nmissing subdictionary specification in single_simulation (prescreening): \n {}'.format(e))
+                                            exit()
+
+                                    elif simul_type == 'lumping' or simul_type == 'validation': 
+                                        # subdictionary storing reactant and products
+                                        # series of reactant/products lumped
+                                        try:
+                                            prodslumped = pd.Series(Prods_Lumped_array,index=Prods_Lumped)
+                                            reaclumped = pd.Series([self.Reac],index=[reaclumped])
+                                            job_list['single_simulation'].update(dict(zip(['REAC','REACLUMPED','PRODS','PRODSLUMPED'],[self.Reac,reaclumped,self.Prod,prodslumped])))
+
+                                        except NameError as e:
+                                            print('\nmissing reactant/product specifications in single_simulation subdictionary: \n {}'.format(e))
+                                            exit()
+
+                                    else:
+                                        # wrong simul type
+                                        print('\nNameError: simulation type unavailable ')
 
                                     # exit from reading this portion
                                     read_single_simul = 0
@@ -271,112 +311,165 @@ class READ_INPUT:
 
         return input_parameters,job_list
 
-    def read_file_lines_old(self):
-        """
-        read the file line by line and sort it into the variables you need
-        """
-        self.plot_cmp = 'NO' # default
-        self.opt_mech = ''   # default
-        
-        with open(self.filename) as myfile:
-            for line in myfile:
-                # find OS folder
-
-                if line.find('Prods_sinks') != -1:
-                    try:
-                        self.Prods_sinks = int(line.split()[2])
-                        if self.Prods_sinks != 1 and self.Prods_sinks != 0:
-                            print('The Prods_sinks option must be 0 or 1')
-                            return None
-                    except:
-                        print('The Prods_sinks option must be 0 or 1')
-                        return None
-
-
-                if line.find('Isomer_equilibrium') != -1:
-                    self.isom_equil = int(line.split()[2])                             
-
-                # read plotting options
-                if line.find('plot_compare') != -1:
-                    self.plot_cmp = line.split()[2]
-
-                if line.find('opt_mech') != -1:
-                    self.opt_mech = line.split()[2]
-
-        myfile.close()
-        # optimized mech: substitute with '' if no path was found 
-        if self.opt_mech == '#':
-            self.opt_mech = ''
-
-
-
-        print(self.OS_folder)
-        return self.OS_folder,self.inp_type,self.Pvect,self.Tvect,self.Tvect_skip,self.stoich,self.Reac,reaclumped,self.Prod,prodslumped,self.isom_equil,self.units_bimol,self.Prods_sinks,self.plot_cmp,self.opt_mech
-
     
     def CHECK_INPUT(self):
         """
         Now check that the variables saved are present when necessary, and that reactants and products are different species
         """
         error_list = ''
-        # check if present - always necessary
-        # type of input
-
+        # check type of input
         if self.inp_type != 'MESS' and self.inp_type != 'CKI':
-            error_list = error_list + ' Wrong keyword for input: set MESS or CKI \n'
+            error_list = error_list + '\nWrong keyword for input: set MESS or CKI '
 
-        if not list(self.Reac) or not self.Prod:
-            # if not defined, the output of the readline above will be #
-            error_list = error_list + ' No reactants or products defined \n'
+        elif self.inp_type == 'MESS':
+            # check that mech file and output file exist in the input folder
+            mechinp = os.path.join(self.cwd,'inp','me_ktp.inp')
+            mechout = os.path.join(self.cwd,'inp','rate.out')
 
-        if isinstance(self.Reac,np.ndarray):
-            for Rr in self.Reac:
-                if np.array([Rr == Pr for Pr in self.Prod]).any():
-                    error_list = error_list + ' The reactant matches one of the product species. Inconsistent! \n'
+            if os.path.isfile(mechinp) == False:
+                error_list = error_list + '\nMissing MESS input file: {} required '.format(mechinp)
+            if os.path.isfile(mechout) == False:
+                error_list = error_list + '\nMissing MESS output file: {} required '.format(mechout)
 
-        elif isinstance(self.Reac,str):
-            if np.array([self.Reac == Pr for Pr in self.Prod]).any():
-                error_list = error_list + ' The reactant matches one of the product species. Inconsistent! \n'
-            if self.isom_equil == 1:
-                error_list = error_list + ' The reactant is not a set of isomers, but Isomer_equilibrium keyword is activated. Inconsistent! \n'
+        # check that MESS input parameters are defined appropriately
+        elif self.inp_type == 'CKI':
 
-        if self.inp_type != 'MESS':
+            # chech that mech files exist in the input folder
+            mechfile = os.path.join(self.cwd,'inp','kin.CKI')
+            if os.path.isfile(mechfile) == False:
+                error_list = error_list + '\nMissing CKI input file: {} required '.format(mechfile)
+        
             # extra checks
             if self.Tvect.size == 0:
-                error_list = error_list + ' Temperature range not defined \n'
+                error_list = error_list + '\nTemperature range not defined '
             
             if self.units_bimol != 'molec' and self.units_bimol != 'mol':
-                error_list = error_list + ' Units for bimolecular reactions wrong or not defined \n'
+                error_list = error_list + '\nUnits for bimolecular reactions wrong or not defined '
 
         # check that the stoichiometry is written correctly
         if self.stoich[0][0] != 'C' or self.stoich[1][0] != 'H' or self.stoich[2][0] != 'O':
-            error_list = error_list + ' The order of the stoichiometry is incorrect: please define C,H,O \n'
+            error_list = error_list + '\nThe order of the stoichiometry is incorrect: please define C,H,O '
         try:
             int(self.stoich[0][1:]) + int(self.stoich[1][1:]) + int(self.stoich[2][1:])
         except:
-            error_list = error_list + ' The stoichiometry coefficients cannot be converted to integers \n'
-
-        # check that isomer_equilibrium and prod_sinks are compatible
-        if self.isom_equil ==1 and self.Prods_sinks == 1:
-            error_list = error_list + ' The products are set as infinite sinks, but Isomer_equilibium keyword is active: incompatible \n'
-        # check if the path to optimized mech. exists
-        if os.path.exists(self.cwd + '/' + self.opt_mech) == False and self.opt_mech != '':
-            error_list = error_list + ' The path to the optimized mechanism does not exist \n'
-
-        if self.plot_cmp != 'YES' and self.plot_cmp != 'NO':
-            error_list = error_list + ' Error in variable of plot comparison: must be "YES" or "NO" \n'
-
-        if self.plot_cmp == 'YES' and self.Prods_sinks == 0:
-            error_list = error_list + ' Prods_sinks == 0 is incompatible with plotting the lumped mech. set it to 1 or set the plot comparison to "NO" \n'
+            error_list = error_list + '\nThe stoichiometry coefficients cannot be converted to integers '
 
         if not error_list:
             return None
         else:
-            raise RuntimeError('Errors detected when reading the input: \n' + str(error_list))
+            raise RuntimeError('Errors detected when reading the input: ' + str(error_list))
 
 
         # no need to check P_vect now, because if it is empty you can read it elsewhere or assume everything is high P limit
         
+    def CHECK_INPUT_JOBTYPE(self,jobtype,jobtype_key,subdict):
+        '''
+        Perform checks based on the type of job.
+        Checks are on input values provided by the user
+        '''
+
+        error_list = ''
+
+        if jobtype == 'composition_selection':
+            # check if values are numbers
+            try:
+                #MAXITERATIONS CHECK
+                if subdict['maxiter'] > 1000:
+                    error_list = error_list + '\nIterations for species composition convergence set above 1000: unreasonable '
+                #CHECK ON BRANCHING FRACTION TOLERANCE
+                if subdict['BF_tol'] <= 0 or subdict['BF_tol'] > 1:
+                    error_list = error_list + '\nBranching fraction tolerance for composition convergence is out of valid 0<BF<1 range '
+
+            except ValueError as e:
+                error_list = error_list + '\nInconsistent values for composition_selection subdictionary: {e}'.format(e)
+
+            # if it is not a "single simulation": species list required
+            if jobtype_key != 'single_simulation':
+
+                pseudospecies_file = os.path.join(self.cwd,'inp','pseudospecies.txt')
+                if os.path.isfile(pseudospecies_file) == False:
+                    error_list = error_list + '\n composition_selection requires file {f}, not found!'.format(pseudospecies_file)
+
+
+        # VALIDATION: DOES THE LUMPED MECH EXIST?
+        if jobtype == 'validation':
+            lumpedmech_kinfile = os.path.join(self.cwd,'lumpedmech','kin.txt')
+            lumpedmech_thermfile = os.path.join(self.cwd,'lumpedmech','therm.txt')
+
+            if os.path.isfile(lumpedmech_kinfile) == False:
+                error_list = error_list + '\n validation requires lumped mech {f}, not found!'.format(pseudospecies_file)
+        
+        # PSEUDOSPECIES: CHECK THAT THEY ARE NOT REPEATED IN EACH GROUP
+        if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive':
+            # check if you have more than one species/pseudospecies group
+            if subdict['pseudospecies'].index.size > 1:
+                for SP in subdict['pseudospecies'].index :
+                    for SP_other in subdict['pseudospecies'].index :
+                        if SP_other != SP:
+                            for species in subdict['pseudospecies'].loc[SP]:
+                                if np.array([species == sp_other for sp_other in subdict['pseudospecies'].loc[SP_other]]).any():
+                                    error_list = error_list + '\nMatching species in different pseudospecies group '
+
+             
+        # SINGLE_SIMULATIONS
+        # check that you don't have products or reactants matching
+        if jobtype_key == 'single_simulation':
+            if jobtype == 'lumping' or jobtype == 'validation':
+                if not list(self.Reac) or not self.Prod:
+                    # if not defined, the output of the readline above will be #
+                    error_list = error_list + '\nNo reactants or products defined '
+
+                if isinstance(self.Reac,np.ndarray):
+                    for Rr in self.Reac:
+                        if np.array([Rr == Pr for Pr in self.Prod]).any():
+                            error_list = error_list + '\nThe reactant matches one of the product species. Inconsistent! '
+
+                elif isinstance(self.Reac,str):
+                    if np.array([self.Reac == Pr for Pr in self.Prod]).any():
+                        error_list = error_list + '\nThe reactant matches one of the product species. Inconsistent! '
+
+            elif jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' or jobtype == 'composition_selection':
+                if subdict['pseudospecies'].index.size > 1:
+                    error_list = error_list + '\nMore than 1 set of pseudospecies: incompatible with single simulations'
+
+
+        if not error_list:
+            return None
+        else:
+            raise RuntimeError('Errors detected when comparing the input with MESS file: \n' + str(error_list))
+
+    def set_inputparam_job(self,jobtype):
+        """
+        Based on job type: 
+        set the rest of input parameters:
+        - plot comparison : only in case of lumping
+        - prodsinks (in case of lumping)
+        - isom_equil (in case of prescreening_equil)
+        """
+
+        keys_inputpar = ['plot_cmp','Prods_sinks','isom_equil']
+
+        if jobtype == 'lumping' or jobtype == 'validation':
+            plot_cmp = 'YES'
+        else:
+            plot_cmp = 'NO'
+
+        if jobtype == 'lumping':
+            Prods_sinks = 1
+        else:
+            Prods_sinks = 0
+        
+        if jobtype == 'prescreening_equil':
+            isom_equil = 1
+        else:
+            isom_equil = 0
+
+        # set the dictionary
+        input_par_jobtype = dict(zip(keys_inputpar,[plot_cmp,Prods_sinks,isom_equil]))
+
+        return input_par_jobtype
+
+
     def COMPARE_INPUT_PVECT(self,input_type,SPECIES,P_VECT_MESS,T_VECT_MESS):
         """
         CHECK that the input provided externally is compatible with the one given by the user
@@ -409,7 +502,10 @@ class READ_INPUT:
             # CHECK IF THE PRODUCTS SELECTED ARE AVAILABLE IN THE SPECIES LIST OF MESS
             error_list = error_list + ' The Products selected are not all available in the list of species! \n \t please select among {SPECIES} \n'.format(SPECIES = str(SPECIES))
 
-
+        ######### ADDITIONAL CHECKS FOR SINGLE SUBDICTIONARIES
+        # check that the pseudospecies are in the list of species
+        # check that in each set you don't have different "types" of species (isomers or bimolecular species)
+        
         if not error_list:
             return None
         else:

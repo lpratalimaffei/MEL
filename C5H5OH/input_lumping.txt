@@ -31,7 +31,7 @@ dictionary prescreening_equilibrium
 end
 
 dictionary prescreening_allreactive
-    # if you don't have this subdictionary: consider each pseudospecies separately
+    # if you don't have this subdictionary: consider each pseudospecies separately    - oppure metti all? più semplice
     pseudospecies = [W1+W4+W5 W3+W6]    # you can also have products
 
 end
@@ -46,8 +46,8 @@ dictionary single_simulation
     simul_type = lumping # choose among: prescreening_equilibrium, prescreening_allreactive, composition_selection, lumping, validation
     Reac = [W1+W4+W5]
     Prod = [R W3 P1 P2+P5 P3 P4] 
-    # options for each kind of simulation
+    # pseudospecies = [W1+W4+W5]
     # maxiter = 10
-    # BF_tolerance = 3%
+    # BF_tolerance = 0.03
 end
 

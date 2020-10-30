@@ -41,7 +41,7 @@ def main_simul():
     input = readinp.READ_INPUT(cwd) # object: input
     tic = clock()
     OS_folder,input_type,P_VECT,T_VECT,T_VECT_SKIP,STOICH,REAC,REACLUMPED,PRODS,PRODSLUMPED,ISOM_EQUIL,UNITS_BIMOL,PRODSINKS,PLOT_CMP,OPT_MECH = input.read_file_lines()
-    # N_INIT = 1; removed, always set to 1
+
     toc = clock()
     Dt[0]=(toc-tic)
     # check the input and exit in case of exceptions
@@ -344,8 +344,10 @@ def main_simul():
         profiles_P_guess = plt_cmp.DERIVE_PROFILES(path_guessmech,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL)
         profiles_P_all.update({'lumped_guess':profiles_P_guess})
         i_reac_all.update({'lumped_guess':0})
+
     # derive the profiles with the optimized mech, if indicated
-    if OPT_MECH :
+    # remove the variable "OPT_MECH" and replace it with checks on the simulation type
+    if OPT_MECH and PLOT_CMP == 'YES':
         path_exp = cwd+'/Outputs_to_optiSMOKE_' + ''.join(STOICH) +  '/' + REAC_L
         plt_cmp = prof_CKImech.PROFILES_FROM_CKI(cwd,OPT_MECH,OS_folder)
         try:
