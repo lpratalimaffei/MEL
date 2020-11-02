@@ -6,7 +6,7 @@ input
     opensmoke_folder = %OPENSMOKEPP_EXE_FOLDER%    #  absolute pathway to OS folder NB if environment variable: include in % symbols. There should be no spaces   C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin    C:\Users\lpratalimaffei\OpenSMOKE++Suite\bin 
     mech_type = MESS                               # OPTIONS: MESS or CKI. MESS file must be me_ktp.inp and rate.out; CKI must be kin.CKI,therm.txt (if therm file is present)
     P_vect = [1]                                   # vector of pressures (for MESS type: may be empty)
-    T_range = [300 2500]                           # range of temperatures (for MESS type: may be empty)
+    T_range = [500 2500]                           # range of temperatures (for MESS type: may be empty)
     T_skip = []                                    # temperatures to possibly skip (e.g. if you find out they give problems in the code)
     units_bimol =                                  # options: molec or mol (for CKI type)  , default: molec for mess
     Stoichiometry = [C5 H6 O1]                     # Stoichiometry in the order C,H,O (for now keep it)
@@ -20,24 +20,22 @@ jobs
     composition_selection
     lumping
     #build_lumpedmech          # more clear as a single job?
-    validation
+    #validation
 end
 
 ############ jobs subdictionaries ########################
 
 dictionary prescreening_equilibrium
-    # if you don't have this subdictionary: consider the full isomer pool together
-    pseudospecies = [W1+W4+W5 W3+W6]     # print error if there are bimol species
+    pseudospecies = [W1+W4+W5]     # write 'all' to consider the full isomer pool together
 end
 
 dictionary prescreening_allreactive
-    # if you don't have this subdictionary: consider each pseudospecies separately    - oppure metti all? più semplice
-    pseudospecies = [W1+W4+W5 W3+W6]    # you can also have products
+    pseudospecies = [W1+W4 W3+W6]    # write 'all' to consider each pseudospecies separately
 
 end
-
+                                                                
 dictionary composition_selection
-    # requires pseudospecies.txt in inp folder and  BFs
+    # requires pseudospecies.txt in inp folder
     BF_tolerance = 0.03                   # tolerance in isomer pool composition before stopping the iterations (3%)
     maxiter = 10
 end

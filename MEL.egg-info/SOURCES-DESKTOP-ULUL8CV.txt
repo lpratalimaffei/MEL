@@ -7,13 +7,11 @@ MEL/D_ODESYSTEM.py
 MEL/E_PLOTTING.py
 MEL/F_FITS.py
 MEL/G_PROFILES.py
-MEL/H_CHECK_FILESYS.py
 MEL/__init__.py
 MEL/extract_RATES_V0GIT.py
 MEL/license_message.py
 MEL/run.py
 MEL.egg-info/PKG-INFO
-MEL.egg-info/SOURCES-DESKTOP-ULUL8CV.txt
 MEL.egg-info/SOURCES.txt
 MEL.egg-info/dependency_links.txt
 MEL.egg-info/entry_points.txt

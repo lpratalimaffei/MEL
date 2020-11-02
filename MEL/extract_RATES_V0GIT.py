@@ -26,82 +26,169 @@ from . import F_FITS as fitall
 from . import G_PROFILES as prof_CKImech
 from time import perf_counter as clock
 
-def main_simul():
+def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
+    '''
+    Set the list of operations to perform for the selected jobtype
+    Output: dataframe
+    rows: N of simulation
+    columns: main subfolder where output is stored; reactant; lumpedreactant; product; lumpedproduct
+    '''
+    # read species list from mech_dict
+    SPECIES = mech_dict['SPECIES']
+    SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
+    SPECIES_UNIMOL = SPECIES[np.where(''==SPECIES_BIMOL)]
 
-    # cwd = os.path.dirname(os.path.abspath(__file__)) # get the path of the script directory
-    cwd = os.path.abspath(os.getcwd()) # current working directory
+    # SINGLE SIMULATION
+    if 'simul_type' in job_subdict.keys():
+        N_simul = 1
+        # for single simulations: for lumping and validation, reactants and products are already indicated
+        if jobtype == 'lumping' or jobtype == 'validation':
+            # look for reactants and products in the subdictionaries
+            REAC = job_subdict['REAC']
+            REACLUMPED = job_subdict['REACLUMPED']
+            PROD = job_subdict['PROD']
+            PRODSLUMPED = job_subdict['PRODSLUMPED']
+            # set output folder
+            
 
-    # Save times as dataframes in excel for every pressure; the first will be a dictionary
-    Dt_names = ['input reading','me_ktp.inp/csv reading','rate.out/csv reading'] # indices for all times
+        elif jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' or jobtype == 'composition_selection':
+
+            # select the reactant
+            if isinstance(job_subdict['pseudospecies'].iloc[0],np.ndarray):
+                REAC = job_subdict['pseudospecies'].iloc[0]
+                REACLUMPED = job_subdict['pseudospecies'] # series
+
+            elif jobtype == 'prescreening_equilibrium' and job_subdict['pseudospecies'].iloc[0] == 'all':
+                # only accepted case where you consider all pseudospecies together: all isomers as one
+                REAC = SPECIES_UNIMOL # all species together
+                REACLUMPED = pd.Series([SPECIES_UNIMOL],index=[SPECIES_UNIMOL[0]+'_L'])
+
+            # PRODUCTS: irrelevant to the reactivity; set them as the "other" species
+            PRODSUMPED = pd.Series(SPECIES,index=[SPECIES])
+            PRODSLUMPED = PRODSLUMPED.drop(index=REAC)
+            PRODS = PRODSLUMPED.values
+
+        # set output folder and simul_array
+        fld = os.path.join(cwd,jobtype,REACLUMPED)
+        simul_array = np.array([fld,REAC,REACLUMPED,PROD,PRODSLUMPED])
+        output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+    
+
+    else:             
+    ############ ALL THE OTHER SIMULATIONS
+    # PRESCREENING_EQUILIBRIUM
+        if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' :
+            
+            if job_subdict['pseudospecies'].iloc[0] == 'all':
+                ######### equilibrium: all isomers together
+                if jobtype == 'prescreening_equilibrium':
+                    N_simul = 1
+                    # all pseudospecies together
+                    REAC = SPECIES_UNIMOL # all species together
+                    REACLUMPED = pd.Series([SPECIES_UNIMOL],index=[SPECIES_UNIMOL[0]+'_L'])
+                    # PRODUCTS: irrelevant to the reactivity; set them as the "other" species
+                    PRODSUMPED = pd.Series(SPECIES,index=[SPECIES])
+                    PRODSLUMPED = PRODSLUMPED.drop(index=REAC)
+                    PRODS = PRODSLUMPED.values 
+                    # set output folder and simul_array
+                    fld = os.path.join(cwd,jobtype,REACLUMPED)
+                    simul_array = np.array([fld,REAC,REACLUMPED,PROD,PRODSLUMPED])  
+                    output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+
+                if jobtype == 'prescreening_allreactive' :
+                    # create one set of simulations for each species
+                    N_simul = len(SPECIES)
+                    output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+                    ind = 0
+                    for SP in SPECIES:
+                        REAC = SP
+                        REACLUMPED = pd.Series([SP],index=[SP+'_L'])
+                        # PRODUCTS: ALL THW OTHERS
+                        PRODSUMPED = pd.Series(SPECIES,index=[SPECIES])
+                        PRODSLUMPED = PRODSLUMPED.drop(index=REAC)
+                        PRODS = PRODSLUMPED.values 
+                        # set output folder and simul_array
+                        fld = os.path.join(cwd,jobtype,REACLUMPED)
+                        output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PROD,PRODSLUMPED])
+                        ind += 1 
+
+            elif job_subdict['pseudospecies'].index.size > 1:
+                # same for both prescreenings
+                N_simul = job_subdict['pseudospecies'].index.size
+                output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+                ind = 0
+                for SP in job_subdict['pseudospecies'].index :
+                    # for each set of pseudospecies: generate dictionaries
+                    if isinstance(job_subdict['pseudospecies'].loc[SP],np.ndarray):
+                        # generate reactant arrays
+                        REAC = job_subdict['pseudospecies'].iloc[SP]
+                        REACLUMPED = job_subdict['pseudospecies'] # series                   
+                        # PRODUCTS: irrelevant to the reactivity; set them as the "other" species
+                        PRODSUMPED = pd.Series(SPECIES,index=[SPECIES])
+                        PRODSLUMPED = PRODSLUMPED.drop(index=REAC)
+                        PRODS = PRODSLUMPED.values 
+                        # select output folder and allocate to dataframe
+                        fld = os.path.join(cwd,jobtype,REACLUMPED)
+                        output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PROD,PRODSLUMPED])
+                        ind += 1 
+
+    # for all of them:
+    # -1 look for the pseudospecies.txt and read it
+    # select reactants and products pseudospecies and set the same input for all three
+    # remove the single species for the composition selection simulations
+    # COMPOSITION_SELECTION
+
+    # LUMPING
+
+    # VALIDATION
+    return output_DF
+
+
+def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict):
+    '''
+    Perform simulations for 1 reacting pseudospecies at all T,P provided
+    '''
+
+    # Save times as dataframes for every pressure; the first will be a dictionary
     Dt_names_Pi = ['ode solving','time Pi','plotting and saving figs']
-    Dt = np.zeros(len(Dt_names))
 
-    ############### READ THE INPUT #######################################
+    ############### DERIVE VARIABLES REQUIRED FOR CODE FLOW #######################################
 
-    input = readinp.READ_INPUT(cwd) # object: input
-    tic = clock()
-    OS_folder,input_type,P_VECT,T_VECT,T_VECT_SKIP,STOICH,REAC,REACLUMPED,PRODS,PRODSLUMPED,ISOM_EQUIL,UNITS_BIMOL,PRODSINKS,PLOT_CMP,OPT_MECH = input.read_file_lines()
+    OS_folder = input_par['opensmoke_folder']
+    input_type = input_par['mech_type']
+    P_VECT = input_par['P_vect']
+    T_VECT = input_par['T_vect']
+    T_VECT_SKIP = input_par['T_skip']
+    UNITS_BIMOL = input_par['units_bimol']
+    STOICH = input_par['stoich']
 
-    toc = clock()
-    Dt[0]=(toc-tic)
-    # check the input and exit in case of exceptions
-    try:
-        input.CHECK_INPUT()
-    except Exception as e:
-        print(str(e))
-        exit()
-
-    ######################################################################
+    ISOM_EQUIL = input_par_jobtype['isom_equil']
+    PRODSINKS = input_par_jobtype['Prods_sinks']
+    PLOT_CMP = input_par_jobtype['isom_equil']    
 
 
-    ############### EXTRACT THE RATES at all T,P available ####################################
+    ################## DERIVE VARIABLES OF THE CORRESPONDING MECHANISM  ################################
+
     if input_type == 'MESS':
-        # create the object "case"
-        case = extr.INPUT_MESS(cwd)
-        # define the pressure, temperature, and species list
-        tic = clock()
-        P_VECT_MESS, T_VECT_MESS, SPECIES, SPECIES_BIMOL = case.data_names()
-        toc = clock()
-        Dt[1] = (toc-tic)
-
-        # check the consistency of the input
-        try:
-            input.COMPARE_INPUT_PVECT(input_type,SPECIES,P_VECT_MESS,T_VECT_MESS)
-        except Exception as e:
-            print(str(e))
-            exit()
-
-        # derive the full matrix of rate constants
-        tic = clock()
-        case.MATRIX()
-        toc = clock()
-        Dt[2]=(toc-tic)
-        
+        P_VECT_MESS = mech_dict['P_VECT_MESS']
+        T_VECT_MESS = mech_dict['T_VECT_MESS']
+        SPECIES = mech_dict['SPECIES']
+        SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
+        rates = mech_dict['rates']        
 
     elif input_type == 'CKI':
-        # create the object "case"
-        case = extr.INPUT_CHEMKIN(cwd)
-        try:
-            SPECIES, SPECIES_BIMOL = case.data_names()
-        except ValueError as e:
-            print(str(e))
-            exit()
+        SPECIES = mech_dict['SPECIES']
+        SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
 
-        # check the consistency of the input
-        try:
-            input.COMPARE_INPUT_PVECT(input_type,SPECIES,'','')
-        except Exception as e:
-            print(str(e))
-            exit()
+    ################ DERIVE REACTANTS AND PRODUCTS FROM THE INPUT DICTIONARY #####################
 
-    else:
-        print('input type not supported. Please select MESS or CKI')
-        exit()
+    REAC
+    REACLUMPED
+    PRODS
+    PRODSLUMPED
 
-    # produce vector of secondary species
-    SPECIES_BIMOL = np.zeros(SPECIES_BIMOL.shape,dtype=str)
+
     # PROCESSING OF SPECIES NAMES AND REACTANT:
-    # assign indices to variable with pandas
     print(SPECIES,SPECIES_BIMOL)
     SPECIES_SERIES = pd.Series(np.arange(0,len(SPECIES)),index = SPECIES)
     SPECIES_BIMOL_SERIES = pd.Series(SPECIES_BIMOL,index = SPECIES) #species values are the names of the bimol species corresponding to the "primary" one
@@ -111,6 +198,7 @@ def main_simul():
         i_REAC = SPECIES_SERIES[REAC].values          # value (single reactant) or array (lumped reactant)
     else:
         i_REAC = SPECIES_SERIES[REAC]
+
     # PREPROCESSING: WRITE THE THERMODYNAMIC FILE
     print('writing therm.txt for OS preprocessor ...'),preproc.WRITE_THERM(cwd + '/mech_tocompile',STOICH,SPECIES_SERIES,SPECIES_BIMOL_SERIES)
 
@@ -383,10 +471,5 @@ def main_simul():
     ##################### SAVE THE TIMES REQUIRED TO PERFORM EVERY STEP ##################
 
     # create series with the times and the description and print it to excel
-    times = pd.Series(Dt,index=Dt_names)
     times_Pi = pd.DataFrame(Dt_Pi,index=list(P_VECT),columns=Dt_names_Pi)
-    times.to_excel('clock.xlsx',sheet_name='times')
     times_Pi.to_excel('clock_Pi.xlsx',sheet_name='times_Pi')
-
-    #times.to_csv('clock_check.csv',sep=':',float_format="%.5f")
-

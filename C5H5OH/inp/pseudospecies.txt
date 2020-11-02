@@ -1,7 +1,7 @@
-W1+W4+W5
-W3
-R
-P1
-P2+P5
-P3
-P4
+W1_L    W1+W4+W5
+W3      W3
+R       R
+P1      P1
+P2_L    P2+P5
+P3      P3
+P4      P4

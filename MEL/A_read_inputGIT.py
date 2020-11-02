@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import re
@@ -38,7 +37,10 @@ class READ_INPUT:
                         if readinput == 1:
                             # find OS folder
                             if line.find('opensmoke_folder') != -1:
-                                OS_folder = '"'+line.split()[2] + '"'
+                                self.OS_folder = line.split()[2]
+                                # if env variable: convert it to absolute
+                                if self.OS_folder[0] == '%':
+                                    self.OS_folder = os.environ[self.OS_folder[1:-1]]
 
                             # select the type of input
                             if line.find('mech_type') != -1:
@@ -122,9 +124,15 @@ class READ_INPUT:
                                 pseudospecies_components = []     # list of arrays with the set of products contained in each species of Prods_Lumped
                                 
                                 for PS in pseudospecies:
-                                    if len(PS.split('+')) == 1 and read_prescreen_equil == 1:
+                                    if len(PS.split('+')) == 1 and read_prescreen_equil == 1 and PS != 'all':
                                         # error: you cannot have single pseudospecies for isomer equilibrium simulations
                                         print(ValueError('subdictionary prescreening_equilibrium: cannot have single isomers'))
+
+                                    elif len(PS.split('+')) == 1 and read_prescreen_equil == 1 and PS == 'all':
+                                        # you will consider the full isomer pool
+                                        pseudospecies_names.append(PS)
+                                        pseudospecies_components.append(PS)
+
                                     elif len(PS.split('+')) == 1 and read_prescreen_allreactive == 1:
                                         # append it also in the lumped products
                                         pseudospecies_names.append(PS)
@@ -156,15 +164,22 @@ class READ_INPUT:
                                 read_comp_sel = 1
 
                             if read_comp_sel == 1:
+
+                                if line.find('maxiter') != -1:
+                                    try:
+                                        maxiter = int(line.split()[2])
+                                    except ValueError as e:
+                                        print('invalid input in composition_selection subdictionary: number of iterations should be an integer number')
+
                                 if line.find('BF_tolerance') != -1 :
-                                    BF_tol = float(line.split()[2])
+                                    try:
+                                        BF_tol = float(line.split()[2])
+                                        if BF_tol >= 1 or BF_tol <= 0 :
+                                            print('error in composition_selection subdictionary: BF tolerance should be betweeen 0 and 1')
+                                            exit()
+                                    except ValueError as e:
+                                        print('invalid input in composition_selection subdictionary: BF tolerance should be a number between 0 and 1')
 
-                                    if BF_tol >= 1:
-                                        print('error in composition_selection subdictionary: BF tolerance should be below 1')
-                                        exit()
-
-                                if line.find('maxiter') != -1 :
-                                    maxiter = line.split()[2]
 
                                 if line.find('end') != -1:
                                     # save variabile in series
@@ -187,7 +202,7 @@ class READ_INPUT:
                                 if line.find('simul_type') != -1 :
                                     simul_type = line.split()[2]
 
-                                if line.find('pseudospecies') != -1 and (simul_type == 'prescreening_allreactive' or simul_type == 'prescreening_equilibrium'):
+                                if line.find('pseudospecies') != -1 and (simul_type == 'prescreening_allreactive' or simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection'):
                                     line_pseudospecies = re.split('\[|\]',line)[1]
                                     pseudospecies = line_pseudospecies.split()
 
@@ -196,9 +211,14 @@ class READ_INPUT:
                                     pseudospecies_components = []     # list of arrays with the set of products contained in each species of Prods_Lumped
                                     
                                     for PS in pseudospecies:
-                                        if len(PS.split('+')) == 1 and simul_type == 'prescreening_equilibrium':
+                                        if len(PS.split('+')) == 1 and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection') and PS != 'all':
                                             # error: you cannot have single pseudospecies for isomer equilibrium simulations
-                                            print(ValueError('subdictionary prescreening_equilibrium: cannot have single isomers'))
+                                            print(ValueError('subdictionary prescreening_equilibrium/composition_selection: cannot have single isomers'))
+
+                                        elif len(PS.split('+')) == 1 and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection') and PS == 'all':
+                                            pseudospecies_names.append(PS)
+                                            pseudospecies_components.append(PS)
+
                                         elif len(PS.split('+')) == 1 and simul_type == 'prescreening_allreactive':
                                             # append it also in the lumped products
                                             pseudospecies_names.append(PS)
@@ -209,15 +229,23 @@ class READ_INPUT:
                                             pseudospecies_names.append(PS.split('+')[0] + '_L')
                                             # append the array of products to Prods_Lumped_array:
                                             pseudospecies_components.append(np.array(PS.split('+'),dtype=str))
-                                            
+                                # dataframe with pseudospecies
+                                pseudospecies_df = pd.Series(pseudospecies_components,index=pseudospecies_names)  
+
                                 if line.find('maxiter') != -1 and simul_type == 'composition_selection':
-                                    maxiter = line.split()[2]
+                                    try:
+                                        maxiter = int(line.split()[2])
+                                    except ValueError as e:
+                                        print('invalid input in single_simulation subdictionary: number of iterations should be an integer number')
 
                                 if line.find('BF_tolerance') != -1 and simul_type == 'composition_selection':
-                                    BF_tol = line.split()[2]
-                                    if BF_tol >= 1:
-                                        print('error in composition_selection subdictionary: BF tolerance should be below 1')
-                                        exit()
+                                    try:
+                                        BF_tol = float(line.split()[2])
+                                        if BF_tol >= 1 or BF_tol <= 0 :
+                                            print('error in single_simulation subdictionary: BF tolerance should be betweeen 0 and 1')
+                                            exit()
+                                    except ValueError as e:
+                                        print('invalid input in single_simulation subdictionary: BF tolerance should be a number between 0 and 1')
 
                                 # read reactants and products
                                 if line.find('Reac ') != -1:
@@ -286,7 +314,7 @@ class READ_INPUT:
                                             prodslumped = pd.Series(Prods_Lumped_array,index=Prods_Lumped)
                                             reaclumped = pd.Series([self.Reac],index=[reaclumped])
                                             job_list['single_simulation'].update(dict(zip(['REAC','REACLUMPED','PRODS','PRODSLUMPED'],[self.Reac,reaclumped,self.Prod,prodslumped])))
-
+                                            print(job_list['single_simulation'])
                                         except NameError as e:
                                             print('\nmissing reactant/product specifications in single_simulation subdictionary: \n {}'.format(e))
                                             exit()
@@ -298,14 +326,14 @@ class READ_INPUT:
                                     # exit from reading this portion
                                     read_single_simul = 0
         myfile.close()
-
+        # np.savetxt('pseudospecies_prova.txt',pseudospecies_df,delimiter='\t',fmt='%s')
         # units bimol: if the input is MESS, set molec by default
         if self.inp_type=='MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
             self.units_bimol = 'molec'
 
         # input_parameters dictionary
         keys_inputpar = ['opensmoke_folder','mech_type','P_vect','T_vect','T_skip','units_bimol','stoich','cutoff'] 
-        values_inputpar = [OS_folder,self.inp_type,self.Pvect,self.Tvect,Tvect_skip,self.units_bimol,self.stoich]
+        values_inputpar = [self.OS_folder,self.inp_type,self.Pvect,self.Tvect,Tvect_skip,self.units_bimol,self.stoich]
         input_parameters = dict(zip(keys_inputpar,values_inputpar))
 
 
@@ -317,6 +345,16 @@ class READ_INPUT:
         Now check that the variables saved are present when necessary, and that reactants and products are different species
         """
         error_list = ''
+        # check that the OS folder exists
+
+        if os.path.exists(self.OS_folder) == False:
+            error_list = error_list + '\nThe opensmoke bin folder indicated does not exist'
+
+        # check that the input_OS_template exists
+        OS_inpfile = os.path.join(self.cwd,'inp','input_OS_template.dic')
+        if os.path.isfile(OS_inpfile) == False:
+            error_list = error_list + '\nMissing OS template input file: {} required '.format(OS_inpfile)
+            
         # check type of input
         if self.inp_type != 'MESS' and self.inp_type != 'CKI':
             error_list = error_list + '\nWrong keyword for input: set MESS or CKI '
@@ -361,82 +399,176 @@ class READ_INPUT:
 
 
         # no need to check P_vect now, because if it is empty you can read it elsewhere or assume everything is high P limit
-        
-    def CHECK_INPUT_JOBTYPE(self,jobtype,jobtype_key,subdict):
-        '''
-        Perform checks based on the type of job.
-        Checks are on input values provided by the user
-        '''
-
+    
+    
+    def COMPARE_INPUT_PT(self,input_type,mech_dict):
+        """
+        CHECK that the input provided externally is compatible with the one given by the user
+        It can be used also for CKI inputs, however the P_VECT_MESS and T_VECT_MESS will not be provided
+        """
+        # useful to do with pandas if you want to restructure, and then you use &
         error_list = ''
 
-        if jobtype == 'composition_selection':
-            # check if values are numbers
-            try:
-                #MAXITERATIONS CHECK
-                if subdict['maxiter'] > 1000:
-                    error_list = error_list + '\nIterations for species composition convergence set above 1000: unreasonable '
-                #CHECK ON BRANCHING FRACTION TOLERANCE
-                if subdict['BF_tol'] <= 0 or subdict['BF_tol'] > 1:
-                    error_list = error_list + '\nBranching fraction tolerance for composition convergence is out of valid 0<BF<1 range '
+        if input_type == 'MESS':
+            P_VECT_MESS = mech_dict['P_VECT_MESS']
+            T_VECT_MESS = mech_dict['T_VECT_MESS']
+            if np.array([[p == P_VECT_MESS for p in self.Pvect][ii].any() for ii in range(0,len(self.Pvect))]).all() != True:
+                # YOU ARE CHECKING IF, INDEPENDENT OF THE ORDER, ALL THE ELEMENTS OF self.Pvect are contained in P_VECT_MESS
+                error_list = error_list + '\nSome of the selected pressures are not available in MESS pressure list \n \t please select among {PRESSURES}'.format(PRESSURES=P_VECT_MESS)
 
-            except ValueError as e:
-                error_list = error_list + '\nInconsistent values for composition_selection subdictionary: {e}'.format(e)
-
-            # if it is not a "single simulation": species list required
-            if jobtype_key != 'single_simulation':
-
-                pseudospecies_file = os.path.join(self.cwd,'inp','pseudospecies.txt')
-                if os.path.isfile(pseudospecies_file) == False:
-                    error_list = error_list + '\n composition_selection requires file {f}, not found!'.format(pseudospecies_file)
-
-
-        # VALIDATION: DOES THE LUMPED MECH EXIST?
-        if jobtype == 'validation':
-            lumpedmech_kinfile = os.path.join(self.cwd,'lumpedmech','kin.txt')
-            lumpedmech_thermfile = os.path.join(self.cwd,'lumpedmech','therm.txt')
-
-            if os.path.isfile(lumpedmech_kinfile) == False:
-                error_list = error_list + '\n validation requires lumped mech {f}, not found!'.format(pseudospecies_file)
-        
-        # PSEUDOSPECIES: CHECK THAT THEY ARE NOT REPEATED IN EACH GROUP
-        if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive':
-            # check if you have more than one species/pseudospecies group
-            if subdict['pseudospecies'].index.size > 1:
-                for SP in subdict['pseudospecies'].index :
-                    for SP_other in subdict['pseudospecies'].index :
-                        if SP_other != SP:
-                            for species in subdict['pseudospecies'].loc[SP]:
-                                if np.array([species == sp_other for sp_other in subdict['pseudospecies'].loc[SP_other]]).any():
-                                    error_list = error_list + '\nMatching species in different pseudospecies group '
-
-             
-        # SINGLE_SIMULATIONS
-        # check that you don't have products or reactants matching
-        if jobtype_key == 'single_simulation':
-            if jobtype == 'lumping' or jobtype == 'validation':
-                if not list(self.Reac) or not self.Prod:
-                    # if not defined, the output of the readline above will be #
-                    error_list = error_list + '\nNo reactants or products defined '
-
-                if isinstance(self.Reac,np.ndarray):
-                    for Rr in self.Reac:
-                        if np.array([Rr == Pr for Pr in self.Prod]).any():
-                            error_list = error_list + '\nThe reactant matches one of the product species. Inconsistent! '
-
-                elif isinstance(self.Reac,str):
-                    if np.array([self.Reac == Pr for Pr in self.Prod]).any():
-                        error_list = error_list + '\nThe reactant matches one of the product species. Inconsistent! '
-
-            elif jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' or jobtype == 'composition_selection':
-                if subdict['pseudospecies'].index.size > 1:
-                    error_list = error_list + '\nMore than 1 set of pseudospecies: incompatible with single simulations'
+            if (T_VECT_MESS > self.Tvect[0]).all() or (T_VECT_MESS < self.Tvect[-1]).all():
+                # CHECK IF THE RANGE OF TEMPERATURE SELECTED IS INCLUDED IN THAT AVAILABLE IN THE MESS OUTPUT
+                error_list = error_list + '\nThe temperature range in the input is outside of the mess range available: \n \t please select between {minT} and {maxT} K'.format(minT=min(T_VECT_MESS),maxT=max(T_VECT_MESS))
 
 
         if not error_list:
             return None
         else:
-            raise RuntimeError('Errors detected when comparing the input with MESS file: \n' + str(error_list))
+            raise RuntimeError('Errors detected when comparing the input with NESS mechanism file: \n' + str(error_list))
+
+    def CHECK_INPUT_JOBTYPE(self,job_list,mech_dict):
+        '''
+        Perform checks for each type of job
+        a. input values provided by the user
+        b. compatibility with the mechanism input parameters
+        '''
+        # extract variables from mech_dict
+        SPECIES = mech_dict['SPECIES']
+        SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
+        error_list = ''
+
+        # loop over the dictionaries
+        for key, value in job_list.items():
+            
+            # for single simulation: re-set job type
+            if key == 'single_simulation':
+                jobtype = value['simul_type']
+            elif key == 'prescreening_equilibrium' or key == 'prescreening_allreactive' or key == 'composition_selection' or key == 'lumping' or key == 'validation':
+                jobtype = key
+            else:
+                print('\nValue Error: dictionary type not recognized')
+            # call subdictionaries
+            subdict = value
+            
+            if key != 'single_simulation' and (jobtype == 'composition_selection' or jobtype == 'lumping' or jobtype == 'validation'):
+                # check that file pseudospecies.txt exists
+                pseudospecies_file = os.path.join(self.cwd,'inp','pseudospecies.txt')
+                if os.path.isfile(pseudospecies_file) == False:
+                    error_list = error_list + '\n composition_selection/lumping/validation require file {}, not found!'.format(pseudospecies_file)
+
+            if jobtype == 'composition_selection':
+                # check if values are numbers
+                try:
+                    #MAXITERATIONS CHECK
+                    if subdict['maxiter'] > 1000:
+                        error_list = error_list + '\nIterations for species composition convergence set above 1000: unreasonable '
+                    #CHECK ON BRANCHING FRACTION TOLERANCE
+                    if subdict['BF_tol'] <= 0 or subdict['BF_tol'] > 1:
+                        error_list = error_list + '\nBranching fraction tolerance for composition convergence is out of valid 0<BF<1 range '
+
+                except ValueError as e:
+                    error_list = error_list + '\nInconsistent values for composition_selection subdictionary: {e}'.format(e)
+
+
+            # VALIDATION: DOES THE LUMPED MECH EXIST?
+            if jobtype == 'validation':
+                lumpedmech_kinfile = os.path.join(self.cwd,'lumpedmech','kin.txt')
+                lumpedmech_thermfile = os.path.join(self.cwd,'lumpedmech','therm.txt')
+
+                if os.path.isfile(lumpedmech_kinfile) == False:
+                    error_list = error_list + '\n validation requires lumped mech {}, not found!'.format(lumpedmech_kinfile)
+
+                if os.path.isfile(lumpedmech_thermfile) == False:
+                    error_list = error_list + '\n validation requires lumped thermo {}, not found!'.format(lumpedmech_thermfile)
+            
+            # PSEUDOSPECIES: CHECK THAT THEY ARE NOT REPEATED IN EACH GROUP
+            if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive':
+
+                # check if you have more than one species/pseudospecies group
+                if subdict['pseudospecies'].index.size > 1:
+                    for SP in subdict['pseudospecies'].index :
+                        for SP_other in subdict['pseudospecies'].index :
+                            if SP_other != SP:
+                                if isinstance(subdict['pseudospecies'].loc[SP],np.ndarray) and isinstance(subdict['pseudospecies'].loc[SP_other],np.ndarray):
+                                    for species in subdict['pseudospecies'].loc[SP]:
+                                        if np.array([species == sp_other for sp_other in subdict['pseudospecies'].loc[SP_other]]).any():
+                                            error_list = error_list + '\nMatching species in different pseudospecies group '
+
+                                elif isinstance(subdict['pseudospecies'].loc[SP],str) and isinstance(subdict['pseudospecies'].loc[SP_other],np.ndarray):
+                                    species = subdict['pseudospecies'].loc[SP]
+                                    if np.array([species == sp_other for sp_other in subdict['pseudospecies'].loc[SP_other]]).any():
+                                        error_list = error_list + '\nMatching species in different pseudospecies group '
+                        
+                # check that the pseudospecies indicated match one of the species in the list
+                for SP in subdict['pseudospecies'].index :
+                    # CHECK THAT THE PSEUDOSPECIES ARE PRESENT IN THE LIST
+                    if isinstance(subdict['pseudospecies'].loc[SP],np.ndarray):
+                        if np.array([[sp == SPECIES for sp in subdict['pseudospecies'].loc[SP]][ii].any() for ii in range(0,len(subdict['pseudospecies'].loc[SP]))]).all() != True:
+                            error_list = error_list + '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
+                        # WITHIN EACH GROUP: CHECK THAT PSEUDOSPECIES BELONG TO THE SAME TYPE (I.E. HAVE SAME BIMOL FRAGMENT)
+                        i_sp_group = np.where([sp_group == SPECIES for sp_group in subdict['pseudospecies'].loc[SP]])[1]
+                        if np.array([i_sp_bim == SPECIES_BIMOL[i_sp_group] for i_sp_bim in SPECIES_BIMOL[i_sp_group]]).all == False:
+                            error_list = error_list + '\nPseudospecies do not belong to the same type: mix of unimol/bimol or bimol with different fragments '
+
+                    elif isinstance(subdict['pseudospecies'].loc[SP],str) and subdict['pseudospecies'].loc[SP] != 'all':
+                        species = subdict['pseudospecies'].loc[SP]
+                        if np.array([species == SP_list for SP_list in SPECIES]).any() != True:
+                            error_list = error_list + '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
+                    
+                
+            # SINGLE_SIMULATIONS
+            # check that you don't have products or reactants matching
+            if key == 'single_simulation':
+                if jobtype == 'lumping' or jobtype == 'validation':
+                    if not list(self.Reac) or not self.Prod:
+                        # if not defined, the output of the readline above will be #
+                        error_list = error_list + '\nNo reactants or products defined '
+
+                    if np.array([[Pr == SPECIES for Pr in self.Prod][ii].any() for ii in range(0,len(self.Prod))]).all() != True:
+                        # CHECK IF THE PRODUCTS SELECTED ARE AVAILABLE IN THE SPECIES LIST OF MESS
+                        error_list = error_list + '\nThe Products selected are not all available in the list of species! \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
+
+                    if isinstance(self.Reac,np.ndarray):
+
+                        if np.array([[Rr == SPECIES for Rr in self.Reac][ii].any() for ii in range(0,len(self.Reac))]).all() != True:
+                            # CHECK IF THE PRODUCTS SELECTED ARE AVAILABLE IN THE SPECIES LIST OF MESS
+                            error_list = error_list + '\nThe Reactants selected are not all available in the list of species! \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))                
+                    
+                        for Rr in self.Reac:
+                            #check that reactants and products do not match
+                            if np.array([Rr == Pr for Pr in self.Prod]).any():
+                                error_list = error_list + '\nThe reactant matches one of the product species. Inconsistent! '
+
+                    elif isinstance(self.Reac,str):
+                        if np.array([self.Reac == Pr for Pr in self.Prod]).any():
+                            error_list = error_list + '\nThe reactant matches one of the product species. Inconsistent! '
+                        if np.array([self.Reac == SP for SP in SPECIES]).any() != True:
+                            # CHECK IF THE REACTANT SELECTED IS AVAILABLE IN THE RANGE OF SPECIES
+                            error_list = error_list + '\nThe Reactant selected is not available in the list of species! \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
+
+                elif jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' or jobtype == 'composition_selection':
+                    if subdict['pseudospecies'].index.size > 1:
+                        error_list = error_list + '\nMore than 1 set of pseudospecies: incompatible with single simulations'
+                    elif subdict['pseudospecies'].index.size == 1:
+                        # CHECK THAT THE PSEUDOSPECIES ARE PRESENT IN THE LIST
+                        if isinstance(subdict['pseudospecies'].iloc[0],np.ndarray):
+                            if np.array([[sp == SPECIES for sp in subdict['pseudospecies'].iloc[0]][ii].any() for ii in range(0,len(subdict['pseudospecies'].iloc[0]))]).all() != True:
+                                error_list = error_list + '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
+                            # WITHIN EACH GROUP: CHECK THAT PSEUDOSPECIES BELONG TO THE SAME TYPE (I.E. HAVE SAME BIMOL FRAGMENT)
+                            i_sp_group = np.where([sp_group == SPECIES for sp_group in subdict['pseudospecies'].iloc[0]])[1]
+                            if np.array([i_sp_bim == SPECIES_BIMOL[i_sp_group] for i_sp_bim in SPECIES_BIMOL[i_sp_group]]).all == False:
+                                error_list = error_list + '\nPseudospecies do not belong to the same type: mix of unimol/bimol or bimol with different fragments '
+
+                        elif isinstance(subdict['pseudospecies'].iloc[0],str) and subdict['pseudospecies'].iloc[0] != 'all':
+                            species = subdict['pseudospecies'].loc[SP]
+                            if np.array([species == SP_list for SP_list in SPECIES]).any() != True:
+                                error_list = error_list + '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
+                        
+
+        if not error_list:
+            return None
+        else:
+            raise RuntimeError('Errors detected when checking input_lumping.txt: \n' + str(error_list))
 
     def set_inputparam_job(self,jobtype):
         """
@@ -470,49 +602,3 @@ class READ_INPUT:
         return input_par_jobtype
 
 
-    def COMPARE_INPUT_PVECT(self,input_type,SPECIES,P_VECT_MESS,T_VECT_MESS):
-        """
-        CHECK that the input provided externally is compatible with the one given by the user
-        It can be used also for CKI inputs, however the P_VECT_MESS and T_VECT_MESS will not be provided
-        """
-        # useful to do with pandas if you want to restructure, and then you use &
-        error_list = ''
-        # for MESS input types: check the pressure and temperature vectors
-        if input_type == 'MESS':
-            if np.array([[p == P_VECT_MESS for p in self.Pvect][ii].any() for ii in range(0,len(self.Pvect))]).all() != True:
-                # YOU ARE CHECKING IF, INDEPENDENT OF THE ORDER, ALL THE ELEMENTS OF self.Pvect are contained in P_VECT_MESS
-                error_list = error_list + ' Some of the selected pressures are not available in MESS pressure list \n \t please select among {PRESSURES} \n'.format(PRESSURES=P_VECT_MESS)
-
-            if (T_VECT_MESS > self.Tvect[0]).all() or (T_VECT_MESS < self.Tvect[-1]).all():
-                # CHECK IF THE RANGE OF TEMPERATURE SELECTED IS INCLUDED IN THAT AVAILABLE IN THE MESS OUTPUT
-                error_list = error_list + ' The temperature range in the input is outside of the mess range available: \n \t please select between {minT} and {maxT} K \n'.format(minT=min(T_VECT_MESS),maxT=max(T_VECT_MESS))
-
-        # the other things will always be checked
-        # check reactant: the check will be different if the reactant is lumped (array of reactants)
-        if isinstance(self.Reac,np.ndarray):
-            if np.array([[Rr == SPECIES for Rr in self.Reac][ii].any() for ii in range(0,len(self.Reac))]).all() != True:
-                # CHECK IF THE PRODUCTS SELECTED ARE AVAILABLE IN THE SPECIES LIST OF MESS
-                error_list = error_list + ' The Reactants selected are not all available in the list of species! \n \t please select among {SPECIES} \n'.format(SPECIES = str(SPECIES))                
-        elif isinstance(self.Reac,str):
-            if np.array([self.Reac == SP for SP in SPECIES]).any() != True:
-                # CHECK IF THE REACTANT SELECTED IS AVAILABLE IN THE RANGE OF SPECIES
-                error_list = error_list + ' The Reactant selected is not available in the list of species! \n \t please select among {SPECIES} \n'.format(SPECIES = str(SPECIES))
-
-        if np.array([[Pr == SPECIES for Pr in self.Prod][ii].any() for ii in range(0,len(self.Prod))]).all() != True:
-            # CHECK IF THE PRODUCTS SELECTED ARE AVAILABLE IN THE SPECIES LIST OF MESS
-            error_list = error_list + ' The Products selected are not all available in the list of species! \n \t please select among {SPECIES} \n'.format(SPECIES = str(SPECIES))
-
-        ######### ADDITIONAL CHECKS FOR SINGLE SUBDICTIONARIES
-        # check that the pseudospecies are in the list of species
-        # check that in each set you don't have different "types" of species (isomers or bimolecular species)
-        
-        if not error_list:
-            return None
-        else:
-            raise RuntimeError('Errors detected when comparing the input with MESS file: \n' + str(error_list))
-
-
-# functions to create the input of each type of simulation
-        
-        
-            
