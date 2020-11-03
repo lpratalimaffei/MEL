@@ -20,8 +20,15 @@ def setfolder(fld):
             YE_NO = 0
         else:
             YE_NO = 1
-            
+
     return YE_NO
+
+def rmfolder(fld):
+    '''
+    remove folder if exists
+    '''
+    if os.path.isdir(fld):
+        os.removedirs(fld)
 
 
 def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
@@ -70,7 +77,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
         fld = os.path.join(cwd,jobtype,REACLUMPED.index[0])
         simul_array = np.array([fld,REAC,REACLUMPED.index[0],PRODS,PRODSLUMPED])
         simul_array = simul_array[np.newaxis,:]
-        output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+        output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
 
     else:             
     ############ ALL THE OTHER SIMULATIONS
@@ -92,12 +99,12 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
                     fld = os.path.join(cwd,jobtype,REACLUMPED.index[0])
                     simul_array = np.array([fld,REAC,REACLUMPED.index[0],PRODS,PRODSLUMPED]) 
                     simul_array = simul_array[np.newaxis,:] 
-                    output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+                    output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
 
                 if jobtype == 'prescreening_allreactive' :
                     # create one set of simulations for each species
                     N_simul = len(SPECIES)
-                    output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+                    output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
                     ind = 0
                     for SP in SPECIES:
                         REAC = SP
@@ -114,7 +121,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
             else:
                 # same for both prescreenings
                 N_simul = job_subdict['pseudospecies'].index.size
-                output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+                output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
                 ind = 0
                 for SP in job_subdict['pseudospecies'].index :
                     # for each set of pseudospecies: generate dictionaries
@@ -147,7 +154,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
 
             # organize dataframe
             N_simul = pseudospecies_series.index.size
-            output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PROD','PRODLUMPED'])
+            output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
             ind = 0
             # now do the loop on the right indices
             for SP in pseudospecies_series.index:

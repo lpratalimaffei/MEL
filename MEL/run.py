@@ -84,7 +84,7 @@ def main():
         # set iterative operations for each type of simulations
         sim_DF = set_sim.set_simul_loop(cwd,jobtype,job_subdict,mech_dict)
         print(sim_DF)
-        
+
         # iterate over the selected set of species
         for i in sim_DF.index:
             sim_series = sim_DF.loc[i]
@@ -93,14 +93,13 @@ def main():
             # create the mechanism folder
             mechfld = set_sim.setfolder(os.path.join(cwd,'mech_tocompile'))
 
-            if YE_NO == 1:
+            if YE_NO == 0:
                 # perform the simulation
                 sim.main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series)
 
             # delete folders to avoid confusion and do cleaning
-            os.removedirs(os.path.join(cwd,'mech_tocompile')) # temporary mech
-            os.removedirs(os.path.join(cwd,'Output'))         # temporary output folder
-
+            set_sim.rmfolder(os.path.join(cwd,'mech_tocompile'))
+            set_sim.rmfolder(os.path.join(cwd,'Output'))
 
 
 
