@@ -104,6 +104,12 @@ class READ_INPUT:
                                 readsubdict = 1
                                 # generate the job_list dictionary
                                 job_list = dict.fromkeys(jobid)
+                                # empty subdictionaries for lumping and validation - if they are present in the list
+                                if 'lumping' in job_list:
+                                    job_list['lumping'] = dict.fromkeys([''],'')
+                                if 'validation' in job_list:
+                                    job_list['validation'] = dict.fromkeys([''],'')
+
 
                         if readsubdict == 1:
                             # read the subdictionaries of the tasks you perform
@@ -115,7 +121,7 @@ class READ_INPUT:
                             if line.find('prescreening_allreactive') != -1 and any('prescreening_allreactive'==x for x in jobid) :
                                 read_prescreen_allreactive = 1
 
-                            if line.find('pseudospecies') != -1 and (read_prescreen_equil == 1 or read_prescreen_allreactive == 1):
+                            if line.find('pseudospecies') != -1 and (read_prescreen_equil == 1 or read_prescreen_allreactive == 1) and read_single_simul==0:
                                 
                                 line_pseudospecies = re.split('\[|\]',line)[1]
                                 pseudospecies = line_pseudospecies.split()
@@ -229,8 +235,9 @@ class READ_INPUT:
                                             pseudospecies_names.append(PS.split('+')[0] + '_L')
                                             # append the array of products to Prods_Lumped_array:
                                             pseudospecies_components.append(np.array(PS.split('+'),dtype=str))
-                                # dataframe with pseudospecies
-                                pseudospecies_df = pd.Series(pseudospecies_components,index=pseudospecies_names)  
+                                    
+                                    # dataframe with pseudospecies
+                                    pseudospecies_df = pd.Series(pseudospecies_components,index=pseudospecies_names)  
 
                                 if line.find('maxiter') != -1 and simul_type == 'composition_selection':
                                     try:
@@ -354,6 +361,11 @@ class READ_INPUT:
         OS_inpfile = os.path.join(self.cwd,'inp','input_OS_template.dic')
         if os.path.isfile(OS_inpfile) == False:
             error_list = error_list + '\nMissing OS template input file: {} required '.format(OS_inpfile)
+            
+        # check that the input_preproc exists
+        preproc_inpfile = os.path.join(self.cwd,'inp','input_preproc.dic')
+        if os.path.isfile(preproc_inpfile) == False:
+            error_list = error_list + '\nMissing OS preprocessor input file: {} required '.format(preproc_inpfile)
             
         # check type of input
         if self.inp_type != 'MESS' and self.inp_type != 'CKI':

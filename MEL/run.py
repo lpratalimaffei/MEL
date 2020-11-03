@@ -8,9 +8,10 @@ import sys
 import pandas as pd
 from time import perf_counter as clock
 from . import license_message
-from . import A_read_inputGIT as readinp
+from . import A_read_input as readinp
 from . import B_extract_rates as extr_rates
-
+from . import extract_RATES_V0 as sim
+from . import H_SET_LOOPS_FLD as set_sim
 def main():
     # print license message
     print(license_message.message)
@@ -80,12 +81,30 @@ def main():
 
         # set rest of input parameters (except reac/prod) based on simulation type
         input_par_jobtype = inp_instr.set_inputparam_job(jobtype)
-        print(input_par_jobtype)
-
         # set iterative operations for each type of simulations
+        sim_DF = set_sim.set_simul_loop(cwd,jobtype,job_subdict,mech_dict)
+        print(sim_DF)
+        
+        # iterate over the selected set of species
+        for i in sim_DF.index:
+            sim_series = sim_DF.loc[i]
+            # check if folder exists, otherwise create it
+            YE_NO = set_sim.setfolder(sim_series['fld'])
+            # create the mechanism folder
+            mechfld = set_sim.setfolder(os.path.join(cwd,'mech_tocompile'))
 
-            # iterate over the selected set of species
-            # check if files exist and if not run the simulation / generate them
+            if YE_NO == 1:
+                # perform the simulation
+                sim.main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series)
+
+            # delete folders to avoid confusion and do cleaning
+            os.removedirs(os.path.join(cwd,'mech_tocompile')) # temporary mech
+            os.removedirs(os.path.join(cwd,'Output'))         # temporary output folder
+
+
+
+
+            
 
         
 

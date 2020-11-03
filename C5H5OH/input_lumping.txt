@@ -15,10 +15,10 @@ end
 
 jobs
     single_simulation             # single simulation of one of the types below
-    prescreening_equilibrium      #w/o options: full isomer pool     -> print suggestions about species lumping (constraints)
-    prescreening_allreactive      #w/o options: all single species
-    composition_selection
-    lumping
+    #prescreening_equilibrium      #w/o options: full isomer pool     -> print suggestions about species lmp(constraints)
+    #prescreening_allreactive      #w/o options: all single species
+    #composition_selection
+    #lumping
     #build_lumpedmech          # more clear as a single job?
     #validation
 end
@@ -26,22 +26,21 @@ end
 ############ jobs subdictionaries ########################
 
 dictionary prescreening_equilibrium
-    pseudospecies = [W1+W4+W5]     # write 'all' to consider the full isomer pool together
+    pseudospecies = [all]     
 end
 
 dictionary prescreening_allreactive
-    pseudospecies = [W1+W4 W3+W6]    # write 'all' to consider each pseudospecies separately
+    pseudospecies = [all]    
 
 end
                                                                 
 dictionary composition_selection
-    # requires pseudospecies.txt in inp folder
     BF_tolerance = 0.03                   # tolerance in isomer pool composition before stopping the iterations (3%)
     maxiter = 10
 end
 
 dictionary single_simulation
-    simul_type = lumping # choose among: prescreening_equilibrium, prescreening_allreactive, composition_selection, lumping, validation
+    simul_type = lumping 
     Reac = [W1+W4+W5]
     Prod = [R W3 P1 P2+P5 P3 P4] 
     # pseudospecies = [W1+W4+W5]
