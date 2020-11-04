@@ -1,0 +1,25 @@
+ELEMENTS				
+C	H	O	N	
+END				
+!	*	*	*	*
+SPECIES				
+AR				
+W1_L	R	W3	P1	P2_L
+P3	P4	OH	CO	H
+HCO				
+END				
+!	*	*	*	*
+REACTIONS				
+W1_L => R+OH	8.65e+66	-15.95	96660.41	! R2_adj = 0.98 , T RANGE = 500 - 2300 K
+ 	 	 	 	 
+W1_L => W3	4.68e+01	1.56	45045.56	! R2_adj = 0.97 , T RANGE = 500 - 2300 K
+ 	 	 	 	 
+W1_L => P1+CO	4.62e+60	-14.51	79291.68	! R2_adj = 0.97 , T RANGE = 500 - 2300 K
+ 	 	 	 	 
+W1_L => P2_L+H	5.51e+55	-12.81	82845.96	! R2_adj = 0.98 , T RANGE = 500 - 2300 K
+ 	 	 	 	 
+W1_L => P3+H	1.76e+61	-14.35	92392.07	! R2_adj = 0.98 , T RANGE = 500 - 2300 K
+ 	 	 	 	 
+W1_L => P4+HCO	3.13e+21	-3.25	90432.90	! R2_adj = 0.99 , T RANGE = 500 - 2300 K
+ 	 	 	 	 
+END				

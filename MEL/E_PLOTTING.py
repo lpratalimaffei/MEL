@@ -7,15 +7,15 @@ class PLOTTING:
        '''
        This function produces subplots of the profiles of the products at a given pressure
        '''
-       def __init__(self,cwd,STOICH):
+       def __init__(self,cwd):
               '''
               Checks if the output folder "PLOTS" exists and if not it creates it.
               '''
               self.path = cwd
-              if os.path.exists(cwd + '/PLOTS_' + ''.join(STOICH)) == False:
-                     os.mkdir(cwd + '/PLOTS_' + ''.join(STOICH))
+              self.path_plots = os.path.join(cwd,'PLOTS')
+              if os.path.exists(self.path_plots) == False:
+                     os.mkdir(self.path_plots)
 
-              self.path_plots = (cwd + '/PLOTS_' + ''.join(STOICH))
 
        def plot_data(self,profiles_Pi,REAC,PRODS,SPECIES,P):
               '''
@@ -72,15 +72,15 @@ class PLOTTING:
                                           axes[row_plot,col_plot].plot(t,tW_DF[Si],color=self.palette_series[Si],ls=self.lstyles[kk])      
                             kk += 1
                      # labels and formatting
-                     axes[self.n_rows-1,col_plot].set_xlabel(r'$t$ [s]',fontsize=6)
-                     axes[row_plot,0].set_ylabel(r'$X_{i}$ [-]',fontsize=6)
-                     axes[row_plot,col_plot].set_title((str(T) + ' K'),fontsize=7,fontweight='bold')
+                     axes[self.n_rows-1,col_plot].set_xlabel(r'$t$ [s]',fontsize=7)
+                     axes[row_plot,0].set_ylabel(r'$X_{i}$ [-]',fontsize=7)
+                     axes[row_plot,col_plot].set_title((str(T) + ' K'),fontsize=8,fontweight='bold')
                      axes[row_plot,col_plot].set_ylim([0,N_INIT])
                      axes[row_plot,col_plot].axes.ticklabel_format(axis='both', style='sci', scilimits=(0,0),useLocale=True,useMathText=True)
-                     axes[row_plot,col_plot].yaxis.offsetText.set_fontsize(5)
-                     axes[row_plot,col_plot].xaxis.set_tick_params(labelsize=5)
-                     axes[row_plot,col_plot].xaxis.offsetText.set_fontsize(5)
-                     axes[row_plot,col_plot].yaxis.set_tick_params(labelsize=5)
+                     axes[row_plot,col_plot].yaxis.offsetText.set_fontsize(6)
+                     axes[row_plot,col_plot].xaxis.set_tick_params(labelsize=6)
+                     axes[row_plot,col_plot].xaxis.offsetText.set_fontsize(6)
+                     axes[row_plot,col_plot].yaxis.set_tick_params(labelsize=6)
                      
                      
                      # update of the axis
@@ -90,7 +90,7 @@ class PLOTTING:
               if row_plot == self.n_rows-1:
                      for cols in np.arange(col_plot,self.n_cols):
                             fig.delaxes(axes[-1,cols])        
-              axes[0,0].legend(list(self.SPECIES),loc=4,fontsize=3)
+              axes[0,0].legend(list(self.SPECIES),loc=4,fontsize=4)
               # set tight layout
               fig.tight_layout(pad=0.1,w_pad=0.1)
               # save the figure
@@ -123,15 +123,15 @@ class PLOTTING:
                      # plot the species
                      axes[row_plot,col_plot].plot(t,tW_DF[REAC])      
                      # labels and formatting
-                     axes[self.n_rows-1,col_plot].set_xlabel(r'$t$ [s]',fontsize=6)
-                     axes[row_plot,0].set_ylabel(r'$X_{i}$ [-]',fontsize=6)
-                     axes[row_plot,col_plot].set_title((str(T) + ' K'),fontsize=7,fontweight='bold')
+                     axes[self.n_rows-1,col_plot].set_xlabel(r'$t$ [s]',fontsize=7)
+                     axes[row_plot,0].set_ylabel(r'$X_{i}$ [-]',fontsize=7)
+                     axes[row_plot,col_plot].set_title((str(T) + ' K'),fontsize=8,fontweight='bold')
                      axes[row_plot,col_plot].set_ylim([0,np.max(np.max(tW_DF[REAC]))])
                      axes[row_plot,col_plot].axes.ticklabel_format(axis='both', style='sci', scilimits=(0,0),useLocale=True,useMathText=True)
-                     axes[row_plot,col_plot].yaxis.offsetText.set_fontsize(5)
-                     axes[row_plot,col_plot].xaxis.set_tick_params(labelsize=5)
-                     axes[row_plot,col_plot].xaxis.offsetText.set_fontsize(5)
-                     axes[row_plot,col_plot].yaxis.set_tick_params(labelsize=5)
+                     axes[row_plot,col_plot].yaxis.offsetText.set_fontsize(6)
+                     axes[row_plot,col_plot].xaxis.set_tick_params(labelsize=6)
+                     axes[row_plot,col_plot].xaxis.offsetText.set_fontsize(6)
+                     axes[row_plot,col_plot].yaxis.set_tick_params(labelsize=6)
                         
                      # update of the axis
                      row_plot = row_plot + int((Ti%self.n_cols)==0) 
@@ -140,7 +140,7 @@ class PLOTTING:
               if row_plot == self.n_rows-1:
                      for cols in np.arange(col_plot,self.n_cols):
                             fig.delaxes(axes[-1,cols])        
-              axes[0,0].legend(list(REAC),loc=4,fontsize=3)
+              axes[0,0].legend(list(REAC),loc=4,fontsize=4)
               # set tight layout
               fig.tight_layout(pad=0.1,w_pad=0.1)
               # save the figure

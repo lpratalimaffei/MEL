@@ -125,13 +125,10 @@ def MATRIX(cwd,P_LIST,T_LIST,species_names):
 
        np.savetxt('warnings_negval_messrates.txt',[warnings_neg],fmt='%s')  
 
-       n_T = len(T_LIST)
-       n_P = len(P_LIST)
-
        return matrix_float
 
 
-def MATRIX_TP(T,P,P_LIST,T_LIST,species_names,matrix_float):
+def MATRIX_TP(T,P,T_LIST,P_LIST,species_names,matrix_float):
        """
        Extract square matrix of k_ij at the selected temperature and pressure
        T,P are expected to be numbers, either floating or integers, to be compared with T,P in the lists
@@ -254,7 +251,7 @@ def data_names_CKI(cwd):
        return species_names,species_names_bimol
 
 
-def copy_CKI_processed(self,newpath,PRODSINKS,ISOM_EQUIL,REAC,PRODS):
+def copy_CKI_processed(oldpath,newpath,PRODSINKS,ISOM_EQUIL,REAC,PRODS):
        '''
        IN THIS METHOD, THE MECHANISM IS COPIED TO NEWPATH FOLDER AFTER PREPROCESSING
        PRODSINKS = 1: THE PRODUCTS ARE SET AS IRREVERSIBLE SINKS, SO THE LINES ARE COMMENTED WITH !
@@ -266,7 +263,7 @@ def copy_CKI_processed(self,newpath,PRODSINKS,ISOM_EQUIL,REAC,PRODS):
        if os.path.isdir(newpath) == False:
               raise RuntimeError('The destination folder for the new mech does not exist ')
        else:
-              with open(self.cwd + '/kin.CKI',mode='r') as mech_orig_file:
+              with open(os.path.join(oldpath,'kin.CKI'),mode='r') as mech_orig_file:
                      mech_orig = mech_orig_file.readlines()
 
        newfile = copy.deepcopy(mech_orig)
@@ -326,10 +323,10 @@ def copy_CKI_processed(self,newpath,PRODSINKS,ISOM_EQUIL,REAC,PRODS):
 
 
        # remove the file if it exists and write the new one
-       if os.path.isfile(newpath + '/kin.txt'):
-              os.remove(newpath + '/kin.txt')
+       if os.path.isfile(os.path.join(newpath,'kin.txt')):
+              os.remove(os.path.join(newpath,'kin.txt'))
 
-       with open(newpath + '/kin.txt',mode='x') as inp:
+       with open(os.path.join(newpath,'kin.txt'),mode='x') as inp:
               inp.writelines(newfile)
 
 

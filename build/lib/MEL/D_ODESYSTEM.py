@@ -43,9 +43,9 @@ class ODE_POSTPROC:
               self.path_to_Exp_Datasets = []
               self.path_to_OS_inputs = []
 
-       def MAKE_BRANCHINGFOLDERS(self,REACLUMPED,PRODSLUMPED,T_VECT,STOICH):
+       def MAKE_BRANCHINGFOLDERS(self,jobtype,REACLUMPED,PRODSLUMPED,T_VECT):
               '''
-              Makes the subfolder "Branchings" to store the data of the branching of the lumped products
+              Makes the subfolder "BF_OUTPUT" to store the data of the branching of the lumped products
               It also allocates the dictionary where to store the branchings, which will be written at the end of each single-P simulation
               NB this function is to be called only if PRODSLUMPED contains arrays. if not: raise exception
               '''
@@ -66,33 +66,22 @@ class ODE_POSTPROC:
                             self.lumped_branching[PRi_L] = df_PRi_L
 
               # make the folder "Branchings" if not present already
-              self.branchingpath = self.cwd + '/Branchings_' + ''.join(STOICH)
+              self.branchingpath = os.path.join(self.cwd,jobtype,'BF_OUTPUT',REACLUMPED.index[0])
               if os.path.exists(self.branchingpath) == False:
-                     os.mkdir(self.branchingpath) 
+                     os.makedirs(self.branchingpath) 
 
 
-       def MAKE_FOLDERS(self,STOICH,P,T,REACLUMPED):
+       def MAKE_FOLDERS(self,fld,P,T,REACLUMPED):
               '''
               Makes the subfolders at the selected conditions of reactant, temperature and pressure
               '''
               # extract the name of the reactant
               REAC = REACLUMPED.index[0]
+              self.fld = fld
+              self.dir_PT = os.path.join(fld,str(P) + 'atm',str(T) + 'K')
+              if os.path.exists(self.dir_PT) == False:
+                     os.makedirs(self.dir_PT)
 
-              self.path = self.cwd + '/Outputs_to_optiSMOKE_' + ''.join(STOICH)
-              if os.path.exists(self.path) == False:
-                     os.mkdir(self.path)
-              # make the subfolder for the selected reactant
-              self.dir_reac = self.path + '/' + REAC
-              if os.path.exists(self.dir_reac) == False:
-                     os.mkdir(self.dir_reac)
-              # make the subfolder for the selected P
-              self.dir_P = self.dir_reac + '/' + str(P) + 'atm'
-              if os.path.exists(self.dir_P) == False:
-                     os.mkdir(self.dir_P)
-              # make the subfolder for the selected T
-              self.dir_T = self.dir_P + '/' + str(T) + 'K'
-              if os.path.exists(self.dir_T) == False:
-                     os.mkdir(self.dir_T)
               # Allocate T,P,REAC to "self" for successive use
               self.T = T
               self.P = P
@@ -119,7 +108,7 @@ class ODE_POSTPROC:
                      extracol = 0
 
               # read the output file
-              filename = self.cwd + '\Output\Output.OUT'
+              filename = os.path.join(self.cwd,'Output','Output.OUT')
               if os.path.isfile(filename):
                      cols_species = np.arange(9,9+len(SPECIES)+extracol)
                      n_cols = np.insert(cols_species,0,[0])  # 0 IS THE INDEX, AND [0] IS THE VALUE TO INSERT
@@ -366,21 +355,10 @@ class ODE_POSTPROC:
               header = np.insert(emptycols,0,header)
               header = header[np.newaxis,:]         
               exp_towrite = np.concatenate((header,exp_dataset),axis=0)
-              np.savetxt(self.dir_T + '/' + str(self.T) + '.txt',exp_towrite,delimiter='\t',fmt='%s')
+              np.savetxt(self.dir_PT + '/' + str(self.T) + '.txt',exp_towrite,delimiter='\t',fmt='%s')
               self.path_to_Exp_Datasets.append(str(self.P) + 'atm/' + str(self.T) + 'K/' + str(self.T) + '.txt')
               self.path_to_OS_inputs.append(str(self.P) + 'atm/' + str(self.T) + 'K/input_OS.dic')
-              # previous version of optiSMOKE++:
-              #for Si in indices_R_prods:
-              #       header = np.array(['Batch','Species',Si],dtype=str)
-              #       header = header[np.newaxis,:]
-              #       W_Si = self.W[Si]
-              #       exp_dataset = np.concatenate((self.t,W_Si[:,np.newaxis],0.1*np.ones(self.t.shape)),axis=1)
-              #       exp_towrite = np.concatenate((header,exp_dataset),axis=0)
-              #       np.savetxt(self.dir_T + '/' + Si + '.txt',exp_towrite,delimiter='\t',fmt='%s')
-              #       # add the profile to the list of paths
-              #       self.path_to_Exp_Datasets.append(str(self.P) + 'atm/' + str(self.T) + 'K/' + Si + '.txt')
-              #       self.path_to_OS_inputs.append(str(self.P) + 'atm/' + str(self.T) + 'K/input_OS.dic')
-
+ 
        def WRITE_BRANCHINGS(self,PRODS):
               '''
               This method writes the profiles of the lumped reactants/products in the folder "Branchings"
@@ -388,7 +366,10 @@ class ODE_POSTPROC:
               # products:
               if len(self.PRODSLUMPED) != len(PRODS):
                      for PRi_L in self.lumped_branching:
-                            fld = self.branchingpath + '/' + PRi_L + '_from' + self.REACNAME + '_' + str(self.P) + 'atm.txt'
+                            # make corresponding subfolder if it does not exist
+                            if os.path.isdir(os.path.join(self.branchingpath,PRi_L)) == False:
+                                   os.makedirs(os.path.join(self.branchingpath,PRi_L))
+                            fld = os.path.join(self.branchingpath,PRi_L,str(self.P)+'atm.txt')
                             # concatenate 2 dataframes: write also the values of the temperature
                             # NB for concatenation along rows, the same index is needed!
                             T_DF = pd.DataFrame(self.lumped_branching[PRi_L].index,index=self.lumped_branching[PRi_L].index,columns=['T[K]'])
@@ -403,7 +384,10 @@ class ODE_POSTPROC:
               # lumped reactant:
               if isinstance(self.REAC,np.ndarray):
                      # folder
-                     fld = self.branchingpath + '/' + self.REACNAME + '_from' + self.REACNAME + '_' + str(self.P) + 'atm.txt'
+                     if os.path.isdir(os.path.join(self.branchingpath,self.REACNAME)) == False:
+                            os.makedirs(os.path.join(self.branchingpath,self.REACNAME))
+                     fld = os.path.join(self.branchingpath,self.REACNAME,str(self.P)+'atm.txt')
+                     #fld = self.branchingpath + '/' + self.REACNAME + '_from' + self.REACNAME + '_' + str(self.P) + 'atm.txt'
                      # concatenation
                      T_DF = pd.DataFrame(self.lumped_branching_reac.index,index=self.lumped_branching_reac.index,columns=['T[K]'])
                      BRall = pd.concat([T_DF,self.lumped_branching_reac],axis=1)
@@ -422,20 +406,21 @@ class ODE_POSTPROC:
               '''
               # with the new indices, the reactants and products are lumped
               new_indices = np.insert(self.PRODS,0,self.REACNAME)
+              os.mkdir(os.path.join(self.dir_PT,'inp'))
               # Copy the input to OS simulations and substitute the values of interest
-              shutil.copyfile(self.cwd + '/input_OS_template.dic',self.dir_T + '/input_OS_template.dic')
+              shutil.copyfile(os.path.join(self.cwd,'inp','input_OS_template.dic'),os.path.join(self.dir_PT,'inp','input_OS_template.dic'))
               # write new input in the selected folder
-              write_OS_new = preproc.WRITE_OS_INPUT(self.dir_T,self.T,self.P,new_indices,pd.Series(self.REACNAME,index=[self.REACNAME]),N_INIT,self.SPECIES_BIMOL_SERIES,'')
+              write_OS_new = preproc.WRITE_OS_INPUT(self.dir_PT,self.T,self.P,new_indices,pd.Series(self.REACNAME,index=[self.REACNAME]),N_INIT,self.SPECIES_BIMOL_SERIES,'')
               write_OS_new.w_input_OS()
               # Remove the template from the subfolders
-              os.remove(self.dir_T + '/input_OS_template.dic')
+              shutil.rmtree(os.path.join(self.dir_PT,'inp'))
 
        def WRITE_FINAL_PATHS(self):
               '''
               Write the paths to the experimental datasets in the folder named after the reactant
               '''
-              np.savetxt(self.dir_reac + '/Path_to_Exp_Datasets.txt',self.path_to_Exp_Datasets,fmt='%s')
-              np.savetxt(self.dir_reac + '/Path_to_OS_inputs.txt',self.path_to_OS_inputs,fmt='%s')
+              np.savetxt(os.path.join(self.fld,'Path_to_Exp_Datasets.txt'),self.path_to_Exp_Datasets,fmt='%s')
+              np.savetxt(os.path.join(self.fld,'Path_to_OS_inputs.txt'),self.path_to_OS_inputs,fmt='%s')
               
 
 

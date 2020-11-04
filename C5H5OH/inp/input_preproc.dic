@@ -14,9 +14,9 @@
 
 Dictionary CHEMKIN_PreProcessor
 {
-		@Thermodynamics therm.txt;
-		@Kinetics 		kin.txt;		
-		@Output			kinetics;	
+		@Thermodynamics .\mech_tocompile\therm.txt;
+		@Kinetics 		.\mech_tocompile\kin.txt;		
+		@Output			.\mech_tocompile\kinetics;	
 		@ReverseFitting	true;
 		@ReactionTables true;
 

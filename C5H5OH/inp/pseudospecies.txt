@@ -1,4 +1,4 @@
-W1_L    W1+W4+W5
+W4_L    W4+W5+W1
 W3      W3
 R       R
 P1      P1

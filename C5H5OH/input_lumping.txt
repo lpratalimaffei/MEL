@@ -41,7 +41,7 @@ end
 
 dictionary single_simulation
     simul_type = lumping 
-    Reac = [W1+W4+W5]
+    Reac = [W4+W5+W1]
     Prod = [R W3 P1 P2+P5 P3 P4] 
     # pseudospecies = [W1+W4+W5]
     # maxiter = 10

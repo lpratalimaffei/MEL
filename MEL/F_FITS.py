@@ -125,8 +125,8 @@ class FITTING:
 
     def write_originalk(self,out_fld):
 
-        print(self.data_P_fits)
-        print(self.data_P_fits_wERR)
+        #print(self.data_P_fits)
+        #print(self.data_P_fits_wERR)
         # Save the profiles in the appropriate folder
         head = self.data_P_fits.columns
         head = np.append('T[K]',head)
@@ -138,8 +138,8 @@ class FITTING:
         profiles_wERR_towrite = np.concatenate((self.T_VECT[:,np.newaxis],self.data_P_fits_wERR.values),axis=1)
         #profiles_final = np.concatenate((header,profiles_towrite),axis=0)
         # save the rates (before fitting) and the corresponding fitting error
-        np.savetxt(out_fld + '/rates.txt',profiles_towrite,header=head,delimiter='\t',fmt='%.2e')
-        np.savetxt(out_fld + '/rates_wERR.txt',profiles_wERR_towrite,header=head_err,delimiter='\t',fmt='%s')
+        np.savetxt(os.path.join(out_fld,'rates.txt'),profiles_towrite,header=head,delimiter='\t',fmt='%.2e')
+        np.savetxt(os.path.join(out_fld,'rates_wERR.txt'),profiles_wERR_towrite,header=head_err,delimiter='\t',fmt='%s')
 
     def fits_lumped_k(self,cwd,P,SPECIES_BIMOL_SERIES):
         '''

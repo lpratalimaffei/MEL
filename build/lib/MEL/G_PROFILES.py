@@ -6,7 +6,7 @@ import numpy as np
 class PROFILES_FROM_CKI:
     def __init__(self,cwd,path,OS_folder):
         self.cwd = cwd      # execution folder
-        self.path = path    # path where the CKI mech is
+        self.path = path    # path where the kin.txt mech is
         self.OS_folder = OS_folder # folder containing OS executables
     # derive the profiles in the selected range of T,P with the optimized mech
     # 1 compile the mechanism
@@ -66,10 +66,10 @@ class PROFILES_FROM_CKI:
                 ################### retrieve OPENSMOKE INPUT ##################################################
                 
                 # if the pathway exists: perform the simulation
-                inputpath = path_exp + '/' + str(P) + 'atm/' + str(T) + 'K/input_OS.dic'
+                inputpath = os.path.join(path_exp,str(P)+'atm',str(T)+'K','input_OS.dic')
                 if os.path.isfile(inputpath):
-                    os.remove(self.cwd + '/input_OS.dic')
-                    shutil.copyfile(inputpath,self.cwd + '/input_OS.dic')
+                    os.remove(os.path.join(self.cwd,'input_OS.dic'))
+                    shutil.copyfile(inputpath,os.path.join(self.cwd,'input_OS.dic'))
 
                     ################## SOLUTION OF THE ODE SYSTEM ##########################################
                     # CALL OPENSMOKE

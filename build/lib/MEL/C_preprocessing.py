@@ -45,7 +45,7 @@ def INITIALMOLES(REAC,SPECIES_BIMOL_SERIES,N_INIT):
 
        return N_INIT_REAC
 
-def BRANCHING_LUMPEDREAC(cwd,REACLUMPED,REAC,T_VECT,P,STOICH,ISOM_EQUIL):
+def BRANCHING_LUMPEDREAC(cwd,REACLUMPED,REAC,T_VECT,P):
        '''
        This method extracts at every pressure the branching fractions of the inlet reactant species
        Warnings may be given by:
@@ -53,13 +53,16 @@ def BRANCHING_LUMPEDREAC(cwd,REACLUMPED,REAC,T_VECT,P,STOICH,ISOM_EQUIL):
        - Comparison between the reactants and the branchings found: if the species don't correspond, the function is stopped
        - If the file is not found: the program is stopped
        '''
+       print(REACLUMPED)
+       REACLUMPED = REACLUMPED.index[0] #extract name from series
        warnings = ''
-       fld = cwd + '/Branchings_' + ''.join(STOICH) +'/'+ REACLUMPED + '_' + str(P) + 'atm.txt'
+       fld = os.path.join(cwd,'BF_INPUT',REACLUMPED,str(P)+'atm.txt')
+       #fld = cwd + '/Branchings_' + ''.join(STOICH) +'/'+ REACLUMPED + '_' + str(P) + 'atm.txt'
        #if os.path.isfile(fld) == False and ISOM_EQUIL != 1:
        #              raise ValueError('The file ' + fld + 'does not exist: impossible to retrieve the fractions of the reactant pool ')
        #elif os.path.isfile(fld) == False and ISOM_EQUIL == 1:
        if os.path.isfile(fld) == False :
-              warnings = warnings + ' warning: Branching fractions not found: initial BFs randomly generated from normal distribution \n'
+              warnings = warnings + '\nWarning: Branching fractions not found: initial BFs randomly generated from normal distribution '
               # you need the equilibrium composition: start from a random composition of isomers
               rand_comp = abs(np.random.randn(len(T_VECT),len(REAC)))
               rand_comp = rand_comp/np.sum(rand_comp,axis=1).reshape(len(T_VECT),1)
@@ -80,7 +83,7 @@ def BRANCHING_LUMPEDREAC(cwd,REACLUMPED,REAC,T_VECT,P,STOICH,ISOM_EQUIL):
               for T in T_VECT:
                      if  (T==BR_L_REAC.index).any() != True:
                             T_VECT = np.delete(T_VECT,np.where(T_VECT==T))
-                            warnings = warnings + ' warning: lumped reactivity at {TK} K not available. T skipped. \n'.format(TK=T)
+                            warnings = warnings + '\nWarning: lumped reactivity at {TK} K not available. T skipped. '.format(TK=T)
        
        print(warnings)
        return BR_L_REAC,T_VECT
@@ -334,7 +337,7 @@ class WRITE_OS_INPUT:
               Generate the variables to overwrite
               '''
               self.cwd = cwd
-              self.path = cwd + '/input_OS_template.dic'
+              self.path = os.path.join(cwd,'inp','input_OS_template.dic')
               if os.path.isfile(self.path) == False:
                      raise RuntimeError('The file input_OS_template.dic does not exist: impossible to generate OS input ')
               else:
@@ -407,10 +410,10 @@ class WRITE_OS_INPUT:
                      for idx,row in enumerate(newfile):
                             newfile[idx] = re.sub(kk,newval,row)
 
-              if os.path.isfile(self.cwd + '/input_OS.dic'):
-                     os.remove(self.cwd + '/input_OS.dic')
+              if os.path.isfile(os.path.join(self.cwd,'input_OS.dic')):
+                     os.remove(os.path.join(self.cwd,'input_OS.dic'))
 
-              with open(self.cwd + '/input_OS.dic',mode='x') as inp:
+              with open(os.path.join(self.cwd,'input_OS.dic'),mode='x') as inp:
                      inp.writelines(newfile)
 
 

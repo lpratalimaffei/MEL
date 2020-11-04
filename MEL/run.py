@@ -5,6 +5,7 @@ executes the jobs of input_lumping.txt and generates folders with the output
 
 import os
 import sys
+import shutil
 import pandas as pd
 from time import perf_counter as clock
 from . import license_message
@@ -30,7 +31,6 @@ def main():
     inp_instr = readinp.READ_INPUT(cwd,inputfile)
     # extract input + job_list and corresponding subdictionaries
     input_par,job_list = inp_instr.read_file_lines()
-    print(input_par,job_list)
 
     # first check of the input: exit in case of exceptions
     try:
@@ -83,16 +83,15 @@ def main():
         input_par_jobtype = inp_instr.set_inputparam_job(jobtype)
         # set iterative operations for each type of simulations
         sim_DF = set_sim.set_simul_loop(cwd,jobtype,job_subdict,mech_dict)
-        print(sim_DF)
 
         # iterate over the selected set of species
         for i in sim_DF.index:
             sim_series = sim_DF.loc[i]
             # check if folder exists, otherwise create it
             YE_NO = set_sim.setfolder(sim_series['fld'])
-            # create the mechanism folder
-            mechfld = set_sim.setfolder(os.path.join(cwd,'mech_tocompile'))
-
+            # create the mechanism folder and copy the input preprocessor
+            set_mechfld = set_sim.setfolder(os.path.join(cwd,'mech_tocompile'))
+            shutil.copy(os.path.join(cwd,'inp','input_preproc.dic'),os.path.join(cwd,'mech_tocompile','input_preproc.dic'))
             if YE_NO == 0:
                 # perform the simulation
                 sim.main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series)
@@ -100,7 +99,13 @@ def main():
             # delete folders to avoid confusion and do cleaning
             set_sim.rmfolder(os.path.join(cwd,'mech_tocompile'))
             set_sim.rmfolder(os.path.join(cwd,'Output'))
+            # delete simulation files
+            os.remove(os.path.join(cwd,'OS_output.txt'))
+            os.remove(os.path.join(cwd,'input_OS.dic'))
 
+        # for lumping: derive the full lumped mechanism from the submechs in each subfolder
+
+        
 
 
             
