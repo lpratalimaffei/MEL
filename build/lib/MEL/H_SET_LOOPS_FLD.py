@@ -143,39 +143,42 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
             # read the pseudospecies file
             pseudospecies_file = os.path.join(cwd,'inp','pseudospecies.txt')
             pseudospecies_array = np.genfromtxt(pseudospecies_file,delimiter='',dtype=str)
+            # set an array of all pseudospecies
+            stable_species = [] 
             # generate pseudospecies series
             pseudospecies_series = pd.Series(pseudospecies_array[:,1],index=pseudospecies_array[:,0])
             for SP in pseudospecies_series.index:
                 if pseudospecies_series.loc[SP].split('+') != [pseudospecies_series.loc[SP]]:
-                    pseudospecies_series.loc[SP] = pseudospecies_series.loc[SP].split('+')
+                    for i in pseudospecies_series.loc[SP].split('+'):
+                        stable_species.append(i)
+                    pseudospecies_series.loc[SP] = np.array(pseudospecies_series.loc[SP].split('+'),dtype=str)
                 else :
+                    stable_species.append(pseudospecies_series.loc[SP])
                     # single species: composition_selection does not require them
                     if jobtype == 'composition_selection':
                          pseudospecies_series = pseudospecies_series.drop(index=[SP])
+            stable_species = np.array(stable_species,dtype=str)
 
             # organize dataframe
             N_simul = pseudospecies_series.index.size
             output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
             ind = 0
+            
             # now do the loop on the right indices
             for SP in pseudospecies_series.index:
                 # for each set: setup simulations
                 REACLUMPED = pd.Series([pseudospecies_series.loc[SP]],index=[SP])
                 REAC = pseudospecies_series.loc[SP]
                 PRODSLUMPED = pseudospecies_series.drop(index=[SP])
-                PRODS = np.delete(SPECIES,np.where([rr==SPECIES for rr in REAC])[1])
+                if isinstance(REAC,np.ndarray):
+                    PRODS = np.delete(stable_species,np.where([rr==stable_species for rr in REAC])[1])
+                else:
+                    PRODS = np.delete(stable_species,np.where([ss==REAC for ss in stable_species])[0])
+                    
                 # select output folder and allocate to dataframe
                 fld = os.path.join(cwd,jobtype,SP)
                 output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED])
                 ind += 1  
-            print(pseudospecies_series)
-        # for all of them:
-        # -look for the pseudospecies.txt and read it
-        # select reactants and products pseudospecies and set the same input for all three
-        # remove the single species for the composition selection simulations
-        # COMPOSITION_SELECTION
 
-        # LUMPING
 
-        # VALIDATION
     return output_DF

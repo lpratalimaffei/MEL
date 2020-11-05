@@ -74,8 +74,7 @@ def data_names_mess(cwd):
        T_LIST = np.array(temperatures,dtype=np.int16)
        
        species_names = np.append(species_names_unimol,species_names_bimol)
-       print(species_names,species_names_bimol_frag2)
-
+       
        return P_LIST,T_LIST,species_names,species_names_bimol_frag2
 
 def MATRIX(cwd,P_LIST,T_LIST,species_names):

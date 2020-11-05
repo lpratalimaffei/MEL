@@ -34,7 +34,7 @@ class PROFILES_FROM_CKI:
         print('compiling mech ...'),os.system(toexecute)
 
     # 2 derive again all the profiles with the compiled mechanism
-    def DERIVE_PROFILES(self,path_exp,P_VECT,T_VECT,SPECIES,PRODS,i_REAC,N_INIT_REAC,SPECIES_BIMOL_SERIES,ISOM_EQUIL):
+    def DERIVE_PROFILES(self,path_exp,P_VECT,T_VECT,SPECIES,PRODS,i_REAC,N_INIT_REAC,SPECIES_BIMOL_SERIES,ISOM_EQUIL,CUTOFF):
         '''
         Derive the output profiles of the OS simulations with the appropriate compiled mechanism
         INPUT:
@@ -81,7 +81,7 @@ class PROFILES_FROM_CKI:
 
                     ##################### EXTRACT THE OUTPUT ###############################################
                     try:
-                        tW_DF,PV = postproc.EXTRACT_PROFILES(SPECIES_PR,0,N_INIT_REAC,SPECIES_BIMOL_SERIES_NEW,ISOM_EQUIL)
+                        tW_DF,PV = postproc.EXTRACT_PROFILES(SPECIES_PR,0,N_INIT_REAC,SPECIES_BIMOL_SERIES_NEW,ISOM_EQUIL,CUTOFF)
                     except ValueError as e:
                         print(str(e))
                     # SAVE PROFILES IN A DICTIONARY FOR LATER POSTPROCESSING AND PLOTTING

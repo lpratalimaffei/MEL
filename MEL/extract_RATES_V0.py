@@ -45,11 +45,11 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series):
     T_VECT_SKIP = input_par['T_skip']
     UNITS_BIMOL = input_par['units_bimol']
     STOICH = input_par['stoich']
+    CUTOFF = input_par['cutoff']
 
     ISOM_EQUIL = input_par_jobtype['isom_equil']
     PRODSINKS = input_par_jobtype['Prods_sinks']
     PLOT_CMP = input_par_jobtype['plot_cmp']    
-
 
     ################## DERIVE VARIABLES OF THE CORRESPONDING MECHANISM  ################################
 
@@ -237,7 +237,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series):
 
             ##################### EXTRACT THE OUTPUT ###############################################
             try:
-                tW_DF,PV = postproc.EXTRACT_PROFILES(SPECIES,i_REAC,N_INIT_REAC,SPECIES_BIMOL_SERIES,ISOM_EQUIL)
+                tW_DF,PV = postproc.EXTRACT_PROFILES(SPECIES,i_REAC,N_INIT_REAC,SPECIES_BIMOL_SERIES,ISOM_EQUIL,CUTOFF)
             except ValueError as e:
                 print(str(e))
 
@@ -309,7 +309,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series):
             plt_cmp.COMPILE_MECH()
         except ValueError as e:
             print('error while compiling mech: ' + str(e))
-        profiles_P_guess = plt_cmp.DERIVE_PROFILES(fld,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL)
+        profiles_P_guess = plt_cmp.DERIVE_PROFILES(fld,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL,CUTOFF)
         profiles_P_all.update({'lumped_guess':profiles_P_guess})
         i_reac_all.update({'lumped_guess':0})
 
@@ -322,7 +322,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series):
             plt_cmp.COMPILE_MECH()
         except ValueError as e:
             print('error while compiling mech: ' + str(e))
-        profiles_P_opt = plt_cmp.DERIVE_PROFILES(fld,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL)
+        profiles_P_opt = plt_cmp.DERIVE_PROFILES(fld,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL,CUTOFF)
         profiles_P_all.update({'lumped_opt':profiles_P_opt})
         i_reac_all.update({'lumped_opt':0})
 

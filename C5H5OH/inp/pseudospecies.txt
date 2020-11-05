@@ -1,6 +1,6 @@
+R       R
 W4_L    W4+W5+W1
 W3      W3
-R       R
 P1      P1
 P2_L    P2+P5
 P3      P3

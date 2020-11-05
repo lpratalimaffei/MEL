@@ -6,7 +6,7 @@ input
     opensmoke_folder = %OPENSMOKEPP_EXE_FOLDER%    #  absolute pathway to OS folder NB if environment variable: include in % symbols. There should be no spaces   C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin    C:\Users\lpratalimaffei\OpenSMOKE++Suite\bin 
     mech_type = MESS                               # OPTIONS: MESS or CKI. MESS file must be me_ktp.inp and rate.out; CKI must be kin.CKI,therm.txt (if therm file is present)
     P_vect = [1]                                   # vector of pressures (for MESS type: may be empty)
-    T_range = [500 2500]                           # range of temperatures (for MESS type: may be empty)
+    T_range = [600 2500]                           # range of temperatures (for MESS type: may be empty)
     T_skip = []                                    # temperatures to possibly skip (e.g. if you find out they give problems in the code)
     units_bimol =                                  # options: molec or mol (for CKI type)  , default: molec for mess
     Stoichiometry = [C5 H6 O1]                     # Stoichiometry in the order C,H,O (for now keep it)
@@ -14,11 +14,11 @@ input
 end
 
 jobs
-    single_simulation             # single simulation of one of the types below
+    #single_simulation             # single simulation of one of the types below
     #prescreening_equilibrium      #w/o options: full isomer pool     -> print suggestions about species lmp(constraints)
     #prescreening_allreactive      #w/o options: all single species
     #composition_selection
-    #lumping
+    lumping
     #build_lumpedmech          # more clear as a single job?
     #validation
 end
@@ -41,8 +41,8 @@ end
 
 dictionary single_simulation
     simul_type = lumping 
-    Reac = [W4+W5+W1]
-    Prod = [R W3 P1 P2+P5 P3 P4] 
+    Reac = [R]
+    Prod = [W4+W5+W1 W3 P1 P2+P5 P3 P4] 
     # pseudospecies = [W1+W4+W5]
     # maxiter = 10
     # BF_tolerance = 0.03

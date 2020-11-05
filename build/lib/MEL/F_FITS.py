@@ -86,6 +86,7 @@ class FITTING:
             Wreac_fordWi = W[1:-1,i_REAC] 
         Wreac_fordWi = Wreac_fordWi[:,np.newaxis]
         # delete nan or inf values of dWi
+        #print(dWi)
         index_nan = np.where(np.isnan(dWi))[0] # rows corresponding to nan
         index_inf = np.where(np.isinf(dWi))[0] # rows corresponding to inf
         index_remove = np.concatenate((index_nan,index_inf)) # all the rows to delete
@@ -99,6 +100,7 @@ class FITTING:
                     c = 2
                 else:
                     c = 1
+                print(c*Wreac_fordWi,dWi[:,Pr_i_index])
                 model = LinearRegression(fit_intercept=False).fit(c*Wreac_fordWi,dWi[:,Pr_i_index])  # set the intercept to 0
                 fiterr = model.score(c*Wreac_fordWi,dWi[:,Pr_i_index])
                 self.data_P_fits[Pr_i][T] = model.coef_[0] # save directly the dimensional coefficient
@@ -125,8 +127,8 @@ class FITTING:
 
     def write_originalk(self,out_fld):
 
-        print(self.data_P_fits)
-        print(self.data_P_fits_wERR)
+        #print(self.data_P_fits)
+        #print(self.data_P_fits_wERR)
         # Save the profiles in the appropriate folder
         head = self.data_P_fits.columns
         head = np.append('T[K]',head)

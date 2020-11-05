@@ -12,6 +12,7 @@ class READ_INPUT:
 
     def read_file_lines(self):
 
+        errorlist = ''
         readinput = 0
         readjobs = 0
         readsubdict = 0
@@ -75,6 +76,7 @@ class READ_INPUT:
                                 line_cutoff = line.split()[2]
                                 lower_cutoff = re.split('-',line_cutoff)[0] 
                                 upper_cutoff = re.split('-',line_cutoff)[1] 
+                                self.cutoff = np.array([lower_cutoff,upper_cutoff],dtype=np.float32)
 
                             if line.find('end') != -1:
                                 readinput = 0
@@ -132,7 +134,7 @@ class READ_INPUT:
                                 for PS in pseudospecies:
                                     if len(PS.split('+')) == 1 and read_prescreen_equil == 1 and PS != 'all':
                                         # error: you cannot have single pseudospecies for isomer equilibrium simulations
-                                        print(ValueError('subdictionary prescreening_equilibrium: cannot have single isomers'))
+                                        errorlist = errorlist+'\nsubdictionary prescreening_equilibrium: cannot have single isomers'
 
                                     elif len(PS.split('+')) == 1 and read_prescreen_equil == 1 and PS == 'all':
                                         # you will consider the full isomer pool
@@ -175,16 +177,15 @@ class READ_INPUT:
                                     try:
                                         maxiter = int(line.split()[2])
                                     except ValueError as e:
-                                        print('invalid input in composition_selection subdictionary: number of iterations should be an integer number')
+                                        errorlist = errorlist+'\ninvalid input in composition_selection subdictionary: number of iterations should be an integer number'
 
                                 if line.find('BF_tolerance') != -1 :
                                     try:
                                         BF_tol = float(line.split()[2])
                                         if BF_tol >= 1 or BF_tol <= 0 :
-                                            print('error in composition_selection subdictionary: BF tolerance should be betweeen 0 and 1')
-                                            exit()
+                                            errorlist = errorlist+'\nerror in composition_selection subdictionary: BF tolerance should be betweeen 0 and 1'
                                     except ValueError as e:
-                                        print('invalid input in composition_selection subdictionary: BF tolerance should be a number between 0 and 1')
+                                        errorlist = errorlist+'\ninvalid input in composition_selection subdictionary: BF tolerance should be a number between 0 and 1'
 
 
                                 if line.find('end') != -1:
@@ -193,8 +194,7 @@ class READ_INPUT:
                                         subdict_comp_sel = dict(zip(['BF_tol','maxiter'],[BF_tol,maxiter]))
                                         job_list['composition_selection'] = subdict_comp_sel
                                     except NameError as e:
-                                        print('\nmissing subdictionary specification in composition_selection: \n {}'.format(e))
-                                        exit()
+                                        errorlist = errorlist+'\nmissing subdictionary specification in composition_selection: \n {}'.format(e)
                                     # exit from reading this portion
                                     read_comp_sel = 0
 
@@ -219,7 +219,7 @@ class READ_INPUT:
                                     for PS in pseudospecies:
                                         if len(PS.split('+')) == 1 and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection') and PS != 'all':
                                             # error: you cannot have single pseudospecies for isomer equilibrium simulations
-                                            print(ValueError('subdictionary prescreening_equilibrium/composition_selection: cannot have single isomers'))
+                                            errorlist = errorlist+'\nsubdictionary prescreening_equilibrium/composition_selection: cannot have single isomers'
 
                                         elif len(PS.split('+')) == 1 and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection') and PS == 'all':
                                             pseudospecies_names.append(PS)
@@ -243,16 +243,15 @@ class READ_INPUT:
                                     try:
                                         maxiter = int(line.split()[2])
                                     except ValueError as e:
-                                        print('invalid input in single_simulation subdictionary: number of iterations should be an integer number')
+                                        errorlist = errorlist+'\ninvalid input in single_simulation subdictionary: number of iterations should be an integer number'
 
                                 if line.find('BF_tolerance') != -1 and simul_type == 'composition_selection':
                                     try:
                                         BF_tol = float(line.split()[2])
                                         if BF_tol >= 1 or BF_tol <= 0 :
-                                            print('error in single_simulation subdictionary: BF tolerance should be betweeen 0 and 1')
-                                            exit()
+                                            errorlist = errorlist+'\nerror in single_simulation subdictionary: BF tolerance should be betweeen 0 and 1'
                                     except ValueError as e:
-                                        print('invalid input in single_simulation subdictionary: BF tolerance should be a number between 0 and 1')
+                                        errorlist = errorlist+'\ninvalid input in single_simulation subdictionary: BF tolerance should be a number between 0 and 1'
 
                                 # read reactants and products
                                 if line.find('Reac ') != -1:
@@ -303,16 +302,14 @@ class READ_INPUT:
                                             job_list['single_simulation']['maxiter'] = maxiter
                                             job_list['single_simulation']['pseudospecies'] = pseudospecies_df
                                         except NameError as e:
-                                            print('\nmissing subdictionary specification in composition_selection: \n {}'.format(e))
-                                            exit()
+                                            errorlist = errorlist+'\nmissing subdictionary specification in composition_selection: \n {}'.format(e)
 
                                     elif simul_type == 'prescreening_equilibrium' or simul_type == 'prescreening_allreactive':
                                         # check for pseudospecies keyword
                                         try:
                                             job_list['single_simulation']['pseudospecies'] = pseudospecies_df
                                         except NameError as e:
-                                            print('\nmissing subdictionary specification in single_simulation (prescreening): \n {}'.format(e))
-                                            exit()
+                                            errorlist = errorlist+'\nmissing subdictionary specification in single_simulation (prescreening): \n {}'.format(e)
 
                                     elif simul_type == 'lumping' or simul_type == 'validation': 
                                         # subdictionary storing reactant and products
@@ -321,30 +318,32 @@ class READ_INPUT:
                                             prodslumped = pd.Series(Prods_Lumped_array,index=Prods_Lumped)
                                             reaclumped = pd.Series([self.Reac],index=[reaclumped])
                                             job_list['single_simulation'].update(dict(zip(['REAC','REACLUMPED','PRODS','PRODSLUMPED'],[self.Reac,reaclumped,self.Prod,prodslumped])))
-                                            print(job_list['single_simulation'])
                                         except NameError as e:
-                                            print('\nmissing reactant/product specifications in single_simulation subdictionary: \n {}'.format(e))
-                                            exit()
+                                            errorlist = errorlist+'\nmissing reactant/product specifications in single_simulation subdictionary: \n {}'.format(e)
 
                                     else:
                                         # wrong simul type
-                                        print('\nNameError: simulation type unavailable ')
+                                        errorlist = errorlist+'\nNameError: simulation type unavailable '
 
                                     # exit from reading this portion
                                     read_single_simul = 0
         myfile.close()
-        # np.savetxt('pseudospecies_prova.txt',pseudospecies_df,delimiter='\t',fmt='%s')
-        # units bimol: if the input is MESS, set molec by default
-        if self.inp_type=='MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
-            self.units_bimol = 'molec'
 
-        # input_parameters dictionary
-        keys_inputpar = ['opensmoke_folder','mech_type','P_vect','T_vect','T_skip','units_bimol','stoich','cutoff'] 
-        values_inputpar = [self.OS_folder,self.inp_type,self.Pvect,self.Tvect,Tvect_skip,self.units_bimol,self.stoich]
-        input_parameters = dict(zip(keys_inputpar,values_inputpar))
+        if not errorlist:
+            # np.savetxt('pseudospecies_prova.txt',pseudospecies_df,delimiter='\t',fmt='%s')
+            # units bimol: if the input is MESS, set molec by default
+            if self.inp_type=='MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
+                self.units_bimol = 'molec'
 
+            # input_parameters dictionary
+            keys_inputpar = ['opensmoke_folder','mech_type','P_vect','T_vect','T_skip','units_bimol','stoich','cutoff'] 
+            values_inputpar = [self.OS_folder,self.inp_type,self.Pvect,self.Tvect,Tvect_skip,self.units_bimol,self.stoich,self.cutoff]
+            input_parameters = dict(zip(keys_inputpar,values_inputpar))
 
-        return input_parameters,job_list
+            return input_parameters,job_list
+
+        else:
+            raise RuntimeError('Errors detected when reading the input: ' + str(errorlist)) 
 
     
     def CHECK_INPUT(self):
@@ -403,6 +402,14 @@ class READ_INPUT:
             int(self.stoich[0][1:]) + int(self.stoich[1][1:]) + int(self.stoich[2][1:])
         except:
             error_list = error_list + '\nThe stoichiometry coefficients cannot be converted to integers '
+
+        # check that the cutoff is between 0 and 1 and that the lower cutoff is higher
+        if self.cutoff[0] > self.cutoff[1]:
+            error_list = error_list + '\nLower cutoff limit must be smaller than upper cutoff limit'
+        if (self.cutoff[0]<0 or self.cutoff[0]>1) or (self.cutoff[1]<0 or self.cutoff[1]>1):
+            error_list = error_list + '\nCutoff limits must be between 0 and 1'
+
+
 
         if not error_list:
             return None

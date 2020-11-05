@@ -89,7 +89,7 @@ class ODE_POSTPROC:
               self.REAC = REACLUMPED[0]
               # NB self.REAC is the array of reactants, self.REACNAME is the name (single reactant or R_L)
 
-       def EXTRACT_PROFILES(self,SPECIES,i_REAC,N_INIT_REAC,SPECIES_BIMOL_SERIES,ISOM_EQUIL):
+       def EXTRACT_PROFILES(self,SPECIES,i_REAC,N_INIT_REAC,SPECIES_BIMOL_SERIES,ISOM_EQUIL,CUTOFF):
               '''
               Read the profiles obtained by OpenSMOKE++ and store them into arrays
               '''
@@ -146,14 +146,11 @@ class ODE_POSTPROC:
                             
                      # cut the profiles where needed
                      
-                     i_in = np.where(data[:,i_REAC+1] <= 0.99*N_INIT_REAC)
-                     i_fin = np.where(data[:,i_REAC+1] <= 0.01*N_INIT_REAC)
-                     #i_fin = np.where(data[:,i_REAC+1] <= 0.10*N_INIT_REAC)
+                     i_in = np.where(data[:,i_REAC+1] <= (1-CUTOFF[0])*N_INIT_REAC)
+                     i_fin = np.where(data[:,i_REAC+1] <= (1-CUTOFF[1])*N_INIT_REAC)
                      # if the reactant does not reach the minimum consumption (possible for lumped reactants): set the initial value as 0
                      if len(i_in[0]) == 0:
                             i_in = 0
-                            #i_in = np.where(data[:,i_REAC+1] != 0)[0][0]
-                            #print(i_in)
                      else:
                             i_in = i_in[0][0]
                      # impose to cut when the DERIVATIVE of the reactant (consumption) reaches a small value
@@ -169,7 +166,6 @@ class ODE_POSTPROC:
                             else:
                                    maxderiv = max(dreac2_dt)
                                    minderiv = min(dreac2_dt)
-                                   print(maxderiv,minderiv)
                                    i_in = np.where(dreac_dt==maxderiv)[0][0]
                                    if minderiv <= maxderiv*1e-4 :
                                           cutoff_deriv = dreac2_dt[dreac2_dt < maxderiv*1e-4][0]
@@ -181,11 +177,9 @@ class ODE_POSTPROC:
                             i_fin = i_fin[0][0]
                             
 
-                     print([i_in,i_fin])
                      # check that i_fin > i_in, otherwise set i_in to 0
                      if i_fin < i_in:
                             i_in = 0
-                     print(i_in,i_fin)
                      # save data in the appropriate range of consumption of the reactant
                      data = data[i_in:i_fin,:]
                      data_PV = data_PV[i_in:i_fin,:]
