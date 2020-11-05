@@ -101,6 +101,9 @@ class FITTING:
                 else:
                     c = 1
                 #print(c*Wreac_fordWi,dWi[:,Pr_i_index])
+                # alternative:
+                model_np = np.linalg.lstsq(c*Wreac_fordWi,dWi[:,Pr_i_index],rcond=None)
+                slope_np = model_np[0]
                 model = LinearRegression(fit_intercept=False).fit(c*Wreac_fordWi,dWi[:,Pr_i_index])  # set the intercept to 0
                 fiterr = model.score(c*Wreac_fordWi,dWi[:,Pr_i_index])
                 self.data_P_fits[Pr_i][T] = model.coef_[0] # save directly the dimensional coefficient

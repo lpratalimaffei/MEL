@@ -166,8 +166,7 @@ class WRITE_MECH_CKI:
               # organize the dataframe reactant => product k0 alpha EA !comments
               SPECIES_i = self.SPECIES_SERIES.values
               SPECIES_NAMES = np.copy(self.SPECIES_SERIES.index)
-              #print(SPECIES_i,SPECIES_NAMES,self.SPECIES_BIMOL)
-              # if the reaction is bimolecular: change the species name in S+S_ABU
+
               for S_i in SPECIES_i:
                      if self.SPECIES_BIMOL[S_i] != '':
                             SPECIES_NAMES[S_i] = SPECIES_NAMES[S_i] + '+' + self.SPECIES_BIMOL[S_i]
@@ -322,6 +321,48 @@ def WRITE_THERM(cwd,STOICH,SPECIES_SERIES,SPECIES_BIMOL_SERIES):
 
        thermo.write(end)
        thermo.close()
+
+def COMBINE_CKI(newfld,fldlist):
+       '''
+       In this class: 
+       - extract REACTIONS of each submech indicated in the file list between REACTIONS and END
+       - pick the first of the mechanisms (complete)
+       - add the lines of the reactions of all the other mechanism
+       - write kin.txt in the destination folder
+       '''
+       # open new file for writing
+       newfile = open(os.path.join(newfld,'kin.txt'),'w')
+       # flags for reading
+       flag_elements = np.zeros(len(fldlist))
+       flag_elements[0] = 1
+       # extract useful info from each file
+       i_fld = 0
+       for fld in fldlist:
+              flag_el = flag_elements[i_fld]
+              find_end = 0
+              find_reac = 0
+              with open(os.path.join(fld,'kin.txt')) as kin:
+                     for line in kin:
+                            if line.find('END') != -1:
+                                   find_end += 1
+
+                            if flag_el == 1 and find_end < 3:
+                                   newfile.write(line)
+
+                            elif flag_el == 0 and find_end == 2 and find_reac == 1:
+                                   newfile.write(line)
+
+                            if line.find('REACTIONS') != -1:
+                                   find_reac += 1                            
+
+              i_fld +=1
+
+       # write END at the end of the file
+       newfile.write('\nEND')
+       newfile.close()
+
+              
+
 
 
 class WRITE_OS_INPUT:

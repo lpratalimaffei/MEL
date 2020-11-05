@@ -3,6 +3,27 @@ import pandas as pd
 import re
 import os
 
+def read_pseudospecies(pseudospecies_file):
+    '''
+    Read pseudospecies file and generate series and array of pseudospecies
+    '''
+    pseudospecies_array = np.genfromtxt(pseudospecies_file,delimiter='',dtype=str)
+    # set an array of all pseudospecies
+    stable_species = [] 
+    # generate pseudospecies series
+    pseudospecies_series = pd.Series(pseudospecies_array[:,1],index=pseudospecies_array[:,0])
+    for SP in pseudospecies_series.index:
+        if pseudospecies_series.loc[SP].split('+') != [pseudospecies_series.loc[SP]]:
+            for i in pseudospecies_series.loc[SP].split('+'):
+                stable_species.append(i)
+            pseudospecies_series.loc[SP] = np.array(pseudospecies_series.loc[SP].split('+'),dtype=str)
+        else :
+            stable_species.append(pseudospecies_series.loc[SP])
+
+    stable_species = np.array(stable_species,dtype=str)
+
+    return pseudospecies_series,stable_species
+
 class READ_INPUT:
 
     def __init__(self,cwd,inputfile):

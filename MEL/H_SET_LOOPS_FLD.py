@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import shutil
+from . import A_read_input as readinp
 
 def setfolder(fld):
     '''
@@ -30,6 +31,17 @@ def rmfolder(fld):
     '''
     if os.path.isdir(fld):
         shutil.rmtree(fld)
+
+def renamefiles(cwd,fld):
+    '''
+    Renames the files in the given folder with name_old
+    '''
+    files = os.listdir(fld)
+    for F in files:
+        oldname = os.path.join(fld,F)
+        newname = os.path.join(fld,F+'_old')
+        os.rename(oldname,newname)
+
 
 
 def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
@@ -76,7 +88,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
 
         # set output folder and simul_array
         fld = os.path.join(cwd,jobtype,REACLUMPED.index[0])
-        simul_array = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED])
+        simul_array = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED],dtype=object)
         simul_array = simul_array[np.newaxis,:]
         output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
 
@@ -98,7 +110,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
                     PRODS = PRODSLUMPED.values 
                     # set output folder and simul_array
                     fld = os.path.join(cwd,jobtype,REACLUMPED.index[0])
-                    simul_array = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED]) 
+                    simul_array = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED],dtype=object) 
                     simul_array = simul_array[np.newaxis,:] 
                     output_DF = pd.DataFrame(simul_array,index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
 
@@ -116,7 +128,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
                         PRODS = PRODSLUMPED.values 
                         # set output folder and simul_array
                         fld = os.path.join(cwd,jobtype,REACLUMPED.index[0])
-                        output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED])
+                        output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED],dtype=object)
                         ind += 1 
 
             else:
@@ -136,34 +148,25 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
                         PRODS = PRODSLUMPED.values 
                         # select output folder and allocate to dataframe
                         fld = os.path.join(cwd,jobtype,SP)
-                        output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED])
+                        output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED],dtype=object)
                         ind += 1  
 
         elif jobtype == 'composition_selection' or 'lumping' or 'validation':
             # read the pseudospecies file
             pseudospecies_file = os.path.join(cwd,'inp','pseudospecies.txt')
-            pseudospecies_array = np.genfromtxt(pseudospecies_file,delimiter='',dtype=str)
-            # set an array of all pseudospecies
-            stable_species = [] 
-            # generate pseudospecies series
-            pseudospecies_series = pd.Series(pseudospecies_array[:,1],index=pseudospecies_array[:,0])
-            for SP in pseudospecies_series.index:
-                if pseudospecies_series.loc[SP].split('+') != [pseudospecies_series.loc[SP]]:
-                    for i in pseudospecies_series.loc[SP].split('+'):
-                        stable_species.append(i)
-                    pseudospecies_series.loc[SP] = np.array(pseudospecies_series.loc[SP].split('+'),dtype=str)
-                else :
-                    stable_species.append(pseudospecies_series.loc[SP])
-                    # single species: composition_selection does not require them
-                    if jobtype == 'composition_selection':
-                         pseudospecies_series = pseudospecies_series.drop(index=[SP])
-            stable_species = np.array(stable_species,dtype=str)
+            pseudospecies_series,stable_species = readinp.read_pseudospecies(pseudospecies_file)
 
             # organize dataframe
             N_simul = pseudospecies_series.index.size
             output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
             ind = 0
-            
+
+            # remove single species for composition_selection jobtype
+            if jobtype == 'composition_selection':
+                for SP in pseudospecies_series.index:
+                    if isinstance(pseudospecies_series.loc[SP],np.ndarray) == False:
+                        pseudospecies_series = pseudospecies_series.drop(index=[SP])
+
             # now do the loop on the right indices
             for SP in pseudospecies_series.index:
                 # for each set: setup simulations
@@ -177,8 +180,9 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
                     
                 # select output folder and allocate to dataframe
                 fld = os.path.join(cwd,jobtype,SP)
-                output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED])
+                output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED],dtype=object)
                 ind += 1  
 
 
     return output_DF
+
