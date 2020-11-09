@@ -288,7 +288,14 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series):
         # Write branchings to the lumped products
         if len(PRODS) != len(PRODSLUMPED) or len(REAC) != len(REACLUMPED):
             print('writing branchings of lumped reactant/products at the given pressure ...')
-            postproc.WRITE_BRANCHINGS(PRODS)
+            BF_OUTPUT  = postproc.WRITE_BRANCHINGS(PRODS)
+
+        # FOR COMPOSITION_SELECTION: COMPARE THE BF OBTAINED
+        if jobtype == 'composition_selection':
+            # the reactant is lumped; compare the BFs obtained
+            max_deltaBF = preproc.COMPARE_BRANCHINGS(BR_L_REAC,BF_OUTPUT)
+
+
         # update Pi
         Pi += 1
     # write the pathways to the experimental datasets, the final mechanism, and the thermodynamic file

@@ -55,7 +55,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
     SPECIES = mech_dict['SPECIES']
     SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
     SPECIES_UNIMOL = SPECIES[np.where(''==SPECIES_BIMOL)]
-
+    print(SPECIES_UNIMOL)
     # SINGLE SIMULATION
     if 'simul_type' in job_subdict.keys():
         N_simul = 1
@@ -96,7 +96,8 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
     ############ ALL THE OTHER SIMULATIONS
     # PRESCREENING_EQUILIBRIUM
         if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' :
-
+            print('here')
+            print(job_subdict['pseudospecies'])
             if job_subdict['pseudospecies'].index[0] == 'all':
                 ######### equilibrium: all isomers together
                 if jobtype == 'prescreening_equilibrium':

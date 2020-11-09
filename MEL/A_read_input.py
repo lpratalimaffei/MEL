@@ -138,14 +138,13 @@ class READ_INPUT:
                             # read the subdictionaries of the tasks you perform
 
                             ############### subdictionaries for the prescreening ################
-                            if line.find('prescreening_equilibrium') != -1 and any('prescreening_equilibrium'==x for x in jobid) :
+                            if line.find('prescreening_equilibrium') != -1 and any('prescreening_equilibrium'==x for x in jobid) and line.find('simul_type') == -1:
                                 read_prescreen_equil = 1
 
-                            if line.find('prescreening_allreactive') != -1 and any('prescreening_allreactive'==x for x in jobid) :
+                            if line.find('prescreening_allreactive') != -1 and any('prescreening_allreactive'==x for x in jobid) and line.find('simul_type') == -1:
                                 read_prescreen_allreactive = 1
 
                             if line.find('pseudospecies') != -1 and (read_prescreen_equil == 1 or read_prescreen_allreactive == 1) and read_single_simul==0:
-                                
                                 line_pseudospecies = re.split('\[|\]',line)[1]
                                 pseudospecies = line_pseudospecies.split()
                                 # generate the list of psudospecies
@@ -189,7 +188,7 @@ class READ_INPUT:
                                 read_prescreen_allreactive = 0
 
                             ############# subdictionaries for composition selection ################
-                            if line.find('composition_selection') != -1 and any('composition_selection'==x for x in jobid) :
+                            if line.find('composition_selection') != -1 and any('composition_selection'==x for x in jobid) and line.find('simul_type') == -1:
                                 read_comp_sel = 1
 
                             if read_comp_sel == 1:
@@ -220,6 +219,7 @@ class READ_INPUT:
                                     read_comp_sel = 0
 
                             ########## subdictionaries for single simulation ####################
+
                             if line.find('single_simulation') != -1 and any('single_simulation'==x for x in jobid) :
                                 read_single_simul = 1
                                 simul_type= ''
@@ -631,7 +631,7 @@ class READ_INPUT:
         else:
             Prods_sinks = 0
         
-        if jobtype == 'prescreening_equil':
+        if jobtype == 'prescreening_equilibrium':
             isom_equil = 1
         else:
             isom_equil = 0

@@ -37,7 +37,7 @@ def main():
 
     # extract input + job_list and corresponding subdictionaries
     input_par,job_list = inp_instr.read_file_lines()
-
+    print(job_list)
     # first check of the input: exit in case of exceptions
     try:
         inp_instr.CHECK_INPUT()
@@ -89,10 +89,11 @@ def main():
         input_par_jobtype = inp_instr.set_inputparam_job(jobtype)
         # set iterative operations for each type of simulations
         sim_DF = set_sim.set_simul_loop(cwd,jobtype,job_subdict,mech_dict)
-
+        print(sim_DF)
         # iterate over the selected set of species
         for i in sim_DF.index:
             sim_series = sim_DF.loc[i]
+            #print(sim_series)
             # check if folder exists, otherwise create it
             YE_NO = set_sim.setfolder(sim_series['fld'])
             # create the mechanism folder and copy the input preprocessor

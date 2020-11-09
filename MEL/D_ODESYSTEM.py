@@ -206,6 +206,7 @@ class ODE_POSTPROC:
                      # FOR LUMPED REACTANTS: SAVE THE BRANCHING FRACTIONS FOR LATER
                      if reaclumped == 'YES':
                             # reactant composition
+                            # print(self.Wreac_composition,i_in,i_fin)
                             self.Wreac_composition = self.Wreac_composition[i_in:i_fin,:]
                             # if ISOM_EQUIL is active: take only the last BF
                             if ISOM_EQUIL == 1:
@@ -374,6 +375,7 @@ class ODE_POSTPROC:
                             formats_list = list(formats.values)
                             head = '\t'.join(BRall.columns)
                             np.savetxt(fld,BRall,fmt=formats_list,header=head,comments='\t')
+                            return BRall
 
               # lumped reactant:
               if isinstance(self.REAC,np.ndarray):
@@ -391,6 +393,7 @@ class ODE_POSTPROC:
                      formats_list = list(formats.values)
                      head = '\t'.join(BRall.columns)
                      np.savetxt(fld,BRall,fmt=formats_list,header=head,comments='\t')
+                     return BRall
 
 
 
