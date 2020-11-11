@@ -1,6 +1,10 @@
+- per prescreening: scrivi output dal branching che ottieni e cosa potresti eliminare in base a quello
+- togli dagli output le specie sotto una certa concentrazione e le rispettive reazioni nel meccanismo
+- modifica tictoc
+
 per optismoke nel futuro:
-- se negli output hai più di 1000 righe, tieni tipo 100 punti
-- togli dagli output le specie sotto una certa concentrazione
+- se trovi le cartelle per optismoke (quindi profili dettagliati): non rifarli ma leggili e plottali e basta
+- se negli output hai più di 1000 righe, tieni tipo 100 punti (tipo selezionali [0:2:-1] finché non arrivano a meno di 100 punti)
 - plot delle costanti per ogni pseudospecie (tanto le salvi nel rate.out)
 
 
@@ -10,5 +14,6 @@ per optismoke nel futuro:
 4. automatic check on BFs of reactant composition and automatic detection of inconsistent isomers
 5. completely remove reactions if they are irrelevant
 6. processing of CKI mechanism with reversible reactions and chebyshev polynomials
-7. Species with the same color in plots?
+
+
 

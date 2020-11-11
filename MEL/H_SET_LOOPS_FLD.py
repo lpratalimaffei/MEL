@@ -55,7 +55,7 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
     SPECIES = mech_dict['SPECIES']
     SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
     SPECIES_UNIMOL = SPECIES[np.where(''==SPECIES_BIMOL)]
-    print(SPECIES_UNIMOL)
+
     # SINGLE SIMULATION
     if 'simul_type' in job_subdict.keys():
         N_simul = 1
@@ -72,9 +72,12 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
         elif jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' or jobtype == 'composition_selection':
 
             # select the reactant
-            if isinstance(job_subdict['pseudospecies'].iloc[0],np.ndarray):
+            if (isinstance(job_subdict['pseudospecies'].iloc[0],np.ndarray) 
+            or (jobtype == 'prescreening_allreactive' and  isinstance(job_subdict['pseudospecies'].iloc[0],str))):
                 REAC = job_subdict['pseudospecies'].iloc[0]
                 REACLUMPED = job_subdict['pseudospecies'] # series
+
+
 
             elif jobtype == 'prescreening_equilibrium' and job_subdict['pseudospecies'].iloc[0] == 'all':
                 # only accepted case where you consider all pseudospecies together: all isomers as one
@@ -94,10 +97,9 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
 
     else:             
     ############ ALL THE OTHER SIMULATIONS
-    # PRESCREENING_EQUILIBRIUM
+    
         if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' :
-            print('here')
-            print(job_subdict['pseudospecies'])
+
             if job_subdict['pseudospecies'].index[0] == 'all':
                 ######### equilibrium: all isomers together
                 if jobtype == 'prescreening_equilibrium':
@@ -139,34 +141,36 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
                 ind = 0
                 for SP in job_subdict['pseudospecies'].index :
                     # for each set of pseudospecies: generate dictionaries
-                    if isinstance(job_subdict['pseudospecies'].loc[SP],np.ndarray):
-                        # generate reactant arrays
-                        REAC = job_subdict['pseudospecies'].loc[SP]
-                        REACLUMPED = job_subdict['pseudospecies'] # series                   
-                        # PRODUCTS: irrelevant to the reactivity; set them as the "other" species
-                        PRODSLUMPED = pd.Series(SPECIES,index=[SPECIES])
-                        PRODSLUMPED = PRODSLUMPED.drop(index=REAC)
-                        PRODS = PRODSLUMPED.values 
-                        # select output folder and allocate to dataframe
-                        fld = os.path.join(cwd,jobtype,SP)
-                        output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED],dtype=object)
-                        ind += 1  
+                    # if isinstance(job_subdict['pseudospecies'].loc[SP],np.ndarray):
+                    # also valid for single reactants in case of prescreening_allreactive
+                    # generate reactant arrays
+                    REAC = job_subdict['pseudospecies'].loc[SP]
+                    REACLUMPED = pd.Series([REAC],index=[SP]) # series                   
+                    # PRODUCTS: irrelevant to the reactivity; set them as the "other" species
+                    PRODSLUMPED = pd.Series(SPECIES,index=[SPECIES])
+                    PRODSLUMPED = PRODSLUMPED.drop(index=REAC)
+                    PRODS = PRODSLUMPED.values 
+                    # select output folder and allocate to dataframe
+                    fld = os.path.join(cwd,jobtype,SP)
+                    output_DF.loc[ind] = np.array([fld,REAC,REACLUMPED,PRODS,PRODSLUMPED],dtype=object)
+                    ind += 1  
+
 
         elif jobtype == 'composition_selection' or 'lumping' or 'validation':
             # read the pseudospecies file
             pseudospecies_file = os.path.join(cwd,'inp','pseudospecies.txt')
             pseudospecies_series,stable_species = readinp.read_pseudospecies(pseudospecies_file)
 
-            # organize dataframe
-            N_simul = pseudospecies_series.index.size
-            output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
-            ind = 0
-
             # remove single species for composition_selection jobtype
             if jobtype == 'composition_selection':
                 for SP in pseudospecies_series.index:
                     if isinstance(pseudospecies_series.loc[SP],np.ndarray) == False:
                         pseudospecies_series = pseudospecies_series.drop(index=[SP])
+
+            # organize dataframe
+            N_simul = pseudospecies_series.index.size
+            output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld','REAC','REACLUMPED','PRODS','PRODSLUMPED'])
+            ind = 0
 
             # now do the loop on the right indices
             for SP in pseudospecies_series.index:

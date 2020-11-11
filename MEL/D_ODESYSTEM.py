@@ -354,9 +354,9 @@ class ODE_POSTPROC:
               self.path_to_Exp_Datasets.append(str(self.P) + 'atm/' + str(self.T) + 'K/' + str(self.T) + '.txt')
               self.path_to_OS_inputs.append(str(self.P) + 'atm/' + str(self.T) + 'K/input_OS.dic')
  
-       def WRITE_BRANCHINGS(self,PRODS):
+       def WRITE_BRANCHINGS_PRODS(self,PRODS):
               '''
-              This method writes the profiles of the lumped reactants/products in the folder "Branchings"
+              This method writes the profiles of the lumped products in the folder "Branchings"
               '''
               # products:
               if len(self.PRODSLUMPED) != len(PRODS):
@@ -375,8 +375,9 @@ class ODE_POSTPROC:
                             formats_list = list(formats.values)
                             head = '\t'.join(BRall.columns)
                             np.savetxt(fld,BRall,fmt=formats_list,header=head,comments='\t')
-                            return BRall
 
+
+       def WRITE_BRANCHINGS_REACS(self):
               # lumped reactant:
               if isinstance(self.REAC,np.ndarray):
                      # folder

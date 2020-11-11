@@ -514,13 +514,13 @@ class READ_INPUT:
             if jobtype == 'validation':
                 lumpedmech_kinfile = os.path.join(self.cwd,'lumpedmech','kin.txt')
                 lumpedmech_thermfile = os.path.join(self.cwd,'lumpedmech','therm.txt')
+                if not 'lumping' in job_list.keys():
+                    if os.path.isfile(lumpedmech_kinfile) == False:
+                        error_list = error_list + '\n validation requires lumped mech {}, not found!'.format(lumpedmech_kinfile)
 
-                if os.path.isfile(lumpedmech_kinfile) == False:
-                    error_list = error_list + '\n validation requires lumped mech {}, not found!'.format(lumpedmech_kinfile)
-
-                if os.path.isfile(lumpedmech_thermfile) == False:
-                    error_list = error_list + '\n validation requires lumped thermo {}, not found!'.format(lumpedmech_thermfile)
-            
+                    if os.path.isfile(lumpedmech_thermfile) == False:
+                        error_list = error_list + '\n validation requires lumped thermo {}, not found!'.format(lumpedmech_thermfile)
+                
             # PSEUDOSPECIES: CHECK THAT THEY ARE NOT REPEATED IN EACH GROUP
             if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive':
 

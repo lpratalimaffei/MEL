@@ -45,7 +45,7 @@ def INITIALMOLES(REAC,SPECIES_BIMOL_SERIES,N_INIT):
 
        return N_INIT_REAC
 
-def BRANCHING_LUMPEDREAC(cwd,REACLUMPED,REAC,T_VECT,P):
+def BRANCHING_LUMPEDREAC(cwd,REACLUMPED,REAC,T_VECT,T_VECT_rr_len,P,P_VECT):
        '''
        This method extracts at every pressure the branching fractions of the inlet reactant species
        Warnings may be given by:
@@ -53,28 +53,39 @@ def BRANCHING_LUMPEDREAC(cwd,REACLUMPED,REAC,T_VECT,P):
        - Comparison between the reactants and the branchings found: if the species don't correspond, the function is stopped
        - If the file is not found: the program is stopped
        '''
-       print(REACLUMPED)
+      
        REACLUMPED = REACLUMPED.index[0] #extract name from series
        warnings = ''
        fld = os.path.join(cwd,'BF_INPUT',REACLUMPED,str(P)+'atm.txt')
-       #fld = cwd + '/Branchings_' + ''.join(STOICH) +'/'+ REACLUMPED + '_' + str(P) + 'atm.txt'
-       #if os.path.isfile(fld) == False and ISOM_EQUIL != 1:
-       #              raise ValueError('The file ' + fld + 'does not exist: impossible to retrieve the fractions of the reactant pool ')
-       #elif os.path.isfile(fld) == False and ISOM_EQUIL == 1:
-       if os.path.isfile(fld) == False :
+       fld_out = os.path.join(cwd,'BF_OUTPUT',REACLUMPED,REACLUMPED,str(P)+'atm.txt')
+
+       if (os.path.isfile(fld) == False) and (os.path.isfile(fld_out) == False) :
+
               warnings = warnings + '\nWarning: Branching fractions not found: initial BFs randomly generated from normal distribution '
               # you need the equilibrium composition: start from a random composition of isomers
               rand_comp = abs(np.random.randn(len(T_VECT),len(REAC)))
+              # in case some of the selected reactants are inactive at the selected temperature: set the BF to 0
+              mask = np.zeros(rand_comp.shape)
+              rr_idx = 0
+              for rr in REAC:
+                     #print(mask,'\n',T_VECT_rr_len,'\n',rr_idx,'\n',rr)
+                     mask[:T_VECT_rr_len[rr],rr_idx] = 1
+                     rr_idx += 1
+              rand_comp = rand_comp*mask # multiply elements
               rand_comp = rand_comp/np.sum(rand_comp,axis=1).reshape(len(T_VECT),1)
               # divide by the sum of each column to normalize
               BR_L_REAC = pd.DataFrame(rand_comp,index=np.array(T_VECT),columns=np.array(REAC))
               
        else:
+              # rename fld=fld_out if fld does not exist
+              if os.path.isfile(fld) == False:
+                     fld = fld_out
+                     warnings = warnings + '\nWarning: BF generated from stored output file at the same pressure'
               BR_L_Pi = np.genfromtxt(fld,skip_header=1)
               labels = np.genfromtxt(fld,dtype=str,max_rows=1)
               # generate a dataframe with the info you read
               BR_L_REAC = pd.DataFrame(BR_L_Pi[:,1:],index=BR_L_Pi[:,0],columns=labels[1:])
-              print(BR_L_Pi[:,0],print(labels[1:]))
+              # print(BR_L_Pi[:,0],print(labels[1:]))
               # 1. check that the names in the labels and REAC correspond, independent of the order
               if np.array([[RR == REAC for RR in BR_L_REAC.columns][ii].any() for ii in range(0,len(BR_L_REAC.columns))]).all() != True:
                      raise ValueError('The species read in the file with the branchings and the selected reactant do not match, please check ')
@@ -94,7 +105,7 @@ def COMPARE_BRANCHINGS(BF_INPUT,BF_OUTPUT):
        Compares them and gets the maximum value of their difference (for the whole set)
        '''
        # BF input and BF output are dataframes: get their values
-       delta_BF = abs(BF_INPUT.values-BF_OUTPUT.values)
+       delta_BF = abs(BF_INPUT-BF_OUTPUT)
        max_deltaBF = np.amax(delta_BF)
 
        return max_deltaBF
@@ -452,8 +463,8 @@ class WRITE_OS_INPUT:
                             # extract the mole fractions at the corresponding temperature
                             REAC_BRANCHING =  pd.Series(N_INIT*BR_L_REAC.loc[T,:].values,index=BR_L_REAC.columns)
                             # check that the sum of the BFs is <1, otherwise re-normalize it (else: AR fraction might be negative)
-                            if np.sum(REAC_BRANCHING.values) > 1:
-                                   REAC_BRANCHING[BR_L_REAC.columns] = REAC_BRANCHING[BR_L_REAC.columns]/np.sum(REAC_BRANCHING.values) 
+                            # renormalize
+                            REAC_BRANCHING[BR_L_REAC.columns] = REAC_BRANCHING[BR_L_REAC.columns]/np.sum(REAC_BRANCHING.values) 
                             # LUMPED REACTANTS
                             # take the first value and check if a second species should be added
                             if SPECIES_BIMOL_SERIES[REACLUMPED[0][0]] != '' and SPECIES_BIMOL_SERIES[REACLUMPED[0][0]] != REACLUMPED[0][0] :

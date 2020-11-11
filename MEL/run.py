@@ -37,7 +37,7 @@ def main():
 
     # extract input + job_list and corresponding subdictionaries
     input_par,job_list = inp_instr.read_file_lines()
-    print(job_list)
+
     # first check of the input: exit in case of exceptions
     try:
         inp_instr.CHECK_INPUT()
@@ -83,6 +83,14 @@ def main():
         # call subdictionaries
         job_subdict = value
 
+        # set optional parameters for composition_selection
+        if jobtype == 'composition_selection':
+            BF_tol = job_subdict['BF_tol']
+            maxiter = job_subdict['maxiter']
+            opts = [BF_tol,maxiter]
+        else:
+            opts = ['','']
+
         print('\nstarting task: ' + key +'\n')
 
         # set rest of input parameters (except reac/prod) based on simulation type
@@ -93,7 +101,7 @@ def main():
         # iterate over the selected set of species
         for i in sim_DF.index:
             sim_series = sim_DF.loc[i]
-            #print(sim_series)
+
             # check if folder exists, otherwise create it
             YE_NO = set_sim.setfolder(sim_series['fld'])
             # create the mechanism folder and copy the input preprocessor
@@ -101,8 +109,10 @@ def main():
             shutil.copy(os.path.join(cwd,'inp','input_preproc.dic'),os.path.join(cwd,'mech_tocompile','input_preproc.dic'))
 
             if YE_NO == 0:
+
+                print('\nStart with set of reactants [{}]'.format(sim_series['REAC']))
                 # perform the simulation
-                sim.main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series)
+                sim.main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts)
 
                 # delete folders to avoid confusion and do cleaning
                 set_sim.rmfolder(os.path.join(cwd,'mech_tocompile'))
