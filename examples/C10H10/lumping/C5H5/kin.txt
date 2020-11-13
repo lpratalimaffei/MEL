@@ -1,0 +1,20 @@
+ELEMENTS				
+C	H	O	N	
+END				
+!	*	*	*	*
+SPECIES				
+AR				
+C5H5	T1a_L	T4a_L	N1a_L	N7a_L
+H				
+END				
+!	*	*	*	*
+REACTIONS				
+C5H5+C5H5 => T1a_L	1.08e+19	-2.18	-1269.49	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+C5H5+C5H5 => T4a_L	2.51e-17	8.24	12126.96	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+C5H5+C5H5 => N1a_L+H	6.05e-09	6.07	10487.37	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+C5H5+C5H5 => N7a_L+H	6.68e-20	9.18	23390.39	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+END				

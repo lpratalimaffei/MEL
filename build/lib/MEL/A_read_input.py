@@ -3,6 +3,27 @@ import pandas as pd
 import re
 import os
 
+def read_pseudospecies(pseudospecies_file):
+    '''
+    Read pseudospecies file and generate series and array of pseudospecies
+    '''
+    pseudospecies_array = np.genfromtxt(pseudospecies_file,delimiter='',dtype=str)
+    # set an array of all pseudospecies
+    stable_species = [] 
+    # generate pseudospecies series
+    pseudospecies_series = pd.Series(pseudospecies_array[:,1],index=pseudospecies_array[:,0])
+    for SP in pseudospecies_series.index:
+        if pseudospecies_series.loc[SP].split('+') != [pseudospecies_series.loc[SP]]:
+            for i in pseudospecies_series.loc[SP].split('+'):
+                stable_species.append(i)
+            pseudospecies_series.loc[SP] = np.array(pseudospecies_series.loc[SP].split('+'),dtype=str)
+        else :
+            stable_species.append(pseudospecies_series.loc[SP])
+
+    stable_species = np.array(stable_species,dtype=str)
+
+    return pseudospecies_series,stable_species
+
 class READ_INPUT:
 
     def __init__(self,cwd,inputfile):
@@ -117,14 +138,13 @@ class READ_INPUT:
                             # read the subdictionaries of the tasks you perform
 
                             ############### subdictionaries for the prescreening ################
-                            if line.find('prescreening_equilibrium') != -1 and any('prescreening_equilibrium'==x for x in jobid) :
+                            if line.find('prescreening_equilibrium') != -1 and any('prescreening_equilibrium'==x for x in jobid) and line.find('simul_type') == -1:
                                 read_prescreen_equil = 1
 
-                            if line.find('prescreening_allreactive') != -1 and any('prescreening_allreactive'==x for x in jobid) :
+                            if line.find('prescreening_allreactive') != -1 and any('prescreening_allreactive'==x for x in jobid) and line.find('simul_type') == -1:
                                 read_prescreen_allreactive = 1
 
                             if line.find('pseudospecies') != -1 and (read_prescreen_equil == 1 or read_prescreen_allreactive == 1) and read_single_simul==0:
-                                
                                 line_pseudospecies = re.split('\[|\]',line)[1]
                                 pseudospecies = line_pseudospecies.split()
                                 # generate the list of psudospecies
@@ -168,7 +188,7 @@ class READ_INPUT:
                                 read_prescreen_allreactive = 0
 
                             ############# subdictionaries for composition selection ################
-                            if line.find('composition_selection') != -1 and any('composition_selection'==x for x in jobid) :
+                            if line.find('composition_selection') != -1 and any('composition_selection'==x for x in jobid) and line.find('simul_type') == -1:
                                 read_comp_sel = 1
 
                             if read_comp_sel == 1:
@@ -199,6 +219,7 @@ class READ_INPUT:
                                     read_comp_sel = 0
 
                             ########## subdictionaries for single simulation ####################
+
                             if line.find('single_simulation') != -1 and any('single_simulation'==x for x in jobid) :
                                 read_single_simul = 1
                                 simul_type= ''
@@ -493,13 +514,13 @@ class READ_INPUT:
             if jobtype == 'validation':
                 lumpedmech_kinfile = os.path.join(self.cwd,'lumpedmech','kin.txt')
                 lumpedmech_thermfile = os.path.join(self.cwd,'lumpedmech','therm.txt')
+                if not 'lumping' in job_list.keys():
+                    if os.path.isfile(lumpedmech_kinfile) == False:
+                        error_list = error_list + '\n validation requires lumped mech {}, not found!'.format(lumpedmech_kinfile)
 
-                if os.path.isfile(lumpedmech_kinfile) == False:
-                    error_list = error_list + '\n validation requires lumped mech {}, not found!'.format(lumpedmech_kinfile)
-
-                if os.path.isfile(lumpedmech_thermfile) == False:
-                    error_list = error_list + '\n validation requires lumped thermo {}, not found!'.format(lumpedmech_thermfile)
-            
+                    if os.path.isfile(lumpedmech_thermfile) == False:
+                        error_list = error_list + '\n validation requires lumped thermo {}, not found!'.format(lumpedmech_thermfile)
+                
             # PSEUDOSPECIES: CHECK THAT THEY ARE NOT REPEATED IN EACH GROUP
             if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive':
 
@@ -582,7 +603,10 @@ class READ_INPUT:
                             species = subdict['pseudospecies'].loc[SP]
                             if np.array([species == SP_list for SP_list in SPECIES]).any() != True:
                                 error_list = error_list + '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
-                        
+
+            ########### if you find inp/pseudospecies.txt: check that all species indicated:
+            # are present in the species list
+            # have consistent names (1st species + '_L' for lumped groups)            
 
         if not error_list:
             return None
@@ -610,7 +634,7 @@ class READ_INPUT:
         else:
             Prods_sinks = 0
         
-        if jobtype == 'prescreening_equil':
+        if jobtype == 'prescreening_equilibrium':
             isom_equil = 1
         else:
             isom_equil = 0

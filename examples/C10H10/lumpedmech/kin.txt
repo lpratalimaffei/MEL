@@ -1,0 +1,58 @@
+ELEMENTS				
+C	H	O	N	
+END				
+!	*	*	*	*
+SPECIES				
+AR				
+C5H5	T1a_L	T4a_L	N1a_L	N7a_L
+H				
+END				
+!	*	*	*	*
+REACTIONS				
+C5H5+C5H5 => T1a_L	1.08e+19	-2.18	-1269.49	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+C5H5+C5H5 => T4a_L	2.51e-17	8.24	12126.96	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+C5H5+C5H5 => N1a_L+H	6.05e-09	6.07	10487.37	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+C5H5+C5H5 => N7a_L+H	6.68e-20	9.18	23390.39	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+T1a_L => C5H5+C5H5	6.58e+31	-4.93	63716.05	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+!T1a_L => T4a_L	6.44e+19	-2.67	55624.52	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+T1a_L => T4a_L	3.64e+13	-0.58	54521.23	! R2_adj = 1.00 , T RANGE = 700 - 2000 K
+ 	 	 	 	  	 	 	 	 
+T1a_L => N1a_L+H	7.72e+25	-3.21	75817.10	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+!T1a_L => N7a_L+H	6.71e+05	2.22	79164.19	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+T1a_L => N7a_L+H	8.89e+01	3.56	78964.15	! R2_adj = 1.00 , T RANGE = 700 - 2000 K
+ 	 	 	 	 
+!T4a_L => C5H5+C5H5	1.41e+90	-21.40	127357.02	! R2_adj = 0.99 , T RANGE = 600 - 2000 K
+T4a_L => C5H5+C5H5	4.96e+11	0.77	73242.12	! R2_adj = 1.00 , T RANGE = 700 - 2000 K
+ 	 	 	 	 
+!T4a_L => T1a_L	5.10e+139	-35.98	144106.09	! R2_adj = 0.96 , T RANGE = 600 - 2000 K
+T4a_L => T1a_L	2.30e+17	-1.46	59116.66	! R2_adj = 1.00 , T RANGE = 700 - 2000 K
+ 	 	 	 	 
+!T4a_L => N1a_L+H	1.17e+67	-14.83	125995.07	! R2_adj = 0.99 , T RANGE = 600 - 2000 K
+T4a_L => N1a_L+H	1.24e+02	3.55	81346.62	! R2_adj = 1.00 , T RANGE = 700 - 2000 K	 	 	 	 
+ 	 	 	 	 	 	 	 	 
+T4a_L => N7a_L+H	7.20e+23	-2.45	71985.18	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N1a_L+H => C5H5+C5H5	2.31e+02	3.69	2948.74	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N1a_L+H => T1a_L	4.88e+23	-2.85	3297.23	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N1a_L+H => T4a_L	9.74e+03	2.67	19050.05	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N1a_L+H => N7a_L+H	8.78e-02	5.78	76330.07	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L+H => C5H5+C5H5	7.08e-05	5.60	24049.04	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L+H => T1a_L	5.46e+03	3.04	22855.20	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L+H => T4a_L	2.29e+13	0.19	-1426.66	! R2_adj = 0.70 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L+H => N1a_L+H	1.33e-04	6.80	81223.05	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+
+END

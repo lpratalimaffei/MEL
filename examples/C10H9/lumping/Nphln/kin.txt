@@ -1,0 +1,20 @@
+ELEMENTS				
+C	H	O	N	
+END				
+!	*	*	*	*
+SPECIES				
+AR				
+Nphln	N1a_L	N7a_L	Flvln	Azln
+H				
+END				
+!	*	*	*	*
+REACTIONS				
+Nphln+H => N1a_L	2.04e+09	1.37	45416.61	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Nphln+H => N7a_L	7.41e+43	-8.88	34134.74	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Nphln+H => Flvln+H	4.60e+11	1.16	61961.37	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Nphln+H => Azln+H	2.51e+26	-4.06	50234.28	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+END				

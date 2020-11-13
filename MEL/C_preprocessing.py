@@ -106,6 +106,7 @@ def COMPARE_BRANCHINGS(BF_INPUT,BF_OUTPUT):
        '''
        # BF input and BF output are dataframes: get their values
        delta_BF = abs(BF_INPUT-BF_OUTPUT)
+       print(delta_BF)
        max_deltaBF = np.amax(delta_BF)
 
        return max_deltaBF

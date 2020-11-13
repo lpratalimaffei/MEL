@@ -1,0 +1,49 @@
+###############################################################################
+                     input for lumping code
+###############################################################################
+
+input
+    opensmoke_folder = %OPENSMOKEPP_EXE_FOLDER%    #  absolute pathway to OS folder NB if environment variable: include in % symbols. There should be no spaces   C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin    C:\Users\lpratalimaffei\OpenSMOKE++Suite\bin 
+    mech_type = MESS                               # OPTIONS: MESS or CKI. MESS file must be me_ktp.inp and rate.out; CKI must be kin.CKI,therm.txt (if therm file is present)
+    P_vect = [0.1 1 10 100]                                   # vector of pressures (for MESS type: may be empty)
+    T_range = [600 2500]                           # range of temperatures (for MESS type: may be empty)
+    T_skip = []                                    # temperatures to possibly skip (e.g. if you find out they give problems in the code)
+    units_bimol =                                  # options: molec or mol (for CKI type)  , default: molec for mess
+    Stoichiometry = [C5 H6 O1]                     # Stoichiometry in the order C,H,O (for now keep it)
+    cutoff = 0.01-0.99                                 # cutoff parameters for the profiles: 1-99% of reactant consumption (= from 0.01 to 0.99 conversion)
+end
+
+jobs
+    # single_simulation             # single simulation of one of the types below
+    # prescreening_equilibrium      #print suggestions about species lmp(constraints)
+    # prescreening_allreactive      
+    composition_selection
+    #lumping
+    #validation
+end
+
+############ jobs subdictionaries ########################
+
+dictionary prescreening_equilibrium
+    pseudospecies = [all]     
+end
+
+dictionary prescreening_allreactive
+    pseudospecies = [all]    
+
+end
+                                                                
+dictionary composition_selection
+    BF_tolerance = 0.03                   # tolerance in isomer pool composition before stopping the iterations (3%)
+    maxiter = 10
+end
+
+dictionary single_simulation
+    simul_type = composition_selection
+    Reac = [R]
+    Prod = [W4+W5+W1 W3 P1 P2+P5 P3 P4] 
+    pseudospecies = [W4+W5+W1]
+    maxiter = 10
+    BF_tolerance = 0.03
+end
+

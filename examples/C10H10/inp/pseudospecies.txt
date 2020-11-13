@@ -1,0 +1,5 @@
+C5H5    C5H5
+T1a_L   T1a+T1b+T1c+T1d+T1e+T1f
+T4a_L   T4a+T4b+T4c+T4d+T4e+T4f+T4g+T4h
+N1a_L   N1a+N1b+N1c
+N7a_L   N7a+N7b+N7c

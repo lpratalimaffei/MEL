@@ -603,7 +603,10 @@ class READ_INPUT:
                             species = subdict['pseudospecies'].loc[SP]
                             if np.array([species == SP_list for SP_list in SPECIES]).any() != True:
                                 error_list = error_list + '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(SPECIES = str(SPECIES))
-                        
+
+            ########### if you find inp/pseudospecies.txt: check that all species indicated:
+            # are present in the species list
+            # have consistent names (1st species + '_L' for lumped groups)            
 
         if not error_list:
             return None

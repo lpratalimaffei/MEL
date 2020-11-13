@@ -1,0 +1,53 @@
+ELEMENTS				
+C	H	O	N	
+END				
+!	*	*	*	*
+SPECIES				
+AR				
+N1a_L	N7a_L	Nphln	Flvln	Azln
+H				
+END				
+!	*	*	*	*
+REACTIONS				
+N1a_L => N7a_L	2.16e+74	-17.50	62079.45	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N1a_L => Nphln+H	1.77e+73	-17.95	61422.11	! R2_adj = 0.99 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N1a_L => Flvln+H	9.34e+56	-11.61	69355.87	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N1a_L => Azln+H	1.24e+50	-10.92	66761.07	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L => N1a_L	7.99e+32	-5.99	64882.58	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L => Nphln+H	1.04e+29	-4.69	52270.71	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L => Flvln+H	3.82e+23	-2.22	75459.06	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+N7a_L => Azln+H	6.47e+27	-4.15	50162.93	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Nphln+H => N1a_L	2.04e+09	1.37	45416.61	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Nphln+H => N7a_L	7.41e+43	-8.88	34134.74	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Nphln+H => Flvln+H	4.60e+11	1.16	61961.37	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Nphln+H => Azln+H	2.51e+26	-4.06	50234.28	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Flvln+H => N1a_L	1.11e+15	-0.18	1949.51	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Flvln+H => N7a_L	1.02e+13	-0.07	6927.21	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Flvln+H => Nphln+H	2.90e-04	5.08	3471.78	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Flvln+H => Azln+H	7.97e-06	5.54	7708.98	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Azln+H => N1a_L	4.17e+09	1.18	20014.34	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Azln+H => N7a_L	5.91e+23	-2.86	6967.94	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Azln+H => Nphln+H	1.26e+49	-10.47	36468.33	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+Azln+H => Flvln+H	4.36e-07	6.13	28334.43	! R2_adj = 1.00 , T RANGE = 600 - 2000 K
+ 	 	 	 	 
+
+END

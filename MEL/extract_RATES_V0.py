@@ -101,7 +101,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
     ######################## PREPROCESSING OF CKI MECHANISM #########################
     if input_type == 'CKI':
         # 
-        extr_rates.copy_CKI_processed(os.path.join(cwd,'inp','kin.CKI'),os.path.join(cwd,'mech_tocompile'),PRODSINKS,ISOM_EQUIL,REAC,PRODS)
+        extr_rates.copy_CKI_processed(os.path.join(cwd,'inp'),os.path.join(cwd,'mech_tocompile'),PRODSINKS,ISOM_EQUIL,REAC,PRODS)
         toexecute = '"' + OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" + '"' + " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
         print('compiling mech ...'),os.system(toexecute)
 
@@ -155,6 +155,9 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
             print(Err)
             if flag_exit == 1:
                 exit()
+
+        elif input_type == 'CKI' and isinstance(REAC,np.ndarray):
+            T_VECT_rr_len = pd.Series(len(T_VECT)*np.ones(REAC.shape),index=REAC,dtype=int)
 
         ############### PRE PROCESSING FOR LUMPED REACTANTS AND PRODUCTS   ##################à
 
@@ -283,7 +286,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
                 # GENERATE THE NEW OS INPUT AND WRITE IT TO THE FOLDERS
                 print('Generate OS input for the lumped mech and copy to the folder'),postproc.WRITE_NEW_OSINPUT(1)
 
-                ############################### GENERATE RANDOM PROFILES AND SAVE THEM IN OUTPUT_TO_OPTISMOKE_RANDOM
+            ############## BF processing before getting to the following cycle; fitting if needed
 
             # Return the dataframes of the fits of the rate constants
             if PRODSINKS == 1:
@@ -298,7 +301,8 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
 
             if len(REAC) != len(REACLUMPED):
                 print('writing branchings of lumped reactant at {} atm ...'.format(str(P)))
-                BF_OUTPUT = postproc.WRITE_BRANCHINGS_REACS()                
+                BF_OUTPUT = postproc.WRITE_BRANCHINGS_REACS()   
+
 
             # FOR COMPOSITION_SELECTION: COMPARE THE BF OBTAINED
 
@@ -308,11 +312,17 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
                 print('iteration: {} ; max_deltaBF: {} '.format(it,max_deltaBF))
 
                 if max_deltaBF < BF_tol or it > maxiter:
+
+                    # write the products BF
+                    if len(PRODS) != len(PRODSLUMPED):
+                        print('writing branchings of lumped products at {} atm ...'.format(str(P)))
+                        postproc.WRITE_BRANCHINGS_PRODS(PRODS)
+
                     flag_BFiter = 1
                     # COPY THE COMPOSITION TO validation and lumping directories
                     BF_validation_path = os.path.join(cwd,'validation','BF_INPUT',REAC_L)
                     BF_lumping_path = os.path.join(cwd,'lumping','BF_INPUT',REAC_L)
-                    file_tocopy = os.path.join(cwd,'composition_selection','BF_OUTPUT',REAC_L,str(P)+'atm.txt')
+                    file_tocopy = os.path.join(cwd,'composition_selection','BF_OUTPUT',REAC_L,REAC_L,str(P)+'atm.txt')
 
                     if os.path.isdir(BF_validation_path) == False:
                         os.makedirs(BF_validation_path)
@@ -320,6 +330,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
                     if os.path.isdir(BF_lumping_path) == False:
                         os.makedirs(BF_lumping_path)
                         shutil.copy(file_tocopy,os.path.join(BF_lumping_path,str(P)+'atm.txt'))
+
 
                 else:
                     # continue with the while loop
@@ -332,6 +343,32 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
                 if len(PRODS) != len(PRODSLUMPED):
                     print('writing branchings of lumped products at {} atm ...'.format(str(P)))
                     postproc.WRITE_BRANCHINGS_PRODS(PRODS)
+
+                    # FOR PRESCREENING_ALLREACTIVE: IF YOU HAVE LUMPED PRODUCTS, COPY THE BF TO THE INPUT OF COMPOSITION SELECTION
+                    if jobtype == 'prescreening_allreactive':
+                        for PRi_L in PRODS_L:
+                            BF_comp_sel = os.path.join(cwd,'composition_selection','BF_INPUT',PRODS_L)
+                            file_tocopy = os.path.join(cwd,'prescreening_allreactive','BF_OUTPUT',REAC_L,PRODS_L,str(P)+'atm.txt')
+
+                            if os.path.isdir(BF_comp_sel) == False:
+                                os.makedirs(BF_comp_sel)
+                                shutil.copy(file_tocopy,os.path.join(BF_comp_sel,str(P)+'atm.txt'))
+
+                # FOR PRESCREENING_EQUILIBRIUM : COPY BF TO composition_selection-prescreening_allreactive/BF_INPUT folder?
+                if jobtype == 'prescreening_equilibrium':
+                        # COPY THE COMPOSITION TO validation and lumping directories
+                        BF_prescreen_allreac = os.path.join(cwd,'prescreening_allreactive','BF_INPUT',REAC_L)
+                        BF_comp_sel = os.path.join(cwd,'composition_selection','BF_INPUT',REAC_L)
+                        file_tocopy = os.path.join(cwd,'prescreening_equilibrium','BF_OUTPUT',REAC_L,REAC_L,str(P)+'atm.txt')
+
+                        if os.path.isdir(BF_prescreen_allreac) == False:
+                            os.makedirs(BF_prescreen_allreac)
+                            shutil.copy(file_tocopy,os.path.join(BF_prescreen_allreac,str(P)+'atm.txt'))
+                        if os.path.isdir(BF_comp_sel) == False:
+                            os.makedirs(BF_comp_sel)
+                            shutil.copy(file_tocopy,os.path.join(BF_comp_sel,str(P)+'atm.txt'))
+
+
 
                 flag_BFiter = 1
 

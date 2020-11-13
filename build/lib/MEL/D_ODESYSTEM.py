@@ -206,6 +206,7 @@ class ODE_POSTPROC:
                      # FOR LUMPED REACTANTS: SAVE THE BRANCHING FRACTIONS FOR LATER
                      if reaclumped == 'YES':
                             # reactant composition
+                            # print(self.Wreac_composition,i_in,i_fin)
                             self.Wreac_composition = self.Wreac_composition[i_in:i_fin,:]
                             # if ISOM_EQUIL is active: take only the last BF
                             if ISOM_EQUIL == 1:
@@ -353,9 +354,9 @@ class ODE_POSTPROC:
               self.path_to_Exp_Datasets.append(str(self.P) + 'atm/' + str(self.T) + 'K/' + str(self.T) + '.txt')
               self.path_to_OS_inputs.append(str(self.P) + 'atm/' + str(self.T) + 'K/input_OS.dic')
  
-       def WRITE_BRANCHINGS(self,PRODS):
+       def WRITE_BRANCHINGS_PRODS(self,PRODS):
               '''
-              This method writes the profiles of the lumped reactants/products in the folder "Branchings"
+              This method writes the profiles of the lumped products in the folder "Branchings"
               '''
               # products:
               if len(self.PRODSLUMPED) != len(PRODS):
@@ -375,6 +376,8 @@ class ODE_POSTPROC:
                             head = '\t'.join(BRall.columns)
                             np.savetxt(fld,BRall,fmt=formats_list,header=head,comments='\t')
 
+
+       def WRITE_BRANCHINGS_REACS(self):
               # lumped reactant:
               if isinstance(self.REAC,np.ndarray):
                      # folder
@@ -391,6 +394,7 @@ class ODE_POSTPROC:
                      formats_list = list(formats.values)
                      head = '\t'.join(BRall.columns)
                      np.savetxt(fld,BRall,fmt=formats_list,header=head,comments='\t')
+                     return BRall
 
 
 

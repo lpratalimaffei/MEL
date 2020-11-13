@@ -18,7 +18,7 @@ def readmechanism(input_type,cwd):
      
        elif input_type == 'CKI':
               species_names,species_names_bimol_frag2 = data_names_CKI(os.path.join(cwd,'inp'))        
-              mech_dict = dict(zip(['SPECIES','SPECIES_BIMOL']),[species_names,species_names_bimol_frag2])
+              mech_dict = dict(zip(['SPECIES','SPECIES_BIMOL'],[species_names,species_names_bimol_frag2]))
      
        return mech_dict
 
