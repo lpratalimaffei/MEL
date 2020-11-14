@@ -14,11 +14,11 @@ input
 end
 
 jobs
-    # single_simulation             # single simulation of one of the types below
-    # prescreening_equilibrium      #print suggestions about species lmp(constraints)
-    # prescreening_allreactive      
+    single_simulation             # single simulation of one of the types below
+    prescreening_equilibrium      #print suggestions about species lmp(constraints)
+    prescreening_allreactive      
     composition_selection
-    #lumping
+    lumping
     #validation
 end
 

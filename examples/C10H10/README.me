@@ -1,0 +1,18 @@
+Warning:
+
+running all steps brings to a less accurate mechanism found in
+
+lumpedmech/kin_initial.txt
+
+To get more accurate results: 
+run the case with inp/kin_reduced.CKI mechanism
+
+in input_lumping.txt reduce the T range to [700 2000]
+
+Then replace the following rates in lumpedmech/kin_initial.txt to obtain lumpedmech/kin.txt:
+
+T1a_L => T4a_L
+T1a_L => N7a_L+H
+T4a_L => C5H5+C5H5
+T4a_L => T1a_L
+T4a_L => N1a_L+H
