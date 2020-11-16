@@ -346,7 +346,10 @@ class ODE_POSTPROC:
               # Write the profiles ONLY FOR THE REACTANT AND THE LUMPED PRODUCTS
               header = np.array(['Batch','m_SP',len(self.PRODS)+1],dtype=str)
               header = np.insert(indices_R_prods,0,header)
-              emptycols = np.zeros(3*(len(indices_R_prods))-(3+len(indices_R_prods)),dtype='<U10') # empty spaces corresponding to the other columns with no header
+              if 3*(len(indices_R_prods))-(3+len(indices_R_prods)) < 0:
+                     emptycols = np.zeros(1,dtype='<U10')
+              else:
+                     emptycols = np.zeros(3*(len(indices_R_prods))-(3+len(indices_R_prods)),dtype='<U10') # empty spaces corresponding to the other columns with no header
               header = np.insert(emptycols,0,header)
               header = header[np.newaxis,:]         
               exp_towrite = np.concatenate((header,exp_dataset),axis=0)
