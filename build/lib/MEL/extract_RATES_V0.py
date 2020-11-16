@@ -326,10 +326,11 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
 
                     if os.path.isdir(BF_validation_path) == False:
                         os.makedirs(BF_validation_path)
-                        shutil.copy(file_tocopy,os.path.join(BF_validation_path,str(P)+'atm.txt'))
                     if os.path.isdir(BF_lumping_path) == False:
                         os.makedirs(BF_lumping_path)
-                        shutil.copy(file_tocopy,os.path.join(BF_lumping_path,str(P)+'atm.txt'))
+                        
+                    shutil.copy(file_tocopy,os.path.join(BF_validation_path,str(P)+'atm.txt'))
+                    shutil.copy(file_tocopy,os.path.join(BF_lumping_path,str(P)+'atm.txt'))
 
 
                 else:
@@ -352,7 +353,8 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
 
                             if os.path.isdir(BF_comp_sel) == False:
                                 os.makedirs(BF_comp_sel)
-                                shutil.copy(file_tocopy,os.path.join(BF_comp_sel,str(P)+'atm.txt'))
+
+                            shutil.copy(file_tocopy,os.path.join(BF_comp_sel,str(P)+'atm.txt'))
 
                 # FOR PRESCREENING_EQUILIBRIUM : COPY BF TO composition_selection-prescreening_allreactive/BF_INPUT folder?
                 if jobtype == 'prescreening_equilibrium':
@@ -362,11 +364,12 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
                         file_tocopy = os.path.join(cwd,'prescreening_equilibrium','BF_OUTPUT',REAC_L,REAC_L,str(P)+'atm.txt')
 
                         if os.path.isdir(BF_prescreen_allreac) == False:
-                            os.makedirs(BF_prescreen_allreac)
-                            shutil.copy(file_tocopy,os.path.join(BF_prescreen_allreac,str(P)+'atm.txt'))
+                            os.makedirs(BF_prescreen_allreac)                            
                         if os.path.isdir(BF_comp_sel) == False:
                             os.makedirs(BF_comp_sel)
-                            shutil.copy(file_tocopy,os.path.join(BF_comp_sel,str(P)+'atm.txt'))
+
+                        shutil.copy(file_tocopy,os.path.join(BF_prescreen_allreac,str(P)+'atm.txt'))
+                        shutil.copy(file_tocopy,os.path.join(BF_comp_sel,str(P)+'atm.txt'))
 
 
 
