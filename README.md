@@ -5,7 +5,7 @@ Requirements:
 
 - Windows operating system (only tested on Windows for now)
 - OpenSMOKE++ (available at https://www.opensmokepp.polimi.it/menu-download)
-- python version > 3.6
+- python version > 3.6 ; version 3.9 might have problems with sklearn package
 
 Installation: 
 
