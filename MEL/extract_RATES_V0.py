@@ -400,7 +400,6 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
             print('error while compiling mech: ' + str(e))
         profiles_P_guess = plt_cmp.DERIVE_PROFILES(fld,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL,CUTOFF)
         profiles_P_all.update({'lumped_guess':profiles_P_guess})
-        i_reac_all.update({'lumped_guess':0})
 
     # derive the profiles with the optimized mech, if indicated
     # remove the variable "OPT_MECH" and replace it with checks on the simulation type
@@ -413,7 +412,14 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
             print('error while compiling mech: ' + str(e))
         profiles_P_opt = plt_cmp.DERIVE_PROFILES(fld,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL,CUTOFF)
         profiles_P_all.update({'lumped_opt':profiles_P_opt})
-        i_reac_all.update({'lumped_opt':0})
+
+    # if you find the optimized lumped mechanism: plot also with that
+    if os.path.isdir(os.path.join(cwd,'lumpedmech_opt')):
+        OPT_MECH2 = os.path.join(cwd,'lumpedmech_opt')
+        plt_cmp2 = prof_CKImech.PROFILES_FROM_CKI(cwd,OPT_MECH2,OS_folder)
+        plt_cmp2.COMPILE_MECH()
+        profiles_P_opt2 = plt_cmp2.DERIVE_PROFILES(fld,P_VECT,T_VECT,SPECIES_L,PRODS_L,i_REAC_L,N_INIT_REAC,SPECIES_BIMOL_SERIES_L,ISOM_EQUIL,CUTOFF)
+        profiles_P_all.update({'opt2':profiles_P_opt2})
 
     ###################### PLOTS #######################################################
     print('Plotting ...')

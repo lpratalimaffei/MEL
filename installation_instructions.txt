@@ -1,0 +1,48 @@
+open windows powershell
+
+verify that python is working: type
+python
+
+python should open in the same window, and you should see this at the beginning of the line:
+>>>
+if you do, then return to the powershell with 
+exit()
+
+otherwise, it means that python is not set as environment variable. To do this, type
+[Environment]::SetEnvironmentVariable("Path", "$env:Path;PYTHONPATH")
+and replace PYTHONPATH with your actual python path.
+Then try again to open python.
+
+In order for MEL to be recognized as command, you need also to have the folder
+PYTHONPATH/Scripts among environment variables. If you don't, then type
+[Environment]::SetEnvironmentVariable("Path", "$env:Path;PYTHONPATH/Scripts")
+
+Before installing MEL, make sure to have all the required python libraries.
+If it's the first time you install python, you can add all the required libraries using pip install command:
+
+pip install numpy
+pip install scipy
+pip install sklearn
+pip install pandas
+pip install matplotlib
+
+you can run these commands from any path.
+
+Now go to the MEL folder, where you find the file setup.py, and type
+python setup.py install
+
+the folders build,dist should be updated and MEL.egg-info should be generated.
+At this point, MEL is a command you can run.
+
+You can now try to run one of the examples.
+Copy the folder "inp" and the file "input_lumping.txt" in a new folder in any path.
+Inside the folder, to run MEL just type
+
+MEL input_lumping.txt
+
+if you do not want the verbose output, run instead
+
+MEL input_lumping.txt > stdoud.log
+
+The log file contains a description of the operations currently run by the code
+so that the user knows what the code is doing.
