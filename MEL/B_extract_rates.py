@@ -256,7 +256,6 @@ def copy_CKI_processed(oldpath,newpath,PRODSINKS,ISOM_EQUIL,REAC,PRODS):
        PRODSINKS = 1: THE PRODUCTS ARE SET AS IRREVERSIBLE SINKS, SO THE LINES ARE COMMENTED WITH !
        ISOM_EQUIL = 1: ALL BIMOLECULAR REACTIONS ARE DELETED,SO THAT EQUILIBRIUM WITHIN SETS OF ISOMERS IS REACHED.
                      => ALL BIMOLECULAR REACTIONS COMMENTED WITH !
-                     IN THE FUTURE: MAYBE COMMENT ALL REACTIONS EXCLUDING THOSE INVOLVING A SET OF ISOMERS? 
        '''
 
        if os.path.isdir(newpath) == False:
@@ -327,6 +326,4 @@ def copy_CKI_processed(oldpath,newpath,PRODSINKS,ISOM_EQUIL,REAC,PRODS):
 
        with open(os.path.join(newpath,'kin.txt'),mode='x') as inp:
               inp.writelines(newfile)
-
-
 

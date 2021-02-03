@@ -97,8 +97,13 @@ def set_simul_loop(cwd,jobtype,job_subdict,mech_dict):
 
     else:             
     ############ ALL THE OTHER SIMULATIONS
-    
-        if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' :
+        if jobtype == 'preproc_irreversible':
+            # empty dataframe; it must have 1 index for consistency with the rest of the simulation set
+            N_simul = 1
+            output_DF = pd.DataFrame(index=np.arange(0,N_simul),columns=['fld'])
+            output_DF.loc[0]['fld'] = os.path.join(cwd,jobtype)
+
+        elif jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive' :
 
             if job_subdict['pseudospecies'].index[0] == 'all':
                 ######### equilibrium: all isomers together
