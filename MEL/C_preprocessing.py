@@ -225,51 +225,6 @@ class WRITE_MECH_CKI:
               
               #np.savetxt(r'try.txt',CKI_lines.values,delimiter='\t',fmt='%s')
 
-       def MAKE_CKI2(self,PRODSINKS,ISOM_EQUIL):
-              '''
-              OLD FUNCTION
-              In this function:
-              Organize the rate constants of self.MAT in chemkin format, at a defined temperature and pressure
-              input: PRODSINKS => if it is 1, the products are irreversible sinks, therefore they are not considered in the reactivity
-              if isom_equil=1 and i_reac is an array: exclude all the reactions not involving i_reac
-              '''
-              # organize the dataframe reactant => product k0 alpha EA !comments
-              SPECIES_i = self.SPECIES_SERIES.values
-              SPECIES_NAMES = np.copy(self.SPECIES_SERIES.index)
-
-              for S_i in SPECIES_i:
-                     if self.SPECIES_BIMOL[S_i] != '':
-                            SPECIES_NAMES[S_i] = SPECIES_NAMES[S_i] + '+' + self.SPECIES_BIMOL[S_i]
-
-              if PRODSINKS == 1:
-                     # EXCLUDE THE PRODUCTS FROM THE LOOP, BECAUSE THEY ARE NEVER REACTANTS
-                     SPECIES_EFFECTIVE = np.delete(SPECIES_i,self.i_PRODS)
-              elif PRODSINKS == 0:
-                     SPECIES_EFFECTIVE = SPECIES_i
-
-              if ISOM_EQUIL == 1 and isinstance(self.i_REAC,np.ndarray):
-                     # EXCLUDE ALL THE NON-REACTIVE SPECIES FROM SPECIES_EFFECTIVE
-                     SPECIES_EFFECTIVE = self.i_REAC
-
-              CKI_lines = pd.DataFrame(index=list(np.arange(0,len(SPECIES_EFFECTIVE)*(len(SPECIES_i)-1))),columns=['reac_name','k0','alpha','EA','comments'])
-              ii_row = 0       
-
-              print(SPECIES_i,SPECIES_EFFECTIVE,SPECIES_NAMES)
-              for S_i in SPECIES_EFFECTIVE:
-                     print(S_i)
-                     # loop over the products with the exception of the  reactant selected
-                     for Pr_i in np.delete(SPECIES_i,S_i): # S_i deleted excludes self reactions
-                            print(Pr_i)
-                            CKI_lines['reac_name'][ii_row] = SPECIES_NAMES[S_i] + ' => ' + SPECIES_NAMES[Pr_i]
-                            CKI_lines['k0'][ii_row] = '{:.2e}'.format(self.k0[S_i,Pr_i])
-                            CKI_lines['alpha'][ii_row] = '{:.2f}'.format(self.alpha[S_i,Pr_i])
-                            CKI_lines['EA'][ii_row] = '{:.2f}'.format(self.EA[S_i,Pr_i])
-                            CKI_lines['comments'][ii_row] = '! ' + self.comments[S_i,Pr_i]
-                            ii_row += 1
-
-              return CKI_lines
-              
-              #np.savetxt(r'try.txt',CKI_lines.values,delimiter='\t',fmt='%s')
 
        def WRITE_CKI(self,cwd,CKI_lines_values):
               '''

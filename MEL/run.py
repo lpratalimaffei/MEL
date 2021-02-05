@@ -130,7 +130,7 @@ def main():
                 os.remove(os.path.join(cwd, 'input_OS.dic'))
 
             elif YE_NO == 0 and jobtype == 'preproc_irreversible':
-                preproc_irr.run_preproc(cwd)
+                preproc_irr.run_preproc(cwd, input_par['opensmoke_folder'])
 
         # for lumping: derive the full lumped mechanism from the submechs in each subfolder
         if jobtype == 'lumping' and key != 'single_simulation':
