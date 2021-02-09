@@ -25,7 +25,6 @@ def read_pseudospecies(pseudospecies_file):
             stable_species.append(pseudospecies_series.loc[SP])
 
     stable_species = np.array(stable_species, dtype=str)
-
     return pseudospecies_series, stable_species
 
 

@@ -334,7 +334,7 @@ class ODE_POSTPROC:
               With the profile of each species
               Finally write the file Path_to_Exp_Datasets.txt with the names of the files
               '''
-              PRODS = np.array(PRODS,dtype='<U10')
+              PRODS = np.array(PRODS,dtype='<U20')
               self.PRODS = PRODS
               # indices of the reactant and of the products
               indices_R_prods = np.insert(self.PRODS,0,self.REACNAME)
@@ -342,6 +342,8 @@ class ODE_POSTPROC:
               exp_dataset = np.zeros((np.shape(self.t)[0],3*len(indices_R_prods)))
               exp_dataset[:,0::3] = self.t                            # first column with the time
               # if you have only 1 species to write:
+              print(self.W)
+              print(indices_R_prods)
               exp_dataset[:,1::3] = self.W[indices_R_prods]
               exp_dataset[:,2::3] = 0.1*np.ones(self.t.shape)         # third column with the error
               # Write the profiles ONLY FOR THE REACTANT AND THE LUMPED PRODUCTS
