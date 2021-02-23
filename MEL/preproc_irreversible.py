@@ -286,6 +286,8 @@ def block_to_df(rxn_block):
                     all_params = line2.split()
                     plog_dct[all_params[2]] = '\t'.join(all_params[3:6])
                     iline += 1
+                    if idx+iline == len(rxn_block):
+                        break
 
             elif 'LOW' in rxn_block[idx+iline]:
                 troe_dct = {}

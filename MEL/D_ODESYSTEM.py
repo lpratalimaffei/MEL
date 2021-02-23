@@ -351,7 +351,7 @@ class ODE_POSTPROC:
               header = np.insert(indices_R_prods,0,header)
               
               if 3*(len(indices_R_prods))-(3+len(indices_R_prods)) > 0:
-                     emptycols = np.zeros(3*(len(indices_R_prods))-(3+len(indices_R_prods)),dtype='<U10') # empty spaces corresponding to the other columns with no header
+                     emptycols = np.zeros(3*(len(indices_R_prods))-(3+len(indices_R_prods)),dtype='<U20') # empty spaces corresponding to the other columns with no header
                      header = np.insert(emptycols,0,header)
               else:
                      # for 1 species: the header must have only 3 elements

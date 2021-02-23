@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import re
 import os
-
+import sys
 
 def read_pseudospecies(pseudospecies_file):
     '''
@@ -13,8 +13,13 @@ def read_pseudospecies(pseudospecies_file):
     # set an array of all pseudospecies
     stable_species = []
     # generate pseudospecies series
-    pseudospecies_series = pd.Series(
-        pseudospecies_array[:, 1], index=pseudospecies_array[:, 0])
+    try:
+        pseudospecies_series = pd.Series(
+            pseudospecies_array[:, 1], index=pseudospecies_array[:, 0])
+    except IndexError:
+        print('error: only 1 pseudospecies provided. Reactivity will be meaningless')
+        sys.exit()
+
     for SP in pseudospecies_series.index:
         if pseudospecies_series.loc[SP].split('+') != [pseudospecies_series.loc[SP]]:
             for i in pseudospecies_series.loc[SP].split('+'):
