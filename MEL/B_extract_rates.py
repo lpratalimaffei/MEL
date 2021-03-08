@@ -40,6 +40,7 @@ def data_names_mess(cwd):
     """
     species_names_unimol = np.array([], dtype='<U16')
     species_names_bimol = np.array([], dtype='<U16')
+    species_names_unimol_frag2 = np.array([], dtype='<U16')
     species_names_bimol_frag2 = np.array([], dtype='<U16')
     look_for_species = 0
     look_for_bimol_fragment = 0
@@ -68,8 +69,8 @@ def data_names_mess(cwd):
                 full_line = [x.strip() for x in line.split()]
                 species_names_unimol = np.append(
                     species_names_unimol, full_line[1])
-                species_names_bimol_frag2 = np.append(
-                    species_names_bimol_frag2, '')
+                species_names_unimol_frag2 = np.append(
+                    species_names_unimol_frag2, '')
 
             if (line.find('Bimolecular')) != -1 and look_for_species == 1:
                 look_for_bimol_fragment = 1
@@ -92,8 +93,9 @@ def data_names_mess(cwd):
     T_LIST = np.array(temperatures, dtype=np.int16)
 
     species_names = np.append(species_names_unimol, species_names_bimol)
+    species_names_frag2 = np.append(species_names_unimol_frag2, species_names_bimol_frag2)
     print(species_names)
-    return P_LIST, T_LIST, species_names, species_names_bimol_frag2
+    return P_LIST, T_LIST, species_names, species_names_frag2
 
 
 def MATRIX(cwd, P_LIST, T_LIST, species_names):
