@@ -44,6 +44,8 @@ def data_names_mess(cwd):
     species_names_bimol_frag2 = np.array([], dtype='<U16')
     look_for_species = 0
     look_for_bimol_fragment = 0
+    bad_wellwrds = ['WellDepth', 'WellCutoff', 'WellExtension',
+                    'WellReductionThreshold', 'WellPartitionMethod', 'WellProjectionThreshold']
     with open(os.path.join(cwd, 'me_ktp.inp')) as myfile:
         for line in myfile:
             #  do not read comments
@@ -52,7 +54,7 @@ def data_names_mess(cwd):
             elif len(line.split('!')) > 1:  # remove commented part
                 line = line.split('!')[0]
             # if you enter the model section: start looking for species
-            if line.find('Model') != -1:
+            if line.find('Model') != -1 and line.find('ModelEnergyLimit') == -1:
                 look_for_species = 1
 
             if line.find('PressureList') != -1:
@@ -65,7 +67,7 @@ def data_names_mess(cwd):
                 temperatures = [x.strip() for x in line.split()]
                 del temperatures[0]
 
-            if (line.find('Well') != -1 and line.find('WellDepth') == -1) and look_for_species == 1:
+            if (line.find('Well') != -1 and all(line.find(bad) == -1 for bad in bad_wellwrds)) and look_for_species == 1:
                 full_line = [x.strip() for x in line.split()]
                 species_names_unimol = np.append(
                     species_names_unimol, full_line[1])
@@ -89,11 +91,12 @@ def data_names_mess(cwd):
     myfile.close()
 
     # write files
-    P_LIST = np.array(pressures, dtype=np.float32)
-    T_LIST = np.array(temperatures, dtype=np.int16)
+    P_LIST = np.unique(np.array(pressures, dtype=np.float32))
+    T_LIST = np.unique(np.array(temperatures, dtype=np.int16))
 
     species_names = np.append(species_names_unimol, species_names_bimol)
-    species_names_frag2 = np.append(species_names_unimol_frag2, species_names_bimol_frag2)
+    species_names_frag2 = np.append(
+        species_names_unimol_frag2, species_names_bimol_frag2)
     print(species_names)
     return P_LIST, T_LIST, species_names, species_names_frag2
 
