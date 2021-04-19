@@ -107,6 +107,7 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
     """
     # pre-allocation
     matrix_list = []
+    capture_list = []
     # define checks for temperature and pressure and read the file
     # len works on b
     check_P = len(T_LIST)*len(species_names)*len(P_LIST)
@@ -127,7 +128,7 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
                     # replace '***' values with 0
                     rates = [x.replace('***', '0') for x in rates]
                     matrix_list.append(rates[1:-2])  # -2 excluded
-
+                    capture_list.append(float(rates[-1]))
             if line.find('Temperature-Pressure Rate Tables:') != -1:
                 check_list = 0  # don't read the file anylonger
     myfile.close()
@@ -140,6 +141,8 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
     warnings_neg = ''  # generate list of warnings for negative values
     for ii, row in enumerate(matrix_float):
         mask_neg = np.where(row < 0)
+        mask_toohigh = np.where(row > capture_list[ii])
+        row[mask_toohigh] = 0
         for mask_neg_i in mask_neg[0]:
             row[mask_neg_i] = 0
             R = int(ii/n_T/n_P)
