@@ -310,7 +310,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
 
             if jobtype == 'composition_selection':
                 # the reactant is lumped; compare the BFs obtained
-                max_deltaBF = preproc.COMPARE_BRANCHINGS(BR_L_REAC.values,BF_OUTPUT.values[:,1:])
+                max_deltaBF = preproc.COMPARE_BRANCHINGS(BR_L_REAC,BF_OUTPUT)
                 print('iteration: {} ; max_deltaBF: {} '.format(it,max_deltaBF))
 
                 if max_deltaBF < BF_tol or it > maxiter:
