@@ -70,7 +70,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
     REACLUMPED = sim_series['REACLUMPED']
     PRODS = sim_series['PRODS']
     PRODSLUMPED = sim_series['PRODSLUMPED']
-
+    print(PRODSLUMPED)
     ################## READ OPTIONS CONCERNING MAXIT AND BF TOLERANCE (ONLY FOR COMPOSITION_SELECTIO; OTHERWISE EMPTY) ######
     BF_tol = opts[0]
     maxiter = opts[1]
@@ -87,8 +87,11 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
         i_REAC = SPECIES_SERIES[REAC]
 
     # PREPROCESSING: WRITE THE THERMODYNAMIC FILE
-    print('writing therm.txt for OS preprocessor ...'),preproc.WRITE_THERM(os.path.join(cwd,'mech_tocompile'),STOICH,SPECIES_SERIES,SPECIES_BIMOL_SERIES)
-
+    if input_type == 'MESS':
+        print('writing therm.txt for OS preprocessor ...'),preproc.WRITE_THERM(os.path.join(cwd,'mech_tocompile'),STOICH,SPECIES_SERIES,SPECIES_BIMOL_SERIES)
+    elif input_type == 'CKI':
+        print('copy therm.txt to preproc folder ...')
+        shutil.copy(os.path.join(cwd,'inp', 'therm.txt'), os.path.join(cwd, 'mech_tocompile', 'therm.txt'))
     # ASSIGN THE INITIAL NUMBER OF MOLES
     N_INIT_REAC = preproc.INITIALMOLES(REAC,SPECIES_BIMOL_SERIES,1)
 
@@ -261,7 +264,6 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
                 # process the output: rewrite tW_DF if there are lumped species
                 print('Rewriting profiles for lumped species ...')
                 tW_DF,REAC_L,i_REAC_L,SPECIES_L,SPECIES_SERIES_L,SPECIES_BIMOL_SERIES_L,PRODS_L = postproc.LUMP_PROFILES(PRODS,PRODSLUMPED)
-
                 # SAVE PROFILES IN A DICTIONARY FOR LATER POSTPROCESSING AND PLOTTING
                 profiles_P[P][T] = tW_DF
                 if isinstance(REAC,np.ndarray):
@@ -308,7 +310,7 @@ def main_simul(cwd,jobtype,input_par,input_par_jobtype,mech_dict,sim_series,opts
 
             if jobtype == 'composition_selection':
                 # the reactant is lumped; compare the BFs obtained
-                max_deltaBF = preproc.COMPARE_BRANCHINGS(BR_L_REAC.values,BF_OUTPUT.values[:,1:])
+                max_deltaBF = preproc.COMPARE_BRANCHINGS(BR_L_REAC,BF_OUTPUT)
                 print('iteration: {} ; max_deltaBF: {} '.format(it,max_deltaBF))
 
                 if max_deltaBF < BF_tol or it > maxiter:

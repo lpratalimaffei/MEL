@@ -3,10 +3,9 @@ Master Equation based Lumping code for integrating single PESs into global kinet
 
 Requirements:
 
-- Windows operating system (only tested on Windows for now)
 - OpenSMOKE++ (available at https://www.opensmokepp.polimi.it/menu-download)
 - python version > 3.6 ; version 3.9 might have problems with sklearn package
-
+ warning: code only tested on windows for now
 Installation: 
 
 from MEL repository, run
@@ -23,7 +22,7 @@ MEL input_lumping.txt
 
 Cite this work:
 
-Pratali Maffei, L., Pelucchi, M., Cavallotti, C., Bertolino, A. and Faravelli, T., "Master equation lumping for multi-well potential energy surfaces: a bridge between ab initio based rate constants calculations and large kinetic mechanisms", 2021, submitted
+Pratali Maffei, L., Pelucchi, M., Cavallotti, C., Bertolino, A. and Faravelli, T., "Master equation lumping for multi-well potential energy surfaces: a bridge between ab initio based rate constants calculations and large kinetic mechanisms", Chemical Engineering Journal, 2021, just accepted
 
 
 Contacts:
