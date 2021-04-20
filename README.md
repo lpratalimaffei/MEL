@@ -23,7 +23,7 @@ MEL input_lumping.txt
 
 Cite this work:
 
-Pratali Maffei, L., Pelucchi, M., Cavallotti, C., Bertolino, A. and Faravelli, T., "Master equation lumping for multi-well potential energy surfaces: a bridge between ab initio based rate constants calculations and large kinetic mechanisms", 2021, submitted
+Pratali Maffei, L., Pelucchi, M., Cavallotti, C., Bertolino, A. and Faravelli, T., "Master equation lumping for multi-well potential energy surfaces: a bridge between ab initio based rate constants calculations and large kinetic mechanisms", Chemical Engineering Journal, 2021, just accepted
 
 
 Contacts:
