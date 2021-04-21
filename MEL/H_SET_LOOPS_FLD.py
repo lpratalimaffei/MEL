@@ -37,9 +37,10 @@ def renamefiles(cwd,fld):
     Renames the files in the given folder with name_old
     '''
     files = os.listdir(fld)
+    N = str(round(len(files)/2))
     for F in files:
         oldname = os.path.join(fld,F)
-        newname = os.path.join(fld,F+'_old')
+        newname = os.path.join(fld,F+'_old'+N)
         os.rename(oldname,newname)
 
 
