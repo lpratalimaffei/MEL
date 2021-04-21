@@ -101,8 +101,8 @@ def data_names_mess(cwd):
     print(species_names, species_names_frag2, '\n')
     # check that bimol fragments have different names
     if len(list(set(species_names_bimol_frag2))) != len(list(species_names_bimol_frag2)):
-        print('*Error: some bimol fragments share the same names. Code stopped')
-        sys.exit()
+        print('*Warning: some bimol fragments share the same names. check that they are isomers')
+
     return P_LIST, T_LIST, species_names, species_names_frag2
 
 
