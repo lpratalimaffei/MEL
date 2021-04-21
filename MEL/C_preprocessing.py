@@ -238,14 +238,17 @@ class WRITE_MECH_CKI:
             # loop over the products with the exception of the  reactant selected
             # S_i deleted excludes self reactions
             for Pr_i in SPECIES_NEW.drop(S_i).index:
-                CKI_lines['reac_name'][ii_row] = SPECIES_NEW[S_i] + \
-                    ' => ' + SPECIES_NEW[Pr_i]
-                CKI_lines['k0'][ii_row] = '{:.2e}'.format(self.k0[S_i, Pr_i])
-                CKI_lines['alpha'][ii_row] = '{:.2f}'.format(
-                    self.alpha[S_i, Pr_i])
-                CKI_lines['EA'][ii_row] = '{:.2f}'.format(self.EA[S_i, Pr_i])
-                CKI_lines['comments'][ii_row] = '! ' + self.comments[S_i, Pr_i]
-                ii_row += 1
+                   CKI_lines['reac_name'][ii_row] = SPECIES_NEW[S_i] + \
+                   ' => ' + SPECIES_NEW[Pr_i]
+                   CKI_lines['k0'][ii_row] = '{:.2e}'.format(self.k0[S_i, Pr_i])
+                   CKI_lines['alpha'][ii_row] = '{:.2f}'.format(
+                   self.alpha[S_i, Pr_i])
+                   CKI_lines['EA'][ii_row] = '{:.2f}'.format(self.EA[S_i, Pr_i])
+                   CKI_lines['comments'][ii_row] = '! ' + self.comments[S_i, Pr_i]
+                   # if any of the parameters is nan/inf: comment the reaction
+                   if any([(par==np.nan or par==np.inf) for par in [self.k0[S_i, Pr_i], self.alpha[S_i, Pr_i], self.EA[S_i, Pr_i]]]):
+                       CKI_lines['reac_name'][ii_row] = '!' + CKI_lines['reac_name'][ii_row]
+                   ii_row += 1
 
         return CKI_lines
 
