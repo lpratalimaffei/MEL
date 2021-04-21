@@ -204,10 +204,17 @@ class FITTING:
             else:
                 k_tofit = np.delete(k_tofit, index_ovf, axis=0)
                 T_VECT_NEW = np.delete(self.T_VECT, index_ovf, axis=0)
-                k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0,
-                                                                i_prod], R2adj = arrhenius_fit(T_VECT_NEW, k_tofit)
-                comments_MAT[0, i_prod] = 'R2_adj = {:.2f} , T RANGE = {T_IN} - {T_FIN} K'.format(
-                    R2adj, T_IN=T_VECT_NEW[0], T_FIN=T_VECT_NEW[-1])
+                try:
+                    k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0,
+                                                                    i_prod], R2adj = arrhenius_fit(T_VECT_NEW, k_tofit)
+                    comments_MAT[0, i_prod] = 'R2_adj = {:.2f} , T RANGE = {T_IN} - {T_FIN} K'.format(
+                        R2adj, T_IN=T_VECT_NEW[0], T_FIN=T_VECT_NEW[-1])
+                except TypeError:
+                    print('not enough values for the fit of %s -> %s: setting val to inf' % (self.REAC, Pr_i))
+                    k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0, i_prod] = [np.inf]*3
+                    comments_MAT[0, i_prod] = 'T RANGE = {T_IN} - {T_FIN} K: too small for fit'.format(
+                        T_IN=T_VECT_NEW[0], T_FIN=T_VECT_NEW[-1])
+
                 # print(k_tofit,T_VECT_NEW)
 
    # at this point, call the class WRITE_MECH_CKI from the C_preprocessing module and write the new mech
