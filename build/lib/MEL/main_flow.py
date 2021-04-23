@@ -27,12 +27,19 @@ from . import F_FITS as fitall
 from . import G_PROFILES as prof_CKImech
 from time import perf_counter as clock
 
+def get_OS():
+    if os.name == 'nt':
+        OS_exe = 'exe'
+    elif os.name == 'posix':
+        OS_exe = 'sh'
+    return OS_exe
+
 
 def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series, opts):
     '''
     Perform simulations for 1 reacting pseudospecies at all T,P provided
     '''
-
+    OS_exe = get_OS()
     # Save times as dataframes for every pressure; the first will be a dictionary
     Dt_names_Pi = ['ode solving', 'time Pi', 'plotting and saving figs']
 
@@ -110,8 +117,15 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
         #
         extr_rates.copy_CKI_processed(os.path.join(cwd, 'inp'), os.path.join(
             cwd, 'mech_tocompile'), PRODSINKS, ISOM_EQUIL, REAC, PRODS)
-        toexecute = '"' + OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" + '"' + \
+
+        toexecute = '"' + OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"' + \
             " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
+       # preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"')
+       # input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
+       # output_preproc = os.path.join(".", "mech_tocompile", "preproc_output.txt")
+       # print(preproc_exe, input_preproc, output_preproc)
+       # toexecute = preproc_exe + " --input " + input_preproc + ">" + output_preproc
+
         print('compiling mech ...'), os.system(toexecute)
 
     ####################################################################################
@@ -248,7 +262,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                         exit()
 
                     #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt'
-                    toexecute = '"' + OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" + '"' + \
+                    toexecute = '"' + OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"' + \
                         " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
                     print('compiling mech ...'), os.system(toexecute)
                     #subprocess.run([r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_CHEMKIN_PreProcessor.exe"'],input=(cwd + '/mech_tocompile/input_preproc.dic'),stdout=(cwd+ '/mech_tocompile/preproc_output.txt'))
@@ -267,7 +281,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 # CALL OPENSMOKE
                 tic = clock()
                 #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
-                toexecute = '"' + OS_folder + "\OpenSMOKEpp_BatchReactor.exe" + \
+                toexecute = '"' + OS_folder + "\OpenSMOKEpp_BatchReactor." + OS_exe + \
                     '"' + " --input input_OS.dic > OS_output.txt"
                 # toexecute = r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
                 print('solving OS Batch Reactor ...'), os.system(toexecute)
