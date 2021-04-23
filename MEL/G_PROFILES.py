@@ -1,5 +1,6 @@
 import shutil
 import os
+from . import main_flow
 from . import D_ODESYSTEM as odesys
 import numpy as np
 
@@ -8,6 +9,7 @@ class PROFILES_FROM_CKI:
         self.cwd = cwd      # execution folder
         self.path = path    # path where the kin.txt mech is
         self.OS_folder = OS_folder # folder containing OS executables
+        self.OS_exe = main_flow.get_OS()
     # derive the profiles in the selected range of T,P with the optimized mech
     # 1 compile the mechanism
     def COMPILE_MECH(self):
@@ -28,7 +30,7 @@ class PROFILES_FROM_CKI:
         # compile the optimized mechanism
         #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt'
         #toexecute = r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt'
-        toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" + '"' + " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
+        toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor." + self.OS_exe + '"' + " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
     
         #print(toexecute)
         print('compiling mech ...'),os.system(toexecute)
@@ -75,7 +77,7 @@ class PROFILES_FROM_CKI:
                     # CALL OPENSMOKE
                     #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
                     #toexecute = r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
-                    toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_BatchReactor.exe" + '"' + " --input input_OS.dic > OS_output.txt"
+                    toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_BatchReactor." + self.OS_exe + '"' + " --input input_OS.dic > OS_output.txt"
                     os.system(toexecute)
 
 

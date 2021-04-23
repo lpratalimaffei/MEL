@@ -12,7 +12,7 @@ from . import license_message
 from . import A_read_input as readinp
 from . import B_extract_rates as extr_rates
 from . import C_preprocessing as preproc
-from . import extract_RATES_V0 as sim
+from . import main_flow as sim
 from . import H_SET_LOOPS_FLD as set_sim
 from . import preproc_irreversible as preproc_irr
 
