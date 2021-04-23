@@ -270,7 +270,7 @@ class ODE_POSTPROC:
                      PRODS_L = self.PRODS
               else:
                      # redefine the product names
-                     self.PRODS = list(PRODSLUMPED.index)
+                     self.PRODS = np.array(PRODSLUMPED.index, dtype='<U16')
                      # empty dataframe for the products
                      W_prods_L = pd.DataFrame(columns=self.PRODS)
                      # empty series for bimolecular species
@@ -323,8 +323,6 @@ class ODE_POSTPROC:
                      SPECIES_BIMOL_SERIES_L = pd.concat([SPECIES_BIMOL_SERIES_L,PRODS_L_BIMOL])
                      # UPDATE THE VALUE FOR THE FOLLOWING STEPS
                      self.SPECIES_BIMOL_SERIES = SPECIES_BIMOL_SERIES_L
-              
-              #print(self.lumped_branching)
 
               return tW_DF,self.REACNAME,i_REAC_L,SPECIES_L,SPECIES_SERIES_L,SPECIES_BIMOL_SERIES_L,PRODS_L 
 

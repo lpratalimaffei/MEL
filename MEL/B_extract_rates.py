@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import os
 import pandas as pd
@@ -97,7 +98,11 @@ def data_names_mess(cwd):
     species_names = np.append(species_names_unimol, species_names_bimol)
     species_names_frag2 = np.append(
         species_names_unimol_frag2, species_names_bimol_frag2)
-    print(species_names)
+    print(species_names, species_names_frag2, '\n')
+    # check that bimol fragments have different names
+    if len(list(set(species_names_bimol_frag2))) != len(list(species_names_bimol_frag2)):
+        print('*Warning: some bimol fragments share the same names. check that they are isomers')
+
     return P_LIST, T_LIST, species_names, species_names_frag2
 
 
