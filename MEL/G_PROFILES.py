@@ -44,6 +44,7 @@ class PROFILES_FROM_CKI:
                 in each T dictionary, a DataFrame with the profiles of the selected output species is contained
         '''
         # SPECIES NAMES: REAC_PRODS AS WRITTEN IN OPENSMOKE
+        PRODS = np.array(PRODS, dtype='<U16')
         SPECIES_PR = np.insert(PRODS,0,SPECIES[i_REAC])
         SPECIES_BIMOL_SERIES_NEW = SPECIES_BIMOL_SERIES[SPECIES_PR]
         # initialize postprocessor to extract profiles
