@@ -51,23 +51,25 @@ so that the user knows what the code is doing.
 
 
 ############################## LINUX USING CONDA #############################
+If you don't have conda installed, install it:
+wget https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh
+chmod +x Anaconda3-2020.11-Linux-x86_64.sh
+./Anaconda3-2020.11-Linux-x86_64.sh
 
 copy the environment.yml file where you want to call conda for the env generation.
 Create the appropriate environment for MEL using
 
 conda env create -f environment.yml
+conda activate envMEL_auto (activates the environment)
 
-in the same environment, install MEL. Once you download the folder, run inside MEL/
-
+Download MEL folder:
+git clone git@github.com:lpratalimaffei/MEL.git
+Enter MEL folder and run
 python setup.py install
 
 then try to run one of the examples with the command
 
 MEL input_lumping.txt & (to get a verbose output, otherwise redirect to > stdout.log)
-
-If you fork the github MEL repository, you may also clone it with
-git clone git@github.com:YOURUSERNAME/MEL.git
-and then proceed with the installation as above.
 
 
 
