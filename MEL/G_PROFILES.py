@@ -1,5 +1,6 @@
 import shutil
 import os
+from . import main_flow
 from . import D_ODESYSTEM as odesys
 import numpy as np
 
@@ -8,29 +9,31 @@ class PROFILES_FROM_CKI:
         self.cwd = cwd      # execution folder
         self.path = path    # path where the kin.txt mech is
         self.OS_folder = OS_folder # folder containing OS executables
+        self.OS_exe = main_flow.get_OS()
+        self.preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + self.OS_exe + '"')
+        self.osbatch_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_BatchReactor." + self.OS_exe + '"')
+        self.input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
+        self.output_preproc = os.path.join(".", "mech_tocompile", "preproc_output.txt")
+
     # derive the profiles in the selected range of T,P with the optimized mech
     # 1 compile the mechanism
     def COMPILE_MECH(self):
         '''
-        Compile the mechanism of the "path" folder after copying it into the /mech_tocompile folder
+        Compile the mechanism of the "path" folder after copying it into the mech_tocompile folder
         '''
         # if kin and therm files exist in the selected path: remove them in the destination folder, so as to overwrite them
-        if os.path.isfile(self.path + '/kin.txt'):
-            os.remove(self.cwd +'/mech_tocompile/kin.txt')
-            shutil.copyfile(self.path + '/kin.txt',self.cwd + '/mech_tocompile/kin.txt')
+        if os.path.isfile(os.path.join(self.path, 'kin.txt')):
+            os.remove(os.path.join(self.cwd,'mech_tocompile','kin.txt'))
+            shutil.copyfile(os.path.join(self.path, 'kin.txt'), os.path.join(self.cwd, 'mech_tocompile', 'kin.txt'))
         else:
             raise ValueError('kin.txt not found: file not substituted in the mech_tocompile folder')
 
-        if os.path.isfile(self.path + '/therm.txt'):
-            os.remove(self.cwd + '/mech_tocompile/therm.txt')
-            shutil.copyfile(self.path + '/therm.txt',self.cwd + '/mech_tocompile/therm.txt')
+        if os.path.isfile(os.path.join(self.path, 'therm.txt')):
+            os.remove(os.path.join(self.cwd, 'mech_tocompile', 'therm.txt'))
+            shutil.copyfile(os.path.join(self.path, 'therm.txt'), os.path.join(self.cwd, 'mech_tocompile', 'therm.txt'))
         
         # compile the optimized mechanism
-        #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt'
-        #toexecute = r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt'
-        toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" + '"' + " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
-    
-        #print(toexecute)
+        toexecute = self.preproc_exe + " --input " + self.input_preproc + ">" + self.output_preproc
         print('compiling mech ...'),os.system(toexecute)
 
     # 2 derive again all the profiles with the compiled mechanism
@@ -74,9 +77,7 @@ class PROFILES_FROM_CKI:
 
                     ################## SOLUTION OF THE ODE SYSTEM ##########################################
                     # CALL OPENSMOKE
-                    #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
-                    #toexecute = r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
-                    toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_BatchReactor.exe" + '"' + " --input input_OS.dic > OS_output.txt"
+                    toexecute = self.osbatch_exe + " --input input_OS.dic > OS_output.txt"
                     os.system(toexecute)
 
 

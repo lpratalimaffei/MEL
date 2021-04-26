@@ -1,0 +1,14 @@
+name: envMEL_auto
+
+channels:
+    - conda-forge
+
+dependencies:
+    - python=3.9
+    - numpy
+    - scipy
+    - matplotlib
+    - pylint
+    - pandas
+    - scikit-learn
+

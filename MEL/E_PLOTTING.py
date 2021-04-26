@@ -153,7 +153,7 @@ class PLOTTING:
                      t = tW_DF['t'].values
                      t = t[:,np.newaxis]
                      # redefine tW_DF based on the sum of the reactants mole fraction
-                     tW_DF_REAC_tot = np.sum(tW_DF[REAC],axis=1)
+                     tW_DF_REAC_tot = np.sum(tW_DF[REAC].values,axis=1)
                      tW_DF_REAC_tot = tW_DF_REAC_tot[:,np.newaxis]
                      tW_DF[REAC] = tW_DF[REAC]/tW_DF_REAC_tot
                      # plot the species
@@ -180,7 +180,7 @@ class PLOTTING:
               # set tight layout
               fig.tight_layout(pad=0.1,w_pad=0.1)
               # save the figure
-              fig_path = (self.path_plots + '/Prof_EXP_' + self.REAC + 'composition_' + str(self.P) + '_atm.png')
+              fig_path = (os.path.join(self.path_plots, 'Prof_EXP_' + self.REAC + 'composition_' + str(self.P) + '_atm.png'))
               if os.path.isfile(fig_path):
                      os.remove(fig_path)
               fig.savefig(fig_path,dpi=200)

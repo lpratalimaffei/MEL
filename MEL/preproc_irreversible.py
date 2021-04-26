@@ -4,6 +4,7 @@ import pandas as pd
 import copy
 import re
 import shutil
+from . import main_flow
 from . import C_preprocessing as preproc
 
 
@@ -389,8 +390,11 @@ def run_extract_fittedkin(cwd, OS_folder):
     '''
     run preprocessor and extract bw HP kinetics dataframe
     '''
-    toexecute = '"' + OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" + '"' + \
-        " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
+    OS_exe = main_flow.get_OS()
+    preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"')
+    input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
+    output_preproc = os.path.join(".", "mech_tocompile", "preproc_output.txt")
+    toexecute = preproc_exe + " --input " + input_preproc + ">" + output_preproc
     print('compiling mech ...'), os.system(toexecute)
 
     # derive the dataframe for the corresponding backward reactions
