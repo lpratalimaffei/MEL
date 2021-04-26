@@ -231,16 +231,16 @@ class FITTING:
         This method writes the arrhenius fits at a SINGLE given pressure in the /Arr_fits_CKI folder
         '''
 
-        if os.path.isdir(cwd + '/Arr_fits_CKI') == False:
-            os.mkdir(cwd + '/Arr_fits_CKI')
+        if os.path.isdir(os.path.join(cwd, 'Arr_fits_CKI')) == False:
+            os.mkdir(os.path.join(cwd, 'Arr_fits_CKI'))
         # Now check if the file already exists and remove it
-        if os.path.isfile(cwd + '/Arr_fits_CKI' + '/' + str(P) + '_' + self.REAC + '.CKI'):
-            os.remove(cwd + '/Arr_fits_CKI' + '/' +
-                      str(P) + '_' + self.REAC + '.CKI')
+        if os.path.isfile(os.path.join(cwd, 'Arr_fits_CKI', str(P) + '_' + self.REAC + '.CKI')):
+            os.remove(os.path.join(cwd, 'Arr_fits_CKI',
+                      str(P) + '_' + self.REAC + '.CKI'))
         # generate the file kin.txt and rename it accordingly
-        self.new_k_to_CKI.WRITE_CKI(cwd + '/Arr_fits_CKI', CKI_lines.values)
-        os.rename(cwd + '/Arr_fits_CKI' + '/kin.txt', cwd +
-                  '/Arr_fits_CKI' + '/' + str(P) + '_' + self.REAC + '.CKI')
+        self.new_k_to_CKI.WRITE_CKI(os.path.join(cwd, 'Arr_fits_CKI'), CKI_lines.values)
+        os.rename(os.path.join(cwd, 'Arr_fits_CKI', 'kin.txt'), os.path.join(cwd,
+                  'Arr_fits_CKI', str(P) + '_' + self.REAC + '.CKI'))
 
         # check if the selected folder exists
         if os.path.isdir(cwd) == False:

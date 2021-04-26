@@ -180,7 +180,7 @@ class PLOTTING:
               # set tight layout
               fig.tight_layout(pad=0.1,w_pad=0.1)
               # save the figure
-              fig_path = (self.path_plots + '/Prof_EXP_' + self.REAC + 'composition_' + str(self.P) + '_atm.png')
+              fig_path = (os.path.join(self.path_plots, 'Prof_EXP_' + self.REAC + 'composition_' + str(self.P) + '_atm.png'))
               if os.path.isfile(fig_path):
                      os.remove(fig_path)
               fig.savefig(fig_path,dpi=200)

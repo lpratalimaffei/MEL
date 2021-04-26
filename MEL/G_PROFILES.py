@@ -19,18 +19,18 @@ class PROFILES_FROM_CKI:
     # 1 compile the mechanism
     def COMPILE_MECH(self):
         '''
-        Compile the mechanism of the "path" folder after copying it into the /mech_tocompile folder
+        Compile the mechanism of the "path" folder after copying it into the mech_tocompile folder
         '''
         # if kin and therm files exist in the selected path: remove them in the destination folder, so as to overwrite them
-        if os.path.isfile(self.path + '/kin.txt'):
-            os.remove(self.cwd +'/mech_tocompile/kin.txt')
-            shutil.copyfile(self.path + '/kin.txt',self.cwd + '/mech_tocompile/kin.txt')
+        if os.path.isfile(os.path.join(self.path, 'kin.txt')):
+            os.remove(os.path.join(self.cwd,'mech_tocompile','kin.txt'))
+            shutil.copyfile(os.path.join(self.path, 'kin.txt'), os.path.join(self.cwd, 'mech_tocompile', 'kin.txt'))
         else:
             raise ValueError('kin.txt not found: file not substituted in the mech_tocompile folder')
 
-        if os.path.isfile(self.path + '/therm.txt'):
-            os.remove(self.cwd + '/mech_tocompile/therm.txt')
-            shutil.copyfile(self.path + '/therm.txt',self.cwd + '/mech_tocompile/therm.txt')
+        if os.path.isfile(os.path.join(self.path, 'therm.txt')):
+            os.remove(os.path.join(self.cwd, 'mech_tocompile', 'therm.txt'))
+            shutil.copyfile(os.path.join(self.path, 'therm.txt'), os.path.join(self.cwd, 'mech_tocompile', 'therm.txt'))
         
         # compile the optimized mechanism
         toexecute = self.preproc_exe + " --input " + self.input_preproc + ">" + self.output_preproc

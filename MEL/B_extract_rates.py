@@ -119,7 +119,7 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
     # define current checks
     check_P_curr = 0
     check_list = 0
-    with open(cwd + '/rate.out') as myfile:
+    with open(os.path.join(cwd, 'rate.out')) as myfile:
         for line in myfile:
             # find the 'Temperature-Species rate tables to extract the rates
             if line.find('Temperature-Species Rate Tables:') != -1:
