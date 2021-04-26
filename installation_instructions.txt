@@ -1,3 +1,4 @@
+############################### WINDOWS ######################################
 open windows powershell
 
 verify that python is working: type
@@ -36,6 +37,7 @@ At this point, MEL is a command you can run.
 
 You can now try to run one of the examples.
 Copy the folder "inp" and the file "input_lumping.txt" in a new folder in any path.
+Remember to change the path to the OS folder appropriately.
 Inside the folder, to run MEL just type
 
 MEL input_lumping.txt
@@ -46,3 +48,26 @@ MEL input_lumping.txt > stdoud.log
 
 The log file contains a description of the operations currently run by the code
 so that the user knows what the code is doing.
+
+
+############################## LINUX USING CONDA #############################
+
+copy the environment.yml file where you want to call conda for the env generation.
+Create the appropriate environment for MEL using
+
+conda env create -f environment.yml
+
+in the same environment, install MEL. Once you download the folder, run inside MEL/
+
+python setup.py install
+
+then try to run one of the examples with the command
+
+MEL input_lumping.txt & (to get a verbose output, otherwise redirect to > stdout.log)
+
+If you fork the github MEL repository, you may also clone it with
+git clone git@github.com:YOURUSERNAME/MEL.git
+and then proceed with the installation as above.
+
+
+
