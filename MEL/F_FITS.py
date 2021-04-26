@@ -272,6 +272,7 @@ class FITTING:
                 [FITS_DICT[P].loc[reac][['k0', 'alpha', 'EA']].values for P in P_VECT])
             if any([(par == 'nan' or par == 'inf') for par in par_all]):
                 flag = '!'
+                DF_reac.loc[-1]['reac_name'] = '!' + DF_reac.loc[-1]['reac_name']
             else:
                 flag = ''
             # Scan the pressures and write in PLOG form
