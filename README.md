@@ -5,10 +5,10 @@ Requirements:
 
 - OpenSMOKE++ (available at https://www.opensmokepp.polimi.it/menu-download)
 - python version >= 3.7 
- warning: code only tested on windows for now
-
+ working on both windows and linux OS
+ 
 Installation: 
-
+read installation_instructions.txt
 from MEL repository, run
 python setup.py install
 
