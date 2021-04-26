@@ -22,7 +22,7 @@ If it's the first time you install python, you can add all the required librarie
 
 pip install numpy
 pip install scipy
-pip install sklearn
+pip install scikit-learn
 pip install pandas
 pip install matplotlib
 
