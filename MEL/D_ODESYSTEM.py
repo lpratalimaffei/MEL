@@ -6,22 +6,6 @@ from scipy.optimize import curve_fit
 import shutil
 from . import C_preprocessing as preproc
 
-def dWi_dt(t,W,k_ij):
-       '''
-       system of equations
-       dWi/dt = sum(kji*Wj) - sum(kij)*Wi
-       '''
-       prod = np.dot(k_ij.T,W)      # Production term of i by all the other species: sum(kji*Wj)
-       sum_ki = np.sum(k_ij,axis=1) # sum all the cols of each row : sum_i(kij) = ki_cons_tot
-       cons = sum_ki*W              # total consumption term
-       
-       dW = prod - cons             #dWi/dt = production - consumption
-       return dW
-
-def jac(t,W,jac_sys):
-       return jac_sys # the jacobian is constant and computed externally
-
-
 class ODE_POSTPROC:
        '''
        In this class the output of the ODE is post-processed and the output is written as required by optiSMOKE++
@@ -108,7 +92,7 @@ class ODE_POSTPROC:
                      extracol = 0
 
               # read the output file
-              filename = os.path.join(self.cwd,'Output','Output.OUT')
+              filename = os.path.join(self.cwd,'Output','Output.out')
               if os.path.isfile(filename):
                      cols_species = np.arange(9,9+len(SPECIES)+extracol)
                      n_cols = np.insert(cols_species,0,[0])  # 0 IS THE INDEX, AND [0] IS THE VALUE TO INSERT
@@ -295,7 +279,7 @@ class ODE_POSTPROC:
                                    W_prods_L[PRi_L] = np.sum(self.W[PRi_L_value],axis=1)
 
                                    # compute the weighted average branching within each product and save them to dataframe
-                                   Wtot = W_prods_L[PRi_L][1:,np.newaxis]
+                                   Wtot = W_prods_L[PRi_L].values[1:, np.newaxis]
                                    dtweight = ((self.t[1:]-self.t[:-1])/self.t[-1])
                                    BR_PRi_L = self.W.loc[1:,PRi_L_value]/Wtot*dtweight
                                    self.lumped_branching[PRi_L].loc[self.T,PRi_L_value] = np.sum(BR_PRi_L,axis=0)
@@ -357,9 +341,9 @@ class ODE_POSTPROC:
                      header = np.insert(indices_R_prods,0,header)
               header = header[np.newaxis,:]         
               exp_towrite = np.concatenate((header,exp_dataset),axis=0)
-              np.savetxt(self.dir_PT + '/' + str(self.T) + '.txt',exp_towrite,delimiter='\t',fmt='%s')
-              self.path_to_Exp_Datasets.append(str(self.P) + 'atm/' + str(self.T) + 'K/' + str(self.T) + '.txt')
-              self.path_to_OS_inputs.append(str(self.P) + 'atm/' + str(self.T) + 'K/input_OS.dic')
+              np.savetxt(os.path.join(self.dir_PT, str(self.T) + '.txt)'), exp_towrite, delimiter='\t', fmt='%s')
+              self.path_to_Exp_Datasets.append(os.path.join(str(self.P) + 'atm', str(self.T) + 'K', str(self.T) + '.txt'))
+              self.path_to_OS_inputs.append(os.path.join(str(self.P) + 'atm', str(self.T) + 'K', 'input_OS.dic'))
  
        def WRITE_BRANCHINGS_PRODS(self,PRODS):
               '''
