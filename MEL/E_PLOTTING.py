@@ -153,7 +153,7 @@ class PLOTTING:
                      t = tW_DF['t'].values
                      t = t[:,np.newaxis]
                      # redefine tW_DF based on the sum of the reactants mole fraction
-                     tW_DF_REAC_tot = np.sum(tW_DF[REAC],axis=1)
+                     tW_DF_REAC_tot = np.sum(tW_DF[REAC].values,axis=1)
                      tW_DF_REAC_tot = tW_DF_REAC_tot[:,np.newaxis]
                      tW_DF[REAC] = tW_DF[REAC]/tW_DF_REAC_tot
                      # plot the species

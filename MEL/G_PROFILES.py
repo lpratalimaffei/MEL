@@ -10,6 +10,11 @@ class PROFILES_FROM_CKI:
         self.path = path    # path where the kin.txt mech is
         self.OS_folder = OS_folder # folder containing OS executables
         self.OS_exe = main_flow.get_OS()
+        self.preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + self.OS_exe + '"')
+        self.osbatch_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_BatchReactor." + self.OS_exe + '"')
+        self.input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
+        self.output_preproc = os.path.join(".", "mech_tocompile", "preproc_output.txt")
+
     # derive the profiles in the selected range of T,P with the optimized mech
     # 1 compile the mechanism
     def COMPILE_MECH(self):
@@ -28,11 +33,7 @@ class PROFILES_FROM_CKI:
             shutil.copyfile(self.path + '/therm.txt',self.cwd + '/mech_tocompile/therm.txt')
         
         # compile the optimized mechanism
-        #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt'
-        #toexecute = r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_CHEMKIN_PreProcessor.exe" --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt'
-        toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_CHEMKIN_PreProcessor." + self.OS_exe + '"' + " --input .\mech_tocompile\input_preproc.dic >.\mech_tocompile\preproc_output.txt"
-    
-        #print(toexecute)
+        toexecute = self.preproc_exe + " --input " + self.input_preproc + ">" + self.output_preproc
         print('compiling mech ...'),os.system(toexecute)
 
     # 2 derive again all the profiles with the compiled mechanism
@@ -75,9 +76,7 @@ class PROFILES_FROM_CKI:
 
                     ################## SOLUTION OF THE ODE SYSTEM ##########################################
                     # CALL OPENSMOKE
-                    #toexecute = r'"C:\Users\Luna Pratali Maffei\OpenSMOKE++Suite\bin\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
-                    #toexecute = r'"%OPENSMOKEPP_EXE_FOLDER%\OpenSMOKEpp_BatchReactor.exe" --input input_OS.dic > OS_output.txt'
-                    toexecute = '"' + self.OS_folder + "\OpenSMOKEpp_BatchReactor." + self.OS_exe + '"' + " --input input_OS.dic > OS_output.txt"
+                    toexecute = self.osbatch_exe + " --input input_OS.dic > OS_output.txt"
                     os.system(toexecute)
 
 

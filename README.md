@@ -4,8 +4,9 @@ Master Equation based Lumping code for integrating single PESs into global kinet
 Requirements:
 
 - OpenSMOKE++ (available at https://www.opensmokepp.polimi.it/menu-download)
-- python version > 3.6 ; version 3.9 might have problems with sklearn package
+- python version >= 3.7 
  warning: code only tested on windows for now
+
 Installation: 
 
 from MEL repository, run
