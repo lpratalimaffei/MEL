@@ -81,7 +81,7 @@ def main():
         if key == 'single_simulation':
             jobtype = value['simul_type']
         elif key in ['prescreening_equilibrium', 'prescreening_allreactive', 'composition_selection',
-                    'lumping', 'validation', 'preproc_irreversible']:
+                     'lumping', 'validation', 'preproc_irreversible']:
             jobtype = key
 
         # call subdictionaries
@@ -120,7 +120,7 @@ def main():
                     sim_series['REAC']))
                 # perform the simulation
                 sim.main_simul(cwd, jobtype, input_par,
-                            input_par_jobtype, mech_dict, sim_series, opts)
+                               input_par_jobtype, mech_dict, sim_series, opts)
 
                 # delete folders to avoid confusion and do cleaning
                 set_sim.rmfolder(os.path.join(cwd, 'mech_tocompile'))
@@ -146,8 +146,7 @@ def main():
             # write kinetics
             preproc.COMBINE_CKI(lumpedmech_fld, fld_list)
 
-
-
+    print('Done! press enter to exit :) \n')
 
 
 if __name__ == "__main__":
