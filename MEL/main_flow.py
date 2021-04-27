@@ -34,6 +34,16 @@ def get_OS():
         OS_exe = 'sh'
     return OS_exe
 
+def get_libpath():
+
+    if os.name == 'sh' and os.path.isfile('~/.bash_profile'):
+        # mac: add libraries
+        mylib = subprocess.run('source ~/.bash_profile && echo $DYLD_LIBRARY_PATH', shell=True, stdout=subprocess.PIPE)
+        env_dct = {'DYLD_LIBRARY_PATH': mylib.stdout.read()[:-2]}
+    else:
+        env_dct = None
+
+    return env_dct
 
 def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series, opts):
     '''
@@ -80,11 +90,12 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
 
     ################# OS EXECUTION FOLDERS AND COMMANDS ########################################
     OS_exe = get_OS()
+    env_dct = get_libpath()
     preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"')
     osbatch_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_BatchReactor." + OS_exe + '"')
     input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
     output_preproc = os.path.join(".", "mech_tocompile", "preproc_output.txt")
-
+    
     ################## READ OPTIONS CONCERNING MAXIT AND BF TOLERANCE (ONLY FOR COMPOSITION_SELECTIO; OTHERWISE EMPTY) ######
     BF_tol = opts[0]
     maxiter = opts[1]
@@ -127,7 +138,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
 
         toexecute = preproc_exe + " --input " + input_preproc + ">" + output_preproc
 
-        print('compiling mech ...'), os.system(toexecute)
+        print('compiling mech ...'),  subprocess.run(toexecute, env=env_dct, shell=True)
 
     ####################################################################################
 
@@ -263,7 +274,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                         exit()
 
                     toexecute = preproc_exe + " --input " + input_preproc + ">" + output_preproc
-                    print('compiling mech ...'), os.system(toexecute)
+                    print('compiling mech ...'), subprocess.run(toexecute, env=env_dct, shell=True)
 
                 ################### WRITE OPENSMOKE INPUT ##################################################
                 try:
@@ -279,7 +290,8 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 tic = clock()
 
                 toexecute = osbatch_exe + " --input input_OS.dic > OS_output.txt"
-                print('solving OS Batch Reactor ...'), os.system(toexecute)
+                print('solving OS Batch Reactor ...'), subprocess.run(toexecute, env=env_dct, shell=True)
+
                 toc = clock()
                 Dt_Pi[Pi, 0] = toc-tic
 
