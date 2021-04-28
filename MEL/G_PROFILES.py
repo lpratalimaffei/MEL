@@ -11,7 +11,7 @@ class PROFILES_FROM_CKI:
         self.path = path    # path where the kin.txt mech is
         self.OS_folder = OS_folder # folder containing OS executables
         self.OS_exe = main_flow.get_OS()
-        self.env_dct = main_flow.get_libpath()
+        self.exec0 = main_flow.get_libpath()
         self.preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + self.OS_exe + '"')
         self.osbatch_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_BatchReactor." + self.OS_exe + '"')
         self.input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
@@ -35,8 +35,8 @@ class PROFILES_FROM_CKI:
             shutil.copyfile(os.path.join(self.path, 'therm.txt'), os.path.join(self.cwd, 'mech_tocompile', 'therm.txt'))
         
         # compile the optimized mechanism
-        toexecute = self.preproc_exe + " --input " + self.input_preproc + ">" + self.output_preproc
-        print('compiling mech ...'), subprocess.run(toexecute, env=self.env_dct, shell=True)
+        toexecute = self.exec0 + self.preproc_exe + " --input " + self.input_preproc + ">" + self.output_preproc
+        print('compiling mech ...'), subprocess.run(toexecute, shell=True)
 
     # 2 derive again all the profiles with the compiled mechanism
     def DERIVE_PROFILES(self,path_exp,P_VECT,T_VECT,SPECIES,PRODS,i_REAC,N_INIT_REAC,SPECIES_BIMOL_SERIES,ISOM_EQUIL,CUTOFF):
@@ -79,8 +79,8 @@ class PROFILES_FROM_CKI:
 
                     ################## SOLUTION OF THE ODE SYSTEM ##########################################
                     # CALL OPENSMOKE
-                    toexecute = self.osbatch_exe + " --input input_OS.dic > OS_output.txt"
-                    subprocess.run(toexecute, env=self.env_dct, shell=True)
+                    toexecute = self.exec0 + self.osbatch_exe + " --input input_OS.dic > OS_output.txt"
+                    subprocess.run(toexecute, shell=True)
 
 
                     ##################### EXTRACT THE OUTPUT ###############################################
