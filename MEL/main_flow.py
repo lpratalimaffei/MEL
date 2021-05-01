@@ -40,7 +40,7 @@ def get_libpath():
     if sys.platform == 'darwin' and os.path.exists(checkpath):
         # mac: add libraries
         my_env = subprocess.check_output('source ' +  checkpath + ' && echo $DYLD_LIBRARY_PATH', shell=True)
-        my_env = str(my_env)[1:-2]
+        my_env = str(my_env)[2:-3]
         exec0 = 'export DYLD_LIBRARY_PATH=' + my_env + '; '
     else:
         exec0 = ''
