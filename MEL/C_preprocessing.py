@@ -304,22 +304,16 @@ def WRITE_THERM(cwd, STOICH, SPECIES_SERIES, SPECIES_BIMOL_SERIES):
     input: STOICH provides the stoichiometry of the inlet species with carbon, hydrogen and oxygen
     THIS FUNCTION IS NOT IN THE CLASS WRITE_MECH_CKI because it does not require the rates
     '''
-    # READ "STOICH" AND DERIVE THE STOICHIOMETRY TO SUBSTITUTE
-    xxx = ' '*(3-len(STOICH[0][1:])) + STOICH[0][1:]
-    yyy = ' '*(3-len(STOICH[1][1:])) + STOICH[1][1:]
-    zzz = ' '*(3-len(STOICH[2][1:])) + STOICH[2][1:]
-
+    # 
     # FIXED LINES TO WRITE
     header = 'THERMO \n'
     sub_header = '   300.000  1500.000  5000.000 \n'
-    L1_part2 = '      C xxxH yyyO zzz     G    300.00   4000.00 1000.00      1\n'
+    L1_part2_uni = '      C   2H   2O   2     G    300.00   4000.00 1000.00      1\n'
+    L1_part2_bim = '      C   1H   1O   1     G    300.00   4000.00 1000.00      1\n'
     L2 = ' 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00    2\n'
     L3 = ' 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00    3\n'
     L4 = ' 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00                   4\n'
     end = 'END'
-    L1_part2_S_i = L1_part2.replace('xxx', xxx)
-    L1_part2_S_i = L1_part2_S_i.replace('yyy', yyy)
-    L1_part2_S_i = L1_part2_S_i.replace('zzz', zzz)
     # SPECIES NAMES
     SPECIES_NAMES = np.copy(SPECIES_SERIES.index)
     # WRITE FILE
@@ -342,27 +336,10 @@ def WRITE_THERM(cwd, STOICH, SPECIES_SERIES, SPECIES_BIMOL_SERIES):
         empty_spaces = 18-len_S_i  # right number of spaces to reach L1_part2
         # check if the species is bimolecular reactant and remove 1 hydrogen
         # if the reaction is self-reaction: divide the stoichiometry by 2
-        if SPECIES_BIMOL_SERIES[S_i] != '' and SPECIES_BIMOL_SERIES[S_i] != S_i:
-            stoich_reac = str(int(STOICH[1][1:])-1)
-            yyy = ' '*(3-len(stoich_reac)) + stoich_reac
-            L1_part2_reac = L1_part2.replace('xxx', xxx)
-            L1_part2_reac = L1_part2_reac.replace('yyy', yyy)
-            L1_part2_reac = L1_part2_reac.replace('zzz', zzz)
-            L1 = S_i + ' '*empty_spaces + L1_part2_reac
-        # for self reactions: divide the stoichiometry by 2
-        elif SPECIES_BIMOL_SERIES[S_i] != '' and SPECIES_BIMOL_SERIES[S_i] == S_i:
-            stoich_reacxB = str(int(int(STOICH[0][1:])/2))
-            stoich_reacyB = str(int(int(STOICH[1][1:])/2))
-            stoich_reaczB = str(int(int(STOICH[2][1:])/2))
-            xxxB = ' '*(3-len(stoich_reacxB)) + stoich_reacxB
-            yyyB = ' '*(3-len(stoich_reacyB)) + stoich_reacyB
-            zzzB = ' '*(3-len(stoich_reaczB)) + stoich_reaczB
-            L1_part2_reac = L1_part2.replace('xxx', xxxB)
-            L1_part2_reac = L1_part2_reac.replace('yyy', yyyB)
-            L1_part2_reac = L1_part2_reac.replace('zzz', zzzB)
-            L1 = S_i + ' '*empty_spaces + L1_part2_reac
+        if SPECIES_BIMOL_SERIES[S_i] != '':
+            L1 = S_i + ' '*empty_spaces + L1_part2_bim
         else:
-            L1 = S_i + ' '*empty_spaces + L1_part2_S_i
+            L1 = S_i + ' '*empty_spaces + L1_part2_uni
         thermo.write(L1)
         thermo.write(L2)
         thermo.write(L3)
@@ -376,8 +353,7 @@ def WRITE_THERM(cwd, STOICH, SPECIES_SERIES, SPECIES_BIMOL_SERIES):
             S_i_last = SPECIES_BIMOL_SERIES[S_i]
             len_S_i = len(S_i_last)   # characters in the species
             empty_spaces = 18-len_S_i  # right number of spaces to reach L1_part2
-            L1 = S_i_last + ' '*empty_spaces + \
-                '      C   0H   1O   0     G    300.00   4000.00 1000.00      1\n'
+            L1 =S_i_last + ' '*empty_spaces + L1_part2_bim
             thermo.write(L1)
             thermo.write(L2)
             thermo.write(L3)

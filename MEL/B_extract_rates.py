@@ -250,9 +250,9 @@ def data_names_CKI(cwd):
     '''
 
     # names of all the primary species
-    species_names = np.array([], dtype='<U16')
+    species_names = np.array([], dtype='<U32')
     # names of the "second" reactant found in bimolecular reaction channels
-    species_names_bimol = np.array([], dtype='<U16')
+    species_names_bimol = np.array([], dtype='<U32')
     # check in the file if you reading the part with all the reactions
     check_reactions = 0
 
@@ -272,11 +272,15 @@ def data_names_CKI(cwd):
                 # ARR_PAR = rest_ofline.split()[-3:]
                 PRODS = ''.join(rest_ofline.split()[:-3])
                 PRODS = PRODS.split('+')
-
                 reacting_species = [REACS, PRODS]
                 # ALLOCATE THE SPECIES INTO THE ARRAYS
                 # if species are not into the array of species: append them
                 for x in reacting_species:
+                    # IF LEN IS 1 AND REACTION IS LIKE 2A=>PRODS OR REACS=>2B: RECOGNIZE SPECIES B
+                    # and add another product
+                    if x[0][0] == '2':
+                        x[0] = x[0][1:]
+                        x.append(x[0])
                     if np.array([x[0] == SP for SP in species_names]).any() != True:
                         species_names = np.append(species_names, x[0])
                         # if the species is bimolecular, also append the second species

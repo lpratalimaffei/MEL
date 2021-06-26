@@ -28,7 +28,6 @@ def run_preproc(cwd, OS_folder):
     rxn_irrev_df = block_to_df(rxn_irrev)
     rxn_irrev = df_to_block(rxn_irrev_df)
     # preserve the only-fw reactions as a separate string block
-
     # define 2 groups:
     # pressure independent reactions
 
@@ -130,8 +129,17 @@ def sort_CKI(rxn_block):
 
             else:
                 # reversible reaction
+                # replace <=> with = for consistency in compilation
+                if '<=>' in rxn:
+                    rxn = rxn.replace('<=>', '=')
                 if 'PLOG' in rxn_block[idx+iline] or 'LOW' in rxn_block[idx+iline]:
                     obj = rxn_rev_PDEP
+                    # if the reaction is reacs=>2B like: rewrite products from B+B to 2B
+                    prods = rxn.strip().split('=')[1].split()[0]
+                    potential_products = prods.split('+')
+                    if len(potential_products) == 2:
+                        if potential_products[0] == potential_products[1]:
+                            rxn = rxn.replace(prods, '2'+potential_products[0])
                     obj.append(rxn)
                 else:
                     # HP lim reaction
@@ -160,7 +168,7 @@ def write_CKI_blocks(filename, element_block, species_block, reaction_block):
         reaction_str += 'END \n'
 
     total_str = element_str + '\n' + species_str + '\n' + reaction_str
-
+    print(total_str)
     mechfile = open(filename, "w")
     mechfile.writelines(total_str)
     mechfile.close()
@@ -285,8 +293,8 @@ def block_to_df(rxn_block):
                 while 'PLOG' in rxn_block[idx+iline]:
                     line2 = rxn_block[idx+iline]
                     line2 = line2.replace('\n', '')
-                    all_params = line2.split()
-                    plog_dct[all_params[2]] = '\t'.join(all_params[3:6])
+                    all_params = line2.replace('/', ' ').split()
+                    plog_dct[all_params[1]] = '\t'.join(all_params[2:5])
                     iline += 1
                     if idx+iline == len(rxn_block):
                         break
