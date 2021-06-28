@@ -10,14 +10,14 @@ def read_pseudospecies(pseudospecies_file):
     '''
     pseudospecies_array = np.genfromtxt(
         pseudospecies_file, delimiter='', dtype=str)
-    pseudospecies_array = np.array(pseudospecies_array, dtype='<U16')
+    pseudospecies_array = np.array(pseudospecies_array, dtype='<U160')
     # set an array of all pseudospecies
     stable_species = []
     # generate pseudospecies series
     try:
         pseudospecies_series = pd.Series(
             pseudospecies_array[:, 1], index=pseudospecies_array[:, 0])
-        pseudospecies_series.index.astype('<U16')
+        pseudospecies_series.index.astype('<U160')
     except IndexError:
         print('error: only 1 pseudospecies provided. Reactivity will be meaningless')
         sys.exit()
@@ -27,11 +27,11 @@ def read_pseudospecies(pseudospecies_file):
             for i in pseudospecies_series.loc[SP].split('+'):
                 stable_species.append(i)
             pseudospecies_series.loc[SP] = np.array(
-                pseudospecies_series.loc[SP].split('+'), dtype='<U16')
+                pseudospecies_series.loc[SP].split('+'), dtype='<U160')
         else:
             stable_species.append(pseudospecies_series.loc[SP])
 
-    stable_species = np.array(stable_species, dtype='<U16')
+    stable_species = np.array(stable_species, dtype='<U160')
     return pseudospecies_series, stable_species
 
 

@@ -214,6 +214,10 @@ class FITTING:
                     k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0, i_prod] = [np.inf]*3
                     comments_MAT[0, i_prod] = 'T RANGE = {T_IN} - {T_FIN} K: too small for fit'.format(
                         T_IN=T_VECT_NEW[0], T_FIN=T_VECT_NEW[-1])
+                except ValueError:
+                    print('fitting unavailable - probably species are not connected')
+                    k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0, i_prod] = [np.inf]*3
+                    comments_MAT[0, i_prod] = 'probably species not connected'
 
                 # print(k_tofit,T_VECT_NEW)
 

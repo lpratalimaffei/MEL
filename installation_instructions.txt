@@ -49,6 +49,9 @@ MEL input_lumping.txt > stdoud.log
 The log file contains a description of the operations currently run by the code
 so that the user knows what the code is doing.
 
+NB: also anaconda installation works on linux (see below). Make sure you
+are using Anaconda Powershell Prompt so you are able to activate the environment
+and also execute other commands from the powershell.
 
 ############################## LINUX USING CONDA #############################
 If you don't have conda installed, install it:

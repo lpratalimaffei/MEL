@@ -38,10 +38,15 @@ def get_OS():
 def get_libpath():
     checkpath = os.path.expanduser('~')+'/.bash_profile'
     if sys.platform == 'darwin' and os.path.exists(checkpath):
+    #if sys.platform == 'darwin' and os.path.exists(checkpath):
         # mac: add libraries
         my_env = subprocess.check_output('source ' +  checkpath + ' && echo $DYLD_LIBRARY_PATH', shell=True)
         my_env = str(my_env)[2:-3]
         exec0 = 'export DYLD_LIBRARY_PATH=' + my_env + '; '
+    #elif sys.platform == 'linux' and os.path.exists(os.path.expanduser('~')+'/.bashrc'):
+    #    my_env = subprocess.check_output('source ' +  os.path.expanduser('~')+'/.bashrc' + ' && echo $LD_LIBRARY_PATH', shell=True)
+    #    my_env = str(my_env)[2:-3]
+    #    exec0 = 'export LD_LIBRARY_PATH=' + my_env + '; '
     else:
         exec0 = ''
 
@@ -276,6 +281,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                         exit()
 
                     toexecute = exec0 + preproc_exe + " --input " + input_preproc + ">" + output_preproc
+                    print(toexecute)
                     print('compiling mech ...'), subprocess.run(toexecute, shell=True)
 
                 ################### WRITE OPENSMOKE INPUT ##################################################
