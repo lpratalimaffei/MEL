@@ -281,7 +281,7 @@ def data_names_CKI(cwd):
                     if x[0][0] == '2':
                         x[0] = x[0][1:]
                         x.append(x[0])
-                    if np.array([x[0] == SP for SP in species_names]).any() != True:
+                    if np.array([x[0] == SP for SP in species_names]).any() != True and np.array([x[0] == SP for SP in species_names_bimol]).any() != True:
                         species_names = np.append(species_names, x[0])
                         # if the species is bimolecular, also append the second species
                         if len(x) == 1:

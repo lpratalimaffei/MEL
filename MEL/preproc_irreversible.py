@@ -38,7 +38,10 @@ def run_preproc(cwd, OS_folder):
     rxn_rev_HPLIM_df = block_to_df(rxn_rev_HPLIM)
     write_CKI_blocks(filename, element_block, species_block, rxn_rev_HPLIM)
     rxn_bw_HPLIM_df = run_extract_fittedkin(cwd, OS_folder)
-
+    # align labels in the dataframes:
+    rxn_rev_HPLIM_df = align_labels(rxn_bw_HPLIM_df, rxn_rev_HPLIM_df)
+    # it's possible that fittedkinetics swaps the product names for bimolcular reactionas
+    print('rev HPlim:', rxn_rev_HPLIM_df)
     rxn_irrev_HPLIM = convert_df_FWBW_to_irrev(
         rxn_rev_HPLIM_df, rxn_bw_HPLIM_df)
 
@@ -47,10 +50,9 @@ def run_preproc(cwd, OS_folder):
     rxn_rev_PDEP_df = block_to_df(rxn_rev_PDEP)
     rxn_bw_PDEP_df = pdep_torev(
         cwd, OS_folder, filename, element_block, species_block, rxn_rev_PDEP_df)
-
+    rxn_rev_PDEP_df = align_labels(rxn_bw_PDEP_df, rxn_rev_PDEP_df)
+    print(rxn_bw_PDEP_df, '\n', rxn_rev_PDEP_df)
     rxn_irrev_PDEP = convert_df_FWBW_to_irrev(rxn_rev_PDEP_df, rxn_bw_PDEP_df)
-    # join all the blocks together
-    print(type(rxn_irrev), type(rxn_irrev_HPLIM), type(rxn_irrev_PDEP))
     blocks_all_irrev = rxn_irrev + rxn_irrev_HPLIM + rxn_irrev_PDEP
 
     # write the final mechanism: preproc_irreversible/kin_irr.CKI
@@ -420,20 +422,20 @@ def pdep_torev(cwd, OS_folder, filename, element_block, species_block, rxn_rev_P
     returns a dataframe with the backward rate constants
     reaction names are UNCHANGED
     '''
-
-    # preallocate dataframe
-    rxn_bw_PDEP_df = pd.DataFrame(index=rxn_rev_PDEP_df.index, columns=rxn_rev_PDEP_df.columns, dtype=object)
-    rxn_bw_PDEP_df[rxn_rev_PDEP_df.columns] = np.array([None, None, None, []], dtype=object)
     # derive the reaction block
     rxn_block_PDEP = df_to_block(rxn_rev_PDEP_df)
     write_CKI_blocks(filename, element_block, species_block, rxn_block_PDEP)
-    # run preprocessor
 
+    # run preprocessor
     rxn_bw_HP_df = run_extract_fittedkin(cwd, OS_folder)
+    rxn_rev_PDEP_df = align_labels(rxn_bw_HP_df, rxn_rev_PDEP_df)
+    # preallocate dataframe for p dependent reactions
+    rxn_bw_PDEP_df = pd.DataFrame(index=rxn_rev_PDEP_df.index, columns=rxn_rev_PDEP_df.columns, dtype=object)
+    rxn_bw_PDEP_df[rxn_rev_PDEP_df.columns] = np.array([None, None, None, []], dtype=object)
 
     # for each reaction: derive pressure dependent backward rate constants
     for rxn in rxn_bw_PDEP_df.index:
-
+        print('\n\n',rxn)
         # different runs for PLOG or TROE: the only differences are
         # the column you look at : PLOG or TROE
         # the N of loops: for TROE, you just have HP and LOW, not the last one
@@ -470,7 +472,6 @@ def pdep_torev(cwd, OS_folder, filename, element_block, species_block, rxn_rev_P
             # rewrite the params
             rxn_bw_PDEP_df.loc[rxn][col][P] = rxn_bw_single_HP_df.loc[rxn]['HP']
 
-        print(rxn, rxn_rev_PDEP_df.loc[rxn][col], rxn_bw_PDEP_df.loc[rxn][col])
         # for duplicate reactions:
 
         if rxn_rev_PDEP_df.loc[rxn]['DUPLICATE']:
@@ -537,9 +538,77 @@ def convert_df_FWBW_to_irrev(rxn_fw_df, rxn_bw_df):
     rxn_irrev_df = rxn_irrev_df.sort_values(by='order')
     # drop the order
     rxn_irrev_df = rxn_irrev_df.drop('order', axis=1)
-    print(rxn_irrev_df)
 
     # turn to block
     rxn_irrev_block = df_to_block(rxn_irrev_df)
 
     return rxn_irrev_block
+
+def align_labels(df_ref, df_toalign):
+    """
+    df_ref: dataframe with reference labels coming from fittedkinetics
+    df_toalign: new dataframe with different labels
+    Function tries to understand if the labels are compatible:
+    A+B=C+D is B+A=D+C, A+B=D+C, B+A=C+D
+    takes reference_df and aligns the df_toalign
+    """
+    
+    labels_ref = list(df_ref.index)
+    labels = list(df_toalign.index)
+    labels_aligned = pd.Series(index=labels)
+    for rxn in labels_ref:
+        # list of alternative notations for reactants and products
+        rcts_all, prds_all = all_possible_rcts_prds(rxn)
+        idx = 0
+        for rxn2 in labels:
+            
+            idx += 1
+            # check if the labels are compatible and assign each label
+            if rxn2 in labels_ref:
+                # if you find the same label: be happy
+                labels_aligned[rxn2] = rxn2
+            else:
+                # check if it is a possible label
+                rcts_all2, prds_all2 = all_possible_rcts_prds(rxn2)
+                check_rcts = any(r in rcts_all for r in rcts_all2)
+                check_prds = any(p in prds_all for p in prds_all2)
+
+                if check_rcts == True and check_prds == True:
+                    labels_aligned[rxn2] = rxn
+
+    # replace the labels in the df_toalign
+    new_index = labels_aligned[labels]
+    cols = df_toalign.columns
+    df_aligned = pd.DataFrame(df_toalign[cols].values, index=new_index, columns=cols)
+    return df_aligned
+
+def all_possible_rcts_prds(rxn):
+    """
+    rxn: string with an unformatted reaction
+    returns rcts_all, prds_all: list of all possible reactants and products
+    -formatted-
+    ex. ['A+B','B+A'], ['A+A','2A']
+    """
+    if ('<=>' in rxn):
+        rxn = rxn.replace('<=>', '=')
+    elif ('=>' in rxn):
+        rxn = rxn.replace('=>', '=')
+    rcts, prds = rxn.split('=')
+    rcts_all = [rcts]
+    prds_all = [prds]     
+
+    if '+' in rcts:
+        r1, r2 = rcts.split('+')
+        rcts_all.append('+'.join([r2.strip(), r1.strip()]))
+        rcts_all.append('+'.join([r1.strip(), r2.strip()]))
+    elif '2' == rcts.strip()[0]: # same products
+        rcts_all.append('+'.join([rcts.strip()[1:], rcts.strip()[1:]]))
+    # do the same for products
+    if '+' in prds:
+        p1, p2 = prds.split('+')
+        prds_all.append('+'.join([p2.strip(), p1.strip()]))
+        prds_all.append('+'.join([p1.strip(), p2.strip()]))
+    elif '2' == prds[0]: # same products
+        prds_all.append('+'.join([prds.strip()[1:], prds.strip()[1:]]))  
+
+    return rcts_all, prds_all
