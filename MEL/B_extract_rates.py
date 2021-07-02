@@ -281,18 +281,33 @@ def data_names_CKI(cwd):
                     if x[0][0] == '2':
                         x[0] = x[0][1:]
                         x.append(x[0])
-                    if np.array([x[0] == SP for SP in species_names]).any() != True and np.array([x[0] == SP for SP in species_names_bimol]).any() != True:
+                    
+                    if len(x) == 1 and np.array([x[0] == SP for SP in species_names]).any() != True:
                         species_names = np.append(species_names, x[0])
-                        # if the species is bimolecular, also append the second species
-                        if len(x) == 1:
-                            species_names_bimol = np.append(
-                                species_names_bimol, '')
-                        elif len(x) == 2:
-                            species_names_bimol = np.append(
-                                species_names_bimol, x[1])
-                        else:
-                            raise ValueError(
-                                'Wrong number of elements when reading the reaction: line ' + line)
+                        species_names_bimol = np.append(
+                            species_names_bimol, '')
+
+                    elif len(x) == 2:
+                        r1 = x[0]
+                        r2 = x[1]
+                        # check that the combination is not present
+                        flag = 0
+                        for i in np.arange(0, len(species_names)):
+                            s1 = species_names[i]
+                            s2 = species_names_bimol[i]
+                            # set flag to 1 if you find the same set of species
+                            if (r1==s1 and r2==s2) or (r1==s2 and r2==s1):
+                                flag = 1
+
+                        if flag == 0:
+                            species_names = np.append(species_names, r1)
+                            species_names_bimol = np.append(species_names_bimol, r2)
+
+                    if len(x) > 2:
+                        print(
+                            'Wrong number of elements when reading the reaction: line ' + line)
+                        print('exiting now..')
+                        sys.exit()
 
     return species_names, species_names_bimol
 
