@@ -11,10 +11,10 @@ from time import perf_counter as clock
 from . import license_message
 from . import main_flow as sim
 from . import preproc_irreversible as preproc_irr
-from . import A_read_input as readinp
-from . import B_extract_rates as extr_rates
-from . import C_preprocessing as preproc
-from . import H_SET_LOOPS_FLD as set_sim
+from . import read_input as readinp
+from . import extract_rates as extr_rates
+from . import preprocessing as preproc
+from . import set_jobs as set_sim
 
 
 def main():

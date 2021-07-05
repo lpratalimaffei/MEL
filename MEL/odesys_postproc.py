@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import shutil
-from . import C_preprocessing as preproc
+from . import preprocessing as preproc
 
 class ODE_POSTPROC:
        '''
