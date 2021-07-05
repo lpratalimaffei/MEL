@@ -75,7 +75,6 @@ def BRANCHING_LUMPEDREAC(cwd, REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT
         mask = np.zeros(rand_comp.shape)
         rr_idx = 0
         for rr in REAC:
-            # print(mask,'\n',T_VECT_rr_len,'\n',rr_idx,'\n',rr)
             mask[:T_VECT_rr_len[rr], rr_idx] = 1
             rr_idx += 1
         rand_comp = rand_comp*mask  # multiply elements
@@ -94,7 +93,6 @@ def BRANCHING_LUMPEDREAC(cwd, REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT
         # generate a dataframe with the info you read
         BR_L_REAC = pd.DataFrame(
             BR_L_Pi[:, 1:], index=BR_L_Pi[:, 0], columns=labels[1:])
-        # print(BR_L_Pi[:,0],print(labels[1:]))
         # 1. check that the names in the labels and REAC correspond, independent of the order
         if np.array([[RR == REAC for RR in BR_L_REAC.columns][ii].any() for ii in range(0, len(BR_L_REAC.columns))]).all() != True:
             raise ValueError(
@@ -112,7 +110,7 @@ def BRANCHING_LUMPEDREAC(cwd, REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT
     return BR_L_REAC, T_VECT
 
 
-def COMPARE_BRANCHINGS(BF_INPUT, BF_OUTPUT):
+def COMPARE_BRANCHINGS(BF_INPUT, BF_OUTPUT, verbose=None):
     '''
     Takes BF of input and output species
     Compares them and gets the maximum value of their difference (for the whole set)
@@ -129,7 +127,8 @@ def COMPARE_BRANCHINGS(BF_INPUT, BF_OUTPUT):
     # BF_INPUT.values,BF_OUTPUT.values[:,1:]
     # get the difference
     delta_BF = abs(BF_INPUT_vals-BF_OUTPUT_vals)
-    print(delta_BF)
+    if verbose:
+        print(delta_BF)
     max_deltaBF = np.amax(delta_BF)
 
     return max_deltaBF
@@ -298,10 +297,9 @@ class WRITE_MECH_CKI:
             np.savetxt(kin, data_final, delimiter='\t', fmt='%s')
 
 
-def WRITE_THERM(cwd, STOICH, SPECIES_SERIES, SPECIES_BIMOL_SERIES):
+def WRITE_THERM(cwd, SPECIES_SERIES, SPECIES_BIMOL_SERIES):
     '''
     In this function: write the fictitious thermodynamics in therm.txt
-    input: STOICH provides the stoichiometry of the inlet species with carbon, hydrogen and oxygen
     THIS FUNCTION IS NOT IN THE CLASS WRITE_MECH_CKI because it does not require the rates
     '''
     # 
@@ -334,8 +332,6 @@ def WRITE_THERM(cwd, STOICH, SPECIES_SERIES, SPECIES_BIMOL_SERIES):
     for S_i in SPECIES_NAMES:
         len_S_i = len(S_i)   # characters in the species
         empty_spaces = 18-len_S_i  # right number of spaces to reach L1_part2
-        # check if the species is bimolecular reactant and remove 1 hydrogen
-        # if the reaction is self-reaction: divide the stoichiometry by 2
         if SPECIES_BIMOL_SERIES[S_i] != '':
             L1 = S_i + ' '*empty_spaces + L1_part2_bim
         else:

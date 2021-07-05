@@ -57,9 +57,6 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
     Perform simulations for 1 reacting pseudospecies at all T,P provided
     '''
     
-    # Save times as dataframes for every pressure; the first will be a dictionary
-    Dt_names_Pi = ['ode solving', 'time Pi', 'plotting and saving figs']
-
     ############### DERIVE VARIABLES REQUIRED FOR CODE FLOW #######################################
 
     OS_folder = input_par['opensmoke_folder']
@@ -68,8 +65,8 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
     T_VECT = input_par['T_vect']
     T_VECT_SKIP = input_par['T_skip']
     UNITS_BIMOL = input_par['units_bimol']
-    STOICH = input_par['stoich']
     CUTOFF = input_par['cutoff']
+    VERBOSE = input_par['verbose']
 
     ISOM_EQUIL = input_par_jobtype['isom_equil']
     PRODSINKS = input_par_jobtype['Prods_sinks']
@@ -123,7 +120,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
     # PREPROCESSING: WRITE THE THERMODYNAMIC FILE
     if input_type == 'MESS':
         print('writing therm.txt for OS preprocessor ...'), preproc.WRITE_THERM(
-            os.path.join(cwd, 'mech_tocompile'), STOICH, SPECIES_SERIES, SPECIES_BIMOL_SERIES)
+            os.path.join(cwd, 'mech_tocompile'), SPECIES_SERIES, SPECIES_BIMOL_SERIES)
     elif input_type == 'CKI':
         print('copy therm.txt to preproc folder ...')
         shutil.copy(os.path.join(cwd, 'inp', 'therm.txt'),
@@ -154,7 +151,10 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
     postproc = odesys.ODE_POSTPROC(cwd)
 
     # PREALLOCATIONS
-    Dt_Pi = np.zeros((len(P_VECT), len(Dt_names_Pi)))
+    # create dataframe with the times and the description and print it to excel
+    times_0 = np.zeros((len(P_VECT)+1, 8))
+    times = pd.DataFrame(times_0, index=np.append(P_VECT, 0),
+    columns= ['Pi', 'preproc', 'ode', 'write', 'fit', 'tot Pi', 'plots', 'lumpedsim'], dtype=float)
     Pi = 0
     # dictionary for each pressure
     profiles_P = dict.fromkeys(list(P_VECT))
@@ -167,6 +167,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
 
     for P in P_VECT:
 
+        times['Pi'][P] = P
         print('processing: P = ' + str(P) + ' atm ... ')
         ticP = clock()
 
@@ -235,7 +236,9 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
         if isinstance(REAC, np.ndarray):
             profiles_P_reac[P] = dict.fromkeys(list(T_VECT))
 
-        # todo: for the composition_seleciton: iterate until BFs converge or until you reach max number of iterations
+        toc = clock()
+        times['preproc'][P] += toc-ticP
+        # todo: for the composition_selection: iterate until BFs converge or until you reach max number of iterations
         # at the beginning of each iteration: set BR_L_REAC = BF_OUTPUT
         # at the end: copy the selected BF to lumping/BF_INPUT and validation/BF_INPUT
         flag_BFiter = 0
@@ -249,6 +252,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 print('processing: T = ' + str(T) + ' K ... ')
                 Ti += 1
 
+                tic = clock()
                 # make the folder of the output to optiSMOKE++
                 postproc.MAKE_FOLDERS(fld, P, T, REACLUMPED)
 
@@ -270,7 +274,8 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                     k_to_CKI = preproc.WRITE_MECH_CKI(k_ij_TP_OK, np.zeros(k_ij_TP_OK.shape), np.zeros(
                         k_ij_TP_OK.shape), np.zeros(k_ij_TP_OK.shape, dtype=str), SPECIES_SERIES, i_REAC, i_PRODS, SPECIES_BIMOL)
 
-                    print('writing kin.txt for OS preprocessor ...')
+                    if VERBOSE:
+                        print('writing kin.txt for OS preprocessor ...')
                     # ISOM_EQUIL is put here: if you want to study the isomer equilibrium, all the other reactions are not copied
                     CKI_lines = k_to_CKI.MAKE_CKI(PRODSINKS, ISOM_EQUIL)
                     try:
@@ -281,8 +286,9 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                         exit()
 
                     toexecute = exec0 + preproc_exe + " --input " + input_preproc + ">" + output_preproc
-                    print(toexecute)
-                    print('compiling mech ...'), subprocess.run(toexecute, shell=True)
+                    if VERBOSE:
+                        print(toexecute), print('compiling mech ...')
+                    subprocess.run(toexecute, shell=True)
 
                 ################### WRITE OPENSMOKE INPUT ##################################################
                 try:
@@ -291,19 +297,27 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 except RuntimeError as e:
                     print(str(e))
                     exit()
-                print('writing new input ...'), OS_write.w_input_OS()
+                if VERBOSE:
+                    print('writing new input ...')
+                OS_write.w_input_OS()
+                
+                toc = clock()
+                times['preproc'][P] += toc-tic
 
                 ################## SOLUTION OF THE ODE SYSTEM ##########################################
                 # CALL OPENSMOKE
                 tic = clock()
 
                 toexecute = exec0 + osbatch_exe + " --input input_OS.dic > OS_output.txt"
-                print('solving OS Batch Reactor ...'), subprocess.run(toexecute, shell=True)
+                if VERBOSE:
+                    print('solving OS Batch Reactor ...')
+                subprocess.run(toexecute, shell=True)
 
                 toc = clock()
-                Dt_Pi[Pi, 0] = toc-tic
+                times['ode'][P] += toc-tic
 
                 ##################### EXTRACT THE OUTPUT ###############################################
+                tic = clock()
                 try:
                     tW_DF, PV = postproc.EXTRACT_PROFILES(
                         SPECIES, i_REAC, N_INIT_REAC, SPECIES_BIMOL_SERIES, ISOM_EQUIL, CUTOFF)
@@ -311,7 +325,8 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                     print(str(e))
 
                 # process the output: rewrite tW_DF if there are lumped species
-                print('Rewriting profiles for lumped species ...')
+                if VERBOSE:
+                    print('Rewriting profiles for lumped species ...')
                 tW_DF, REAC_L, i_REAC_L, SPECIES_L, SPECIES_SERIES_L, SPECIES_BIMOL_SERIES_L, PRODS_L = postproc.LUMP_PROFILES(
                     PRODS, PRODSLUMPED)
                 # SAVE PROFILES IN A DICTIONARY FOR LATER POSTPROCESSING AND PLOTTING
@@ -319,9 +334,13 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 if isinstance(REAC, np.ndarray):
                     tW_DF_reac = postproc.PROFILES_REAC_COMPOSITION()
                     profiles_P_reac[P][T] = tW_DF_reac
+                toc = clock()
+
+                times['write'][P] += toc-tic
                 # IF YOU HAVE LUMPING (I.E.: PRODSINKS=1)
                 # LINEAR FIT OF THE PROFILES OBTAINED: GUESS FOR SUCCESSIVE optiSMOKE++
                 if PRODSINKS == 1:
+                    tic = clock()
                     # if it is the first temperature: call the class
                     # generate dataframe at every T,P to allocate the fits of k_ij
                     if Ti == 1:
@@ -329,45 +348,59 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                     # then do the fits
                     k_prods_T, fit_error_T = kfit_P.fit_profiles(
                         tW_DF, i_REAC_L, SPECIES_SERIES_L, T, PV, SPECIES_BIMOL_SERIES_L, 1)
+                    toc = clock()
+                    times['fit'][P] += toc-tic
+
                 # I think I need to do something with this fit_error_T, save it somewhere
                 # maybe I can do a 3D plot with the fitting error at a certain T,P or with the difference between the sum(ki) and k of the reactant
                 # and finally the plot with the branching among different channels with the lumped rates
-
+                tic = clock()
                 # WRITE OUTPUT PROFILES TO OPTISMOKE
-                print('Writing profiles for Optismoke ...'), postproc.WRITE_PROFILES(
-                    PRODS_L)
+                if VERBOSE:
+                    print('Writing profiles for Optismoke ...')
+                postproc.WRITE_PROFILES(
+                    PRODS_L, verbose=VERBOSE)
 
                 # GENERATE THE NEW OS INPUT AND WRITE IT TO THE FOLDERS
-                print(
-                    'Generate OS input for the lumped mech and copy to the folder'), postproc.WRITE_NEW_OSINPUT(1)
-
+                if VERBOSE:
+                    print('Generate OS input for the lumped mech and copy to the folder')
+                postproc.WRITE_NEW_OSINPUT(1)
+                toc = clock()
+                times['write'][P] += toc-tic
             # BF processing before getting to the following cycle; fitting if needed
 
             # Return the dataframes of the fits of the rate constants
             if PRODSINKS == 1:
                 print('Fitting the arrhenius profiles ...')
+                tic = clock()
                 # write the original rate constants in the corresponding folder
                 out_fld = os.path.join(fld, str(P) + 'atm')
-                kfit_P.write_originalk(out_fld)
+                kfit_P.write_originalk(out_fld, verbose=VERBOSE)
                 # fit
                 rates_P_CKI = kfit_P.fits_lumped_k(
                     cwd, P, SPECIES_BIMOL_SERIES_L)
                 arrfit_P[P] = rates_P_CKI
 
+                toc = clock()
+                times['fit'][P] += toc-tic
+
             if len(REAC) != len(REACLUMPED):
+                tic = clock()
                 print(
                     'writing branchings of lumped reactant at {} atm ...'.format(str(P)))
                 BF_OUTPUT = postproc.WRITE_BRANCHINGS_REACS()
+                toc = clock()
+                times['write'][P] += toc-tic
 
             # FOR COMPOSITION_SELECTION: COMPARE THE BF OBTAINED
 
             if jobtype == 'composition_selection':
                 # the reactant is lumped; compare the BFs obtained
-                max_deltaBF = preproc.COMPARE_BRANCHINGS(BR_L_REAC, BF_OUTPUT)
+                max_deltaBF = preproc.COMPARE_BRANCHINGS(BR_L_REAC, BF_OUTPUT, verbose=VERBOSE)
                 print('iteration: {} ; max_deltaBF: {} '.format(it, max_deltaBF))
 
                 if max_deltaBF < BF_tol or it > maxiter:
-
+                    tic = clock()
                     # write the products BF
                     if len(PRODS) != len(PRODSLUMPED):
                         print(
@@ -393,6 +426,8 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                     shutil.copy(file_tocopy, os.path.join(
                         BF_lumping_path, str(P)+'atm.txt'))
 
+                    toc = clock()
+                    times['write'][P] += toc-tic
                 else:
                     # continue with the while loop
                     BR_L_REAC = BF_OUTPUT.iloc[:, 1:]
@@ -401,6 +436,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
             else:
                 # ALL OTHER SIMULATION TYPES: ONLY 1 CYCLE REQUIRED; also write products BF
                 # Write branchings to the lumped products
+                tic = clock()
                 if len(PRODS) != len(PRODSLUMPED):
                     print(
                         'writing branchings of lumped products at {} atm ...'.format(str(P)))
@@ -441,24 +477,30 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                         BF_comp_sel, str(P)+'atm.txt'))
 
                 flag_BFiter = 1
+                toc = clock()
+                times['write'][P] += toc-tic
 
         tocP = clock()
 
-        Dt_Pi[Pi, 1] = tocP-ticP
+        times['tot Pi'][P] += tocP-ticP
         # update Pi
         Pi += 1
     # write the pathways to the experimental datasets, the final mechanism, and the thermodynamic file
     print('Writing the list of pathways to experimental data ...'), postproc.WRITE_FINAL_PATHS()
     if PRODSINKS == 1:
+        tic = clock()
         print('Writing Arrhenius fits in PLOG form ...'), kfit_P.WRITE_PLOG_FITS(
             arrfit_P, P_VECT, fld)
         # write the thermodynamic file
-        preproc.WRITE_THERM(fld, STOICH, SPECIES_SERIES_L,
+        preproc.WRITE_THERM(fld, SPECIES_SERIES_L,
                             SPECIES_BIMOL_SERIES_L)
+        toc = clock()
+        times['write'][0] += toc-tic
 
     ############### IN CASE YOU HAVE PLOT_CMP : PERFORM SIMULATIONS WITH THE LUMPED or OPTIMIZED MECHANISM #############
     profiles_P_all = {'detailed': profiles_P}
     i_reac_all = {'detailed': i_REAC_L}
+    tic = clock()
     # derive the profiles
     if PLOT_CMP == 'YES' and jobtype == 'lumping':
         plt_cmp = prof_CKImech.PROFILES_FROM_CKI(cwd, fld, OS_folder)
@@ -491,7 +533,8 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
         profiles_P_opt2 = plt_cmp2.DERIVE_PROFILES(
             fld, P_VECT, T_VECT, SPECIES_L, PRODS_L, i_REAC_L, N_INIT_REAC, SPECIES_BIMOL_SERIES_L, ISOM_EQUIL, CUTOFF)
         profiles_P_all.update({'opt2': profiles_P_opt2})
-
+    toc = clock()
+    times['lumpedsim'][0] += toc-tic
     ###################### PLOTS #######################################################
     print('Plotting ...')
     # generate the class and the folder "PLOTS"
@@ -513,11 +556,14 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
             plots_callclass.plot_data_reac(
                 profiles_P_reac[P], REAC, P, N_INIT_REAC)
         toc = clock()
-        Dt_Pi[Pi, 2] = toc-tic
+        times['plots'][P] = toc-tic
         Pi += 1
 
     ##################### SAVE THE TIMES REQUIRED TO PERFORM EVERY STEP ##################
 
-    # create series with the times and the description and print it to excel
-    times_Pi = pd.DataFrame(Dt_Pi, index=list(P_VECT), columns=Dt_names_Pi)
-    # times_Pi.to_excel('clock_Pi.xlsx',sheet_name='times_Pi')
+    # save times to txt
+    header_times = '\t\t'.join(list(times.columns))
+    np.savetxt(os.path.join(fld, 'clock.txt'), times.values, delimiter='\t', header=header_times, fmt='%1.2e')
+
+
+

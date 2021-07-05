@@ -80,7 +80,6 @@ class FITTING:
         W = W*Pprofile*Vprofile/8.314/T
         dWi = (W[2:, :]-W[0:-2, :])/(t[2:]-t[0:-2])
         # bimol reaction: multiply by x_ABU*P/RT (x_ABU approximated with N_INIT)
-        # print(SPECIES_BIMOL_SERIES,SPECIES_SERIES)
         if SPECIES_BIMOL_SERIES.iloc[i_REAC] != '' and SPECIES_BIMOL_SERIES.iloc[i_REAC] != SPECIES_SERIES.index[i_REAC]:
             # the W[i_REAC] is already xi^2*Ntot, so I need to multiply it again by Ntot
             Wreac_fordWi = W[1:-1, i_REAC]*PV[1:-1, 0]*PV[1:-1, 1]/8.314/T
@@ -92,7 +91,6 @@ class FITTING:
             Wreac_fordWi = W[1:-1, i_REAC]
         Wreac_fordWi = Wreac_fordWi[:, np.newaxis]
         # delete nan or inf values of dWi
-        # print(dWi)
         index_nan = np.where(np.isnan(dWi))[0]  # rows corresponding to nan
         index_inf = np.where(np.isinf(dWi))[0]  # rows corresponding to inf
         index_remove = np.concatenate(
@@ -107,7 +105,6 @@ class FITTING:
                 c = 2
             else:
                 c = 1
-            # print(c*Wreac_fordWi,dWi[:,Pr_i_index])
             # alternative:
             model_np = np.linalg.lstsq(
                 c*Wreac_fordWi, dWi[:, Pr_i_index], rcond=None)
@@ -140,14 +137,14 @@ class FITTING:
             model_reac.coef_[0], fiterr)
 
         # return the quality of the fits in the comment format
-        # print(self.data_P_fits.loc[T][self.PRODS],self.data_P_R2.loc[T][self.PRODS])
         # these are normalized because they are used to perform simulaions
         return self.data_P_fits.loc[T][self.PRODS], self.data_P_R2.loc[T][self.PRODS]
 
-    def write_originalk(self, out_fld):
+    def write_originalk(self, out_fld, verbose=None):
 
-        # print(self.data_P_fits)
-        # print(self.data_P_fits_wERR)
+        if verbose:
+            print(self.data_P_fits)
+            print(self.data_P_fits_wERR)
         # Save the profiles in the appropriate folder
         head = self.data_P_fits.columns
         head = np.append('T[K]', head)
@@ -195,7 +192,7 @@ class FITTING:
             # rows corresponding to small values of k
             index_ovf = np.where(k_tofit < 1e-90)[0]
             # fit and store the values in the matrices
-            # print(index_ovf)
+
             if len(index_ovf) == 0:
                 k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0,
                                                                 i_prod], R2adj = arrhenius_fit(self.T_VECT, k_tofit)
@@ -218,8 +215,6 @@ class FITTING:
                     print('fitting unavailable - probably species are not connected')
                     k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0, i_prod] = [np.inf]*3
                     comments_MAT[0, i_prod] = 'probably species not connected'
-
-                # print(k_tofit,T_VECT_NEW)
 
    # at this point, call the class WRITE_MECH_CKI from the C_preprocessing module and write the new mech
         # generate the DataFrame with the lines of the mechanism
@@ -300,6 +295,5 @@ class FITTING:
                 plog_fits_array = np.concatenate(
                     (plog_fits_array, DF_reac.values))
 
-        # print(plog_fits_array)
         # write the output
         self.new_k_to_CKI.WRITE_CKI(cwd, plog_fits_array)

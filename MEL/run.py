@@ -6,15 +6,16 @@ executes the jobs of input_lumping.txt and generates folders with the output
 import os
 import sys
 import shutil
+import numpy as np
 import pandas as pd
 from time import perf_counter as clock
 from . import license_message
+from . import main_flow as sim
+from . import preproc_irreversible as preproc_irr
 from . import A_read_input as readinp
 from . import B_extract_rates as extr_rates
 from . import C_preprocessing as preproc
-from . import main_flow as sim
 from . import H_SET_LOOPS_FLD as set_sim
-from . import preproc_irreversible as preproc_irr
 
 
 def main():
@@ -70,9 +71,8 @@ def main():
         sys.exit()
 
     # create dataframe where to store times for each simulation
-    tictoc = pd.Series(index=job_list.keys())
-    tictoc['input reading'] = toc_inpread-tic_inpread
-    tictoc['mech reading'] = toc_mechread-tic_mechread
+    tictoc = 'input reading : \t\t {:1.2e} \n'.format(toc_inpread-tic_inpread)
+    tictoc += 'mech reading : \t\t {:1.2e} \n'.format(toc_mechread-tic_mechread)
 
     ################ loops over each job list ##########################
     for key, value in job_list.items():
@@ -101,11 +101,11 @@ def main():
         input_par_jobtype = inp_instr.set_inputparam_job(jobtype)
         # set iterative operations for each type of simulations
         sim_DF = set_sim.set_simul_loop(cwd, jobtype, job_subdict, mech_dict)
-        print(sim_DF)
+        
         # iterate over the selected set of species
         for i in sim_DF.index:
             sim_series = sim_DF.loc[i]
-
+            tic = clock()
             # check if folder exists, otherwise create it
             YE_NO = set_sim.setfolder(sim_series['fld'])
             # create the mechanism folder and copy the input preprocessor
@@ -130,7 +130,11 @@ def main():
                 os.remove(os.path.join(cwd, 'input_OS.dic'))
 
             elif YE_NO == 0 and jobtype == 'preproc_irreversible':
-                preproc_irr.run_preproc(cwd, input_par['opensmoke_folder'])
+                preproc_irr.run_preproc(cwd, input_par['opensmoke_folder'], verbose=input_par['verbose'])
+
+            toc = clock()
+            # save time
+            tictoc += '{} - {} : \t\t {:1.2e} \n'.format(jobtype, sim_series['REAC'], toc-tic)    
 
         # for lumping: derive the full lumped mechanism from the submechs in each subfolder
         if jobtype == 'lumping' and key != 'single_simulation':
@@ -145,6 +149,8 @@ def main():
                 lumpedmech_fld, 'therm.txt'))
             # write kinetics
             preproc.COMBINE_CKI(lumpedmech_fld, fld_list)
+
+    np.savetxt(os.path.join(cwd, 'clock.txt'), [tictoc], fmt='%s')
 
     print('Done! press enter to exit :) \n')
 

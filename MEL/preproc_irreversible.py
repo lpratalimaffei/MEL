@@ -9,7 +9,7 @@ from . import main_flow
 from . import C_preprocessing as preproc
 
 
-def run_preproc(cwd, OS_folder):
+def run_preproc(cwd, OS_folder, verbose=None):
     '''
     preprocesses CKI input mechanism and re-writes it as mech with only fw reactions
     writes the bw reactions directly below the fw
@@ -40,8 +40,9 @@ def run_preproc(cwd, OS_folder):
     rxn_bw_HPLIM_df = run_extract_fittedkin(cwd, OS_folder)
     # align labels in the dataframes:
     rxn_rev_HPLIM_df = align_labels(rxn_bw_HPLIM_df, rxn_rev_HPLIM_df)
-    # it's possible that fittedkinetics swaps the product names for bimolcular reactionas
-    print('rev HPlim:', rxn_rev_HPLIM_df)
+    # it's possible that fittedkinetics swaps the product names for bimolcular reactions
+    if verbose:
+        print('rev HPlim:', rxn_rev_HPLIM_df)
     rxn_irrev_HPLIM = convert_df_FWBW_to_irrev(
         rxn_rev_HPLIM_df, rxn_bw_HPLIM_df)
 
@@ -51,7 +52,8 @@ def run_preproc(cwd, OS_folder):
     rxn_bw_PDEP_df = pdep_torev(
         cwd, OS_folder, filename, element_block, species_block, rxn_rev_PDEP_df)
     rxn_rev_PDEP_df = align_labels(rxn_bw_PDEP_df, rxn_rev_PDEP_df)
-    print(rxn_bw_PDEP_df, '\n', rxn_rev_PDEP_df)
+    if verbose:
+        print(rxn_bw_PDEP_df, '\n', rxn_rev_PDEP_df)
     rxn_irrev_PDEP = convert_df_FWBW_to_irrev(rxn_rev_PDEP_df, rxn_bw_PDEP_df)
     blocks_all_irrev = rxn_irrev + rxn_irrev_HPLIM + rxn_irrev_PDEP
 
@@ -170,7 +172,6 @@ def write_CKI_blocks(filename, element_block, species_block, reaction_block):
         reaction_str += 'END \n'
 
     total_str = element_str + '\n' + species_str + '\n' + reaction_str
-    print(total_str)
     mechfile = open(filename, "w")
     mechfile.writelines(total_str)
     mechfile.close()
@@ -435,7 +436,6 @@ def pdep_torev(cwd, OS_folder, filename, element_block, species_block, rxn_rev_P
 
     # for each reaction: derive pressure dependent backward rate constants
     for rxn in rxn_bw_PDEP_df.index:
-        print('\n\n',rxn)
         # different runs for PLOG or TROE: the only differences are
         # the column you look at : PLOG or TROE
         # the N of loops: for TROE, you just have HP and LOW, not the last one

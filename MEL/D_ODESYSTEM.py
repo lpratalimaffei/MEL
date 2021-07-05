@@ -20,7 +20,6 @@ class ODE_POSTPROC:
               Indicates the path where to store the output. 
               It can be called either at the beginning of the main or at the first iteration
               '''
-              # the folder is identified by the stoichiometry so as to identify the PES univocally
               self.cwd = cwd
               # preallocate the list of pathways to the experimental datasets you will generate.
               # the paths to the OS input correspond to the datasets.
@@ -310,7 +309,7 @@ class ODE_POSTPROC:
 
               return tW_DF,self.REACNAME,i_REAC_L,SPECIES_L,SPECIES_SERIES_L,SPECIES_BIMOL_SERIES_L,PRODS_L 
 
-       def WRITE_PROFILES(self,PRODS):
+       def WRITE_PROFILES(self, PRODS, verbose=None):
               '''
               Writes single files in Output_to_optiSMOKE/P_reac/T
               With the profile of each species
@@ -324,8 +323,9 @@ class ODE_POSTPROC:
               exp_dataset = np.zeros((np.shape(self.t)[0],3*len(indices_R_prods)))
               exp_dataset[:,0::3] = self.t                            # first column with the time
               # if you have only 1 species to write:
-              print(self.W)
-              print(indices_R_prods)
+              if verbose:
+                     print(self.W)
+                     print(indices_R_prods)
               exp_dataset[:,1::3] = self.W[indices_R_prods]
               exp_dataset[:,2::3] = 0.1*np.ones(self.t.shape)         # third column with the error
               # Write the profiles ONLY FOR THE REACTANT AND THE LUMPED PRODUCTS
@@ -345,7 +345,7 @@ class ODE_POSTPROC:
               self.path_to_Exp_Datasets.append(os.path.join(str(self.P) + 'atm', str(self.T) + 'K', str(self.T) + '.txt'))
               self.path_to_OS_inputs.append(os.path.join(str(self.P) + 'atm', str(self.T) + 'K', 'input_OS.dic'))
  
-       def WRITE_BRANCHINGS_PRODS(self,PRODS):
+       def WRITE_BRANCHINGS_PRODS(self, PRODS):
               '''
               This method writes the profiles of the lumped products in the folder "Branchings"
               '''
