@@ -10,13 +10,13 @@ from time import perf_counter as clock
 # subprocess.call('Run.bat',stdout=subprocess.DEVNULL)
 
 # import custom modules
-from . import B_extract_rates as extr_rates
-from . import C_preprocessing as preproc
+from . import extract_rates as extr_rates
+from . import preprocessing as preproc
 # I call the function without the need of pre-pending anything
-from . import D_ODESYSTEM as odesys
-from . import E_PLOTTING as mine_plt
-from . import F_FITS as fitall
-from . import G_PROFILES as prof_CKImech
+from . import odesys_postproc as odesys
+from . import plotting as mine_plt
+from . import fitting as fitall
+from . import lumpedprofiles as prof_CKImech
 
 def get_OS():
     if os.name == 'nt':
