@@ -1,9 +1,9 @@
-import shutil
 import os
 import subprocess
+import shutil
+import numpy as np
 from . import main_flow
 from . import D_ODESYSTEM as odesys
-import numpy as np
 
 class PROFILES_FROM_CKI:
     def __init__(self,cwd,path,OS_folder):

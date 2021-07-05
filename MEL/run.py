@@ -7,7 +7,6 @@ import os
 import sys
 import shutil
 import numpy as np
-import pandas as pd
 from time import perf_counter as clock
 from . import license_message
 from . import main_flow as sim

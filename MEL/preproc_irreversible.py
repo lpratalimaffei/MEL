@@ -1,13 +1,10 @@
-import numpy as np
 import os
-import pandas as pd
 import copy
-import re
 import shutil
 import subprocess
+import numpy as np
+import pandas as pd
 from . import main_flow
-from . import C_preprocessing as preproc
-
 
 def run_preproc(cwd, OS_folder, verbose=None):
     '''
