@@ -98,7 +98,6 @@ def data_names_mess(cwd):
     species_names = np.append(species_names_unimol, species_names_bimol)
     species_names_frag2 = np.append(
         species_names_unimol_frag2, species_names_bimol_frag2)
-    print(species_names, species_names_frag2, '\n')
     # check that bimol fragments have different names
     if len(list(set(species_names_bimol_frag2))) != len(list(species_names_bimol_frag2)):
         print('*Warning: some bimol fragments share the same names. check that they are isomers')
@@ -127,7 +126,6 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
             if ((check_list == 1) and (check_P_curr < check_P)):
                 # add the check on 'Pressure' in case the values of temperature and pressure are accidentally the same
                 if any(line.find(T) != -1 for T in np.array(T_LIST, dtype=str)) and (line.find('Pressure') == -1):
-                    # print(line)
                     check_P_curr += 1
                     rates = [x.strip() for x in line.split()]
                     # replace '***' values with 0

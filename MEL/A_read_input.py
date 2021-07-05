@@ -103,16 +103,19 @@ class READ_INPUT:
                             if line.find('units_bimol') != -1:
                                 self.units_bimol = line.split()[2]
 
-                            if line.find('Stoichiometry ') != -1:
-                                line_stoich = re.split('\[|\]', line)[1]
-                                self.stoich = line_stoich.split()
-
                             if line.find('cutoff') != -1:
                                 line_cutoff = line.split()[2]
                                 lower_cutoff = re.split('-', line_cutoff)[0]
                                 upper_cutoff = re.split('-', line_cutoff)[1]
                                 self.cutoff = np.array(
                                     [lower_cutoff, upper_cutoff], dtype=np.float32)
+
+                            if line.find('verboseoutput') != -1:
+                                verbose = line.split()[2]
+                                if verbose == 'True':
+                                    self.verbose = True
+                                else:
+                                    self.verbose = None
 
                             if line.find('end') != -1:
                                 readinput = 0
@@ -397,11 +400,14 @@ class READ_INPUT:
             if self.inp_type == 'MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
                 self.units_bimol = 'molec'
 
+            # if verboseoutput is missing: set to None
+            if not hasattr(self, 'verbose'):
+                self.verbose = None
             # input_parameters dictionary
             keys_inputpar = ['opensmoke_folder', 'mech_type', 'P_vect',
-                             'T_vect', 'T_skip', 'units_bimol', 'stoich', 'cutoff']
+                             'T_vect', 'T_skip', 'units_bimol', 'cutoff', 'verbose']
             values_inputpar = [self.OS_folder, self.inp_type, self.Pvect,
-                               self.Tvect, Tvect_skip, self.units_bimol, self.stoich, self.cutoff]
+                               self.Tvect, Tvect_skip, self.units_bimol, self.cutoff, self.verbose]
             input_parameters = dict(zip(keys_inputpar, values_inputpar))
 
             return input_parameters, job_list
@@ -465,17 +471,6 @@ class READ_INPUT:
 
             if self.units_bimol != 'molec' and self.units_bimol != 'mol':
                 error_list = error_list + '\nUnits for bimolecular reactions wrong or not defined '
-
-        # check that the stoichiometry is written correctly
-        if self.stoich[0][0] != 'C' or self.stoich[1][0] != 'H' or self.stoich[2][0] != 'O':
-            error_list = error_list + \
-                '\nThe order of the stoichiometry is incorrect: please define C,H,O '
-        try:
-            int(self.stoich[0][1:]) + \
-                int(self.stoich[1][1:]) + int(self.stoich[2][1:])
-        except:
-            error_list = error_list + \
-                '\nThe stoichiometry coefficients cannot be converted to integers '
 
         # check that the cutoff is between 0 and 1 and that the lower cutoff is higher
         if self.cutoff[0] > self.cutoff[1]:
