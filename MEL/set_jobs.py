@@ -1,9 +1,8 @@
-import sys
 import os
 import numpy as np
 import pandas as pd
 import shutil
-from . import A_read_input as readinp
+from . import read_input as readinp
 
 
 def setfolder(fld):

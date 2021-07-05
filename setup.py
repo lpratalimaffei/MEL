@@ -11,9 +11,6 @@ setup(name='MEL',
   },
   keywords = ['Master Equation', 'Lumping', 'PES', 'Rate Constants'])
 
-
-
-
 '''
 $ python setup.py install
 '''

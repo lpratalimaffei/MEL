@@ -3,22 +3,13 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import scipy.linalg as la
-import scipy.optimize as op
-import scipy.interpolate as interp
-from scipy import integrate
-from scipy.integrate import ode
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
 import subprocess
 import shutil
-import copy
+from time import perf_counter as clock
 
 # subprocess.call('Run.bat',stdout=subprocess.DEVNULL)
 
 # import custom modules
-from . import A_read_input as readinp
 from . import B_extract_rates as extr_rates
 from . import C_preprocessing as preproc
 # I call the function without the need of pre-pending anything
@@ -26,7 +17,6 @@ from . import D_ODESYSTEM as odesys
 from . import E_PLOTTING as mine_plt
 from . import F_FITS as fitall
 from . import G_PROFILES as prof_CKImech
-from time import perf_counter as clock
 
 def get_OS():
     if os.name == 'nt':

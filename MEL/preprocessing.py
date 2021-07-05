@@ -1,9 +1,8 @@
-import numpy as np
 import os
-import pandas as pd
 import copy
 import re
-
+import numpy as np
+import pandas as pd
 
 def CHECK_REACTIVITY(kR_j, T_VECT, T_VECT_MESS):
     '''

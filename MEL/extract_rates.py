@@ -1,8 +1,7 @@
 import sys
-import numpy as np
 import os
+import numpy as np
 import pandas as pd
-import re
 import copy
 # extract names, temperature, pressures and make folder
 # function for mech reading
