@@ -339,7 +339,7 @@ class ODE_POSTPROC:
                      header = np.insert(indices_R_prods,0,header)
               header = header[np.newaxis,:]         
               exp_towrite = np.concatenate((header,exp_dataset),axis=0)
-              np.savetxt(os.path.join(self.dir_PT, str(self.T) + '.txt)'), exp_towrite, delimiter='\t', fmt='%s')
+              np.savetxt(os.path.join(self.dir_PT, str(self.T) + '.txt'), exp_towrite, delimiter='\t', fmt='%s')
               self.path_to_Exp_Datasets.append(os.path.join(str(self.P) + 'atm', str(self.T) + 'K', str(self.T) + '.txt'))
               self.path_to_OS_inputs.append(os.path.join(str(self.P) + 'atm', str(self.T) + 'K', 'input_OS.dic'))
  
