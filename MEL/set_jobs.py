@@ -41,8 +41,9 @@ def renamefiles(cwd, fld):
     files = os.listdir(fld)
     N = str(round(len(files)/2))
     for F in files:
+        F_name, F_format = F.split('.')
         oldname = os.path.join(fld, F)
-        newname = os.path.join(fld, F+'_old'+N)
+        newname = os.path.join(fld, F_name +'_old'+ N + '.' + F_format)
         os.rename(oldname, newname)
 
 
