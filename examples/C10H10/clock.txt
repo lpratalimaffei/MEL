@@ -1,0 +1,5 @@
+input reading : 		 1.06e-03 
+mech reading : 		 1.38e-02 
+prescreening_allreactive - ['N1a' 'N1b' 'N1c'] : 		 5.88e+01 
+prescreening_allreactive - ['N7a' 'N7b' 'N7c'] : 		 1.53e-03 
+

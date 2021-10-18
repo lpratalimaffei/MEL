@@ -1,0 +1,17 @@
+input reading : 		 1.52e-03 
+mech reading : 		 6.77e-02 
+lumping - R : 		 5.54e-03 
+lumping - ['W4' 'W5' 'W1'] : 		 8.86e+01 
+lumping - W3 : 		 1.63e-03 
+lumping - P1 : 		 9.93e-04 
+lumping - ['P2' 'P5'] : 		 1.17e-03 
+lumping - P3 : 		 1.30e-03 
+lumping - P4 : 		 7.48e+01 
+validation - R : 		 2.81e-03 
+validation - ['W4' 'W5' 'W1'] : 		 1.40e-03 
+validation - W3 : 		 1.05e-03 
+validation - P1 : 		 1.29e-03 
+validation - ['P2' 'P5'] : 		 2.03e-03 
+validation - P3 : 		 1.03e-03 
+validation - P4 : 		 2.73e+02 
+

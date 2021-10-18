@@ -1,0 +1,43 @@
+ //-----------------------------------------------------------------//                                                                                  
+ //     ____                    ______ __  __  ____  _  ________    //                                                                                  
+ //    / __ \                  /  ___ |  \/  |/ __ \| |/ /  ____|   //                                                                                  
+ //   | |  | |_ __   ___ _ __ |  (___ | \  / | |  | | ' /| |__      //                                                                                  
+ //   | |  | | '_ \ / _ \ '_ \ \___  \| |\/| | |  | |  < |  __|     //                                                                                  
+ //   | |__| | |_) |  __/ | | |____)  | |  | | |__| | . \| |____    //                                                                                  
+ //    \____/| .__/ \___|_| |_|______/|_|  |_|\____/|_|\_\______|   //                                                                                  
+ //         | |                                                     //                                                                                  
+ //         |_|                                                     //                                                                                  
+ //                                                                 //                                                                                  
+ //                http://www.opensmoke.polimi.it/                  //                                                                                  
+ //             http://creckmodeling.chem.polimi.it/                //                                                                                  
+ //-----------------------------------------------------------------//                                                                                  
+ Dictionary initial-mixture                                                                                  
+ {                                                                                  
+ @Temperature   	1500 K ;                                                                                   
+ @Pressure          10.0 atm ;                                                                                  
+ @MoleFractions    	W1 0.26525265252652525 W2 9.00009000090001e-05 W3 0.3536535365353654 W4 0.022860228602286023 W5 0.061550615506155065 W6 0.29659296592965934  AR 0.00000  ;                                                                                            
+ }                                                                                  
+ Dictionary BatchReactor                                                                                  
+ {                                                                                  
+ @KineticsFolder	mech_tocompile/kinetics ;  
+ @Type				Isothermal-ConstantVolume;                                                                                  
+ @InitialStatus          initial-mixture;                                                                                  
+ @EndTime				1E+30 s;                                                                                  
+ @OdeParameters          ode-OpenSMOKE;                                                                                  
+ @Volume				1. cm3;                                                                                  
+ @Options				Output;                                                                                                                                                                   
+ }                                                                                  
+ Dictionary ode-OpenSMOKE                                                                                  
+ {	                                                                                  
+ @OdeSolver OpenSMOKE;                                                                                  
+ @AbsoluteTolerance 1e-12;                                                                                  
+ @RelativeTolerance 1e-10;                                                                              
+// @MinimumStep 		1e-60;                                                                                  
+ //@MaximumStep 		1e-3;                                                                                  
+ @MaximumNumberOfSteps 100000;                                                                                  
+ }                                                                                  
+ Dictionary Output                                                                                  
+ {                                                                                  
+ @OutputFolder	Output ;  
+ @OutputSpecies	 W1 W2 W3 W4 W5 W6 R P1 P2 P3 P4 P5 P6 ;                                                                                  
+ }                                                                                  
