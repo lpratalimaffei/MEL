@@ -1,0 +1,4 @@
+input reading : 		 1.19e-03 
+mech reading : 		 8.04e-02 
+prescreening_equilibrium - ['W1' 'W2' 'W3' 'W4' 'W5' 'W6'] : 		 1.74e+02 
+

@@ -19,10 +19,10 @@
  }                                                                                  
  Dictionary BatchReactor                                                                                  
  {                                                                                  
- @KineticsFolder	mech_tocompile\kinetics ;  
+ @KineticsFolder	mech_tocompile/kinetics ;  
  @Type				Isothermal-ConstantVolume;                                                                                  
  @InitialStatus          initial-mixture;                                                                                  
- @EndTime				1E+300 s;                                                                                  
+ @EndTime				1E+30 s;                                                                                  
  @OdeParameters          ode-OpenSMOKE;                                                                                  
  @Volume				1. cm3;                                                                                  
  @Options				Output;                                                                                                                                                                   

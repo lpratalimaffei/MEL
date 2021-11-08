@@ -16,10 +16,10 @@ end
 jobs
     #single_simulation             # single simulation of one of the types below
     prescreening_equilibrium      #print suggestions about species lmp(constraints)
-    prescreening_allreactive      
-    composition_selection
-    lumping
-    validation
+    #prescreening_allreactive      
+    #composition_selection
+    #lumping
+    #validation
 end
 
 ############ jobs subdictionaries ########################

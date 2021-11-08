@@ -364,7 +364,7 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
             newfile[idx] = '!' + row
             # if duplicate reaction: comment also that
             # the "lower" notation is to trasfer all to lower cases so that you make the search independent of the font
-            if newfile[idx+1].lower().find('DUPLICATE'.lower()) != -1:
+            if newfile[idx+1].lower().find('DUPLICATE'.lower()) != -1 or newfile[idx+1].lower().find('DUP'.lower()) != -1:
                 newfile[idx+1] = '!' + newfile[idx+1]
             # if PLOG: comment also all the lines below until you don't find PLOG anymore
             check_plog = 0
@@ -375,6 +375,10 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
                     iline += 1
                 else:
                     check_plog = 1
+                    # check for duplicates
+                    if newfile[idx+iline].lower().find('DUPLICATE'.lower()) != -1 or newfile[idx+iline].lower().find('DUP'.lower()) != -1:
+                        newfile[idx+iline] = '!' + newfile[idx+iline]
+
         elif delete == 'NO':
             # copy the line as it is
             newfile[idx] = row
