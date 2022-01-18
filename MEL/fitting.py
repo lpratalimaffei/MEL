@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
@@ -27,6 +28,10 @@ def arrhenius_fit(T_VECT, k_VECT):
     # 2 is the number of parameters in the model excluding the constant, and len(T_VECT) is the number of observations
     R2adj = 1-(1-R2)*(len(T_VECT)-1)/(len(T_VECT)-1-2)
 
+    # check on floating precision for k0 value
+    if k0 <= sys.float_info.min or k0 == 0:
+        k0 = np.inf
+        
     return k0, alpha, EA, R2adj
 
 
