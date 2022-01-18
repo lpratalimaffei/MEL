@@ -195,7 +195,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
             T_VECT_rr_len = pd.Series(
                 len(T_VECT)*np.ones(REAC.shape), index=REAC, dtype=int)
 
-        # PRE PROCESSING FOR LUMPED REACTANTS AND PRODUCTS   ##################à
+        # PRE PROCESSING FOR LUMPED REACTANTS AND PRODUCTS   ##################
 
         # FOR LUMPED REACTANT: EXTRACT IN A DATAFRAME THE COMPOSITION OF THE REACTANT AT EVERY PRESSURE
         # COMPARE THE BRANCHINGS WITH THE T RANGE AND PRINT A WARNING IF YOU REDUCE IT
@@ -475,8 +475,11 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
         times['tot Pi'][P] += tocP-ticP
         # update Pi
         Pi += 1
+    # write the product selectivity
+    print('Writing the product selectivity ...'), postproc.CHECK_PROD_SELECTIVITY(profiles_P)
     # write the pathways to the experimental datasets, the final mechanism, and the thermodynamic file
     print('Writing the list of pathways to experimental data ...'), postproc.WRITE_FINAL_PATHS()
+    
     if PRODSINKS == 1:
         tic = clock()
         print('Writing Arrhenius fits in PLOG form ...'), kfit_P.WRITE_PLOG_FITS(
@@ -487,9 +490,10 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
         toc = clock()
         times['write'][0] += toc-tic
 
+    # WRITE THE PRODUCTS ACCUMULATING IN THE SYSTEM
+
     ############### IN CASE YOU HAVE PLOT_CMP : PERFORM SIMULATIONS WITH THE LUMPED or OPTIMIZED MECHANISM #############
     profiles_P_all = {'detailed': profiles_P}
-    i_reac_all = {'detailed': i_REAC_L}
     tic = clock()
     # derive the profiles
     if PLOT_CMP == 'YES' and jobtype == 'lumping':
