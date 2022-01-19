@@ -88,6 +88,8 @@ class PLOTTING:
                 axx = axes[row_plot, col_plot]
             except IndexError:
                 axx = axes[col_plot]
+            except TypeError:
+                axx = axes
 
             for key in list(self.profiles.keys()):
                 profiles_i = self.profiles[key]
@@ -114,6 +116,10 @@ class PLOTTING:
                 axes[col_plot].set_xlabel(
                     r'$t$ [s]', fontsize=self.fsize_vect[1])
                 axes[0].set_ylabel(r'$X_{i}$ [-]', fontsize=self.fsize_vect[1])
+            except TypeError:
+                axx.set_xlabel(
+                    r'$t$ [s]', fontsize=self.fsize_vect[1])
+                axx.set_ylabel(r'$X_{i}$ [-]', fontsize=self.fsize_vect[1])
             # if you don't have any plot below in the column: put the label
             if T == self.T_VECT[-1] and col_plot != self.n_cols-1:
                 for miss_col in np.arange(col_plot+1, self.n_cols):
@@ -142,6 +148,8 @@ class PLOTTING:
                     fig.delaxes(axes[-1, cols])
         except IndexError:
             axes[0].legend(list(self.SPECIES), loc=4, fontsize=self.legsize)
+        except TypeError:
+            axx.legend(list(self.SPECIES), loc=4, fontsize=self.legsize)
         # set tight layout
         fig.tight_layout(pad=0.1, w_pad=0.1)
         # save the figure
@@ -181,6 +189,9 @@ class PLOTTING:
                 axx = axes[row_plot, col_plot]
             except IndexError:
                 axx = axes[col_plot]
+            except TypeError:
+                axx = axes
+
             axx.plot(t, tW_DF[REAC])
             # labels and formatting
             try:
@@ -192,6 +203,10 @@ class PLOTTING:
                 axes[col_plot].set_xlabel(
                     r'$t$ [s]', fontsize=self.fsize_vect[1])
                 axes[0].set_ylabel(r'$X_{i}$ [-]', fontsize=self.fsize_vect[1])
+            except TypeError:
+                axx.set_xlabel(
+                    r'$t$ [s]', fontsize=self.fsize_vect[1])
+                axx.set_ylabel(r'$X_{i}$ [-]', fontsize=self.fsize_vect[1])
 
             axx.set_title((str(T) + ' K'),
                           fontsize=self.fsize_vect[2], fontweight='bold')
@@ -214,6 +229,8 @@ class PLOTTING:
                     fig.delaxes(axes[-1, cols])
         except IndexError:
             axes[0].legend(list(REAC), loc=4, fontsize=self.legsize)
+        except TypeError:
+            axx.legend(list(REAC), loc=4, fontsize=self.legsize)
 
         # set tight layout
         fig.tight_layout(pad=0.1, w_pad=0.1)
