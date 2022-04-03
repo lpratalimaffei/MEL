@@ -81,21 +81,21 @@ class READ_INPUT:
 
                             if line.find('P_vect') != -1:
                                 # select things in between square brackets
-                                line_Pvect = re.split('\[|\]', line)[1]
+                                line_Pvect = re.split('\[|\]', line)[1].strip()
                                 # get the list of pressures and turn it into an array
                                 list_Pvect = line_Pvect.split()
                                 self.Pvect = np.array(
                                     list_Pvect, dtype=np.float32)
 
                             if line.find('T_range') != -1:
-                                line_Tvect = re.split('\[|\]', line)[1]
+                                line_Tvect = re.split('\[|\]', line)[1].strip()
                                 list_Tvect = line_Tvect.split()
                                 T_range = np.array(list_Tvect, dtype=np.int16)
                                 self.Tvect = np.arange(
                                     T_range[0], T_range[1]+100, 100)
 
                             if line.find('T_skip') != -1:
-                                line_Tvect_skip = re.split('\[|\]', line)[1]
+                                line_Tvect_skip = re.split('\[|\]', line)[1].strip()
                                 list_Tvect_skip = line_Tvect_skip.split()
                                 Tvect_skip = np.array(
                                     list_Tvect_skip, dtype=np.int16)
@@ -105,8 +105,8 @@ class READ_INPUT:
 
                             if line.find('cutoff') != -1:
                                 line_cutoff = line.split()[2]
-                                lower_cutoff = re.split('-', line_cutoff)[0]
-                                upper_cutoff = re.split('-', line_cutoff)[1]
+                                lower_cutoff = re.split('-', line_cutoff)[0].strip()
+                                upper_cutoff = re.split('-', line_cutoff)[1].strip()
                                 self.cutoff = np.array(
                                     [lower_cutoff, upper_cutoff], dtype=np.float32)
 
@@ -251,7 +251,7 @@ class READ_INPUT:
 
                                 if line.find('pseudospecies') != -1 and (simul_type == 'prescreening_allreactive' or simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection'):
                                     line_pseudospecies = re.split(
-                                        '\[|\]', line)[1]
+                                        '\[|\]', line)[1].strip()
                                     pseudospecies = line_pseudospecies.split()
 
                                     # generate the list of psudospecies
@@ -306,11 +306,11 @@ class READ_INPUT:
 
                                 # read reactants and products
                                 if line.find('Reac ') != -1:
-                                    Reac = re.split('\[|\]', line)[1]
+                                    Reac = re.split('\[|\]', line)[1].strip()
                                     # if the reactant is lumped: generate an array
                                     if len(Reac.split('+')) > 1:
                                         self.Reac = np.array(
-                                            Reac.split('+'), dtype=str)
+                                            Reac.split('+').strip(), dtype=str)
                                         reaclumped = self.Reac[0] + '_L'
                                     else:
                                         # the reactant is just 1 so you don't need to do anything
@@ -318,7 +318,7 @@ class READ_INPUT:
                                         reaclumped = Reac
 
                                 if line.find('Prod ') != -1:
-                                    line_Prod = re.split('\[|\]', line)[1]
+                                    line_Prod = re.split('\[|\]', line)[1].strip()
                                     Prod = line_Prod.split()
                                     # generate the list of products: if you have lumped products, allocate them too
                                     self.Prod = []              # list of single species
