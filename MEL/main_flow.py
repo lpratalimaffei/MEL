@@ -348,8 +348,8 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 # WRITE OUTPUT PROFILES TO OPTISMOKE
                 if VERBOSE:
                     print('Writing profiles for Optismoke ...')
-                postproc.WRITE_PROFILES(
-                    PRODS_L, verbose=VERBOSE)
+                    postproc.WRITE_PROFILES(
+                        PRODS_L, verbose=VERBOSE)
 
                 # GENERATE THE NEW OS INPUT AND WRITE IT TO THE FOLDERS
                 if VERBOSE:

@@ -310,7 +310,7 @@ class READ_INPUT:
                                     # if the reactant is lumped: generate an array
                                     if len(Reac.split('+')) > 1:
                                         self.Reac = np.array(
-                                            Reac.split('+').strip(), dtype=str)
+                                            Reac.split('+'), dtype=str)
                                         reaclumped = self.Reac[0] + '_L'
                                     else:
                                         # the reactant is just 1 so you don't need to do anything
