@@ -53,6 +53,10 @@ class READ_INPUT:
         read_prescreen_allreactive = 0
         read_comp_sel = 0
         read_single_simul = 0
+        
+        # default vars
+        self.verbose = False
+        bfthreshold = 0.
 
         with open(self.filename) as myfile:
             for line in myfile:
@@ -70,14 +74,14 @@ class READ_INPUT:
                         if readinput == 1:
                             # find OS folder
                             if line.find('opensmoke_folder') != -1:
-                                self.OS_folder = line.split()[2]
+                                self.OS_folder = line.split('=')[1].strip().split('#')[0].strip()
                                 # if env variable: convert it to absolute
                                 if self.OS_folder[0] == '%':
                                     self.OS_folder = os.environ[self.OS_folder[1:-1]]
 
                             # select the type of input
                             if line.find('mech_type') != -1:
-                                self.inp_type = line.split()[2]
+                                self.inp_type = line.split('=')[1].strip().split('#')[0].strip()
 
                             if line.find('P_vect') != -1:
                                 # select things in between square brackets
@@ -86,13 +90,22 @@ class READ_INPUT:
                                 list_Pvect = line_Pvect.split()
                                 self.Pvect = np.array(
                                     list_Pvect, dtype=np.float32)
+                                if len(self.Pvect) == 0 and self.inp_type != 'MESS':
+                                    errorlist += '\nP range was not defined and cannot be read from mess input'
 
                             if line.find('T_range') != -1:
                                 line_Tvect = re.split('\[|\]', line)[1].strip()
                                 list_Tvect = line_Tvect.split()
                                 T_range = np.array(list_Tvect, dtype=np.int16)
-                                self.Tvect = np.arange(
-                                    T_range[0], T_range[1]+100, 100)
+                                if len(T_range) == 2:
+                                    self.Tvect = np.arange(
+                                        T_range[0], T_range[1]+100, 100)
+                                elif len(T_range) > 2:
+                                    self.Tvect = T_range
+                                elif len(T_range) < 2 and self.inp_type == 'MESS':
+                                    self.Tvect = np.array([],dtype=np.int16) # empty
+                                else:
+                                    errorlist += '\nT range was not defined and cannot be read from mess input'
 
                             if line.find('T_skip') != -1:
                                 line_Tvect_skip = re.split('\[|\]', line)[1].strip()
@@ -101,22 +114,23 @@ class READ_INPUT:
                                     list_Tvect_skip, dtype=np.int16)
 
                             if line.find('units_bimol') != -1:
-                                self.units_bimol = line.split()[2]
+                                self.units_bimol = line.split('=')[1].strip().split('#')[0].strip()
 
                             if line.find('cutoff') != -1:
-                                line_cutoff = line.split()[2]
+                                line_cutoff = line.split('=')[1].strip().split('#')[0].strip()
                                 lower_cutoff = re.split('-', line_cutoff)[0].strip()
                                 upper_cutoff = re.split('-', line_cutoff)[1].strip()
                                 self.cutoff = np.array(
                                     [lower_cutoff, upper_cutoff], dtype=np.float32)
 
                             if line.find('verboseoutput') != -1:
-                                verbose = line.split()[2]
+                                verbose = line.split('=')[1].strip().split('#')[0].strip()
                                 if verbose == 'True':
                                     self.verbose = True
-                                else:
-                                    self.verbose = None
 
+                            if 'keeprxns_bfmin' in line:
+                                bfthreshold = float(line.split('=')[1].strip().split('#')[0].strip())
+                                
                             if line.find('end') != -1:
                                 readinput = 0
 
@@ -152,7 +166,7 @@ class READ_INPUT:
                                 read_prescreen_allreactive = 1
 
                             if line.find('pseudospecies') != -1 and (read_prescreen_equil == 1 or read_prescreen_allreactive == 1) and read_single_simul == 0:
-                                line_pseudospecies = re.split('\[|\]', line)[1]
+                                line_pseudospecies = re.split('\[|\]', line)[1].strip()
                                 pseudospecies = line_pseudospecies.split()
                                 # generate the list of psudospecies
                                 # names of the lumped products, including the single products
@@ -163,8 +177,7 @@ class READ_INPUT:
                                 for PS in pseudospecies:
                                     if len(PS.split('+')) == 1 and read_prescreen_equil == 1 and PS != 'all':
                                         # error: you cannot have single pseudospecies for isomer equilibrium simulations
-                                        errorlist = errorlist + \
-                                            '\nsubdictionary prescreening_equilibrium: cannot have single isomers'
+                                        errorlist += '\nsubdictionary prescreening_equilibrium: cannot have single isomers'
 
                                     elif len(PS.split('+')) == 1 and read_prescreen_equil == 1 and PS == 'all':
                                         # you will consider the full isomer pool
@@ -212,18 +225,15 @@ class READ_INPUT:
                                     try:
                                         maxiter = int(line.split()[2])
                                     except ValueError as e:
-                                        errorlist = errorlist + \
-                                            '\ninvalid input in composition_selection subdictionary: number of iterations should be an integer number'
+                                        errorlist += '\ninvalid input in composition_selection subdictionary: number of iterations should be an integer number'
 
                                 if line.find('BF_tolerance') != -1:
                                     try:
                                         BF_tol = float(line.split()[2])
                                         if BF_tol >= 1 or BF_tol <= 0:
-                                            errorlist = errorlist + \
-                                                '\nerror in composition_selection subdictionary: BF tolerance should be betweeen 0 and 1'
+                                            errorlist += '\nerror in composition_selection subdictionary: BF tolerance should be betweeen 0 and 1'
                                     except ValueError as e:
-                                        errorlist = errorlist + \
-                                            '\ninvalid input in composition_selection subdictionary: BF tolerance should be a number between 0 and 1'
+                                        errorlist += '\ninvalid input in composition_selection subdictionary: BF tolerance should be a number between 0 and 1'
 
                                 if line.find('end') != -1:
                                     # save variabile in series
@@ -400,14 +410,11 @@ class READ_INPUT:
             if self.inp_type == 'MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
                 self.units_bimol = 'molec'
 
-            # if verboseoutput is missing: set to None
-            if not hasattr(self, 'verbose'):
-                self.verbose = None
             # input_parameters dictionary
             keys_inputpar = ['opensmoke_folder', 'mech_type', 'P_vect',
-                             'T_vect', 'T_skip', 'units_bimol', 'cutoff', 'verbose']
+                             'T_vect', 'T_skip', 'units_bimol', 'cutoff', 'verbose', 'bfthreshold']
             values_inputpar = [self.OS_folder, self.inp_type, self.Pvect,
-                               self.Tvect, Tvect_skip, self.units_bimol, self.cutoff, self.verbose]
+                               self.Tvect, Tvect_skip, self.units_bimol, self.cutoff, self.verbose, bfthreshold]
             input_parameters = dict(zip(keys_inputpar, values_inputpar))
 
             return input_parameters, job_list
@@ -497,16 +504,18 @@ class READ_INPUT:
         if input_type == 'MESS':
             P_VECT_MESS = mech_dict['P_VECT_MESS']
             T_VECT_MESS = mech_dict['T_VECT_MESS']
-            if np.array([[p == P_VECT_MESS for p in self.Pvect][ii].any() for ii in range(0, len(self.Pvect))]).all() != True:
-                # YOU ARE CHECKING IF, INDEPENDENT OF THE ORDER, ALL THE ELEMENTS OF self.Pvect are contained in P_VECT_MESS
-                error_list = error_list + \
-                    '\nSome of the selected pressures are not available in MESS pressure list \n \t please select among {PRESSURES}'.format(
-                        PRESSURES=P_VECT_MESS)
+            if len(self.Pvect) > 0: # maybe you will just set the P and T vectors as those of mess so they are empty
+                if np.array([[p == P_VECT_MESS for p in self.Pvect][ii].any() for ii in range(0, len(self.Pvect))]).all() != True:
+                    # YOU ARE CHECKING IF, INDEPENDENT OF THE ORDER, ALL THE ELEMENTS OF self.Pvect are contained in P_VECT_MESS
+                    error_list = error_list + \
+                        '\nSome of the selected pressures are not available in MESS pressure list \n \t please select among {PRESSURES}'.format(
+                            PRESSURES=P_VECT_MESS)
 
-            if (T_VECT_MESS > self.Tvect[0]).all() or (T_VECT_MESS < self.Tvect[-1]).all():
-                # CHECK IF THE RANGE OF TEMPERATURE SELECTED IS INCLUDED IN THAT AVAILABLE IN THE MESS OUTPUT
-                error_list = error_list + '\nThe temperature range in the input is outside of the mess range available: \n \t please select between {minT} and {maxT} K'.format(
-                    minT=min(T_VECT_MESS), maxT=max(T_VECT_MESS))
+            if len(self.Tvect) > 0:
+                if (T_VECT_MESS > self.Tvect[0]).all() or (T_VECT_MESS < self.Tvect[-1]).all():
+                    # CHECK IF THE RANGE OF TEMPERATURE SELECTED IS INCLUDED IN THAT AVAILABLE IN THE MESS OUTPUT
+                    error_list = error_list + '\nThe temperature range in the input is outside of the mess range available: \n \t please select between {minT} and {maxT} K'.format(
+                        minT=min(T_VECT_MESS), maxT=max(T_VECT_MESS))
 
         if not error_list:
             return None
