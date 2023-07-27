@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from . import main_flow
 
-def run_preproc(cwd, OS_folder, verbose=None):
+def run_preproc(cwd, OS_folder, verbose=False):
     '''
     preprocesses CKI input mechanism and re-writes it as mech with only fw reactions
     writes the bw reactions directly below the fw
@@ -24,6 +24,7 @@ def run_preproc(cwd, OS_folder, verbose=None):
     rxn_irrev, rxn_rev_HPLIM, rxn_rev_PDEP = sort_CKI(reaction_block)
     rxn_irrev_df = block_to_df(rxn_irrev)
     rxn_irrev = df_to_block(rxn_irrev_df)
+
     # preserve the only-fw reactions as a separate string block
     # define 2 groups:
     # pressure independent reactions
@@ -49,8 +50,6 @@ def run_preproc(cwd, OS_folder, verbose=None):
     rxn_bw_PDEP_df = pdep_torev(
         cwd, OS_folder, filename, element_block, species_block, rxn_rev_PDEP_df)
     rxn_rev_PDEP_df = align_labels(rxn_bw_PDEP_df, rxn_rev_PDEP_df)
-    if verbose:
-        print(rxn_bw_PDEP_df, '\n', rxn_rev_PDEP_df)
     rxn_irrev_PDEP = convert_df_FWBW_to_irrev(rxn_rev_PDEP_df, rxn_bw_PDEP_df)
     blocks_all_irrev = rxn_irrev + rxn_irrev_HPLIM + rxn_irrev_PDEP
 
@@ -133,6 +132,7 @@ def sort_CKI(rxn_block):
                 # replace <=> with = for consistency in compilation
                 if '<=>' in rxn:
                     rxn = rxn.replace('<=>', '=')
+                    
                 if 'PLOG' in rxn_block[idx+iline] or 'LOW' in rxn_block[idx+iline]:
                     obj = rxn_rev_PDEP
                     # if the reaction is reacs=>2B like: rewrite products from B+B to 2B
@@ -282,9 +282,9 @@ def block_to_df(rxn_block):
             # preallocate the array
             PARAM_ARRAY = np.array([None, None, None, []], dtype=object)
             line_split = line.split()
-            rxn_name = line_split[0]
+            rxn_name = ''.join(line_split[:-3])
             # convert parameters in appropriate format and append them
-            params = '\t'.join(line_split[1: 4])
+            params = '\t'.join(line_split[-3:])
             # PDEP
             if 'PLOG' in rxn_block[idx+iline]:
                 plog_dct = {}
@@ -294,7 +294,12 @@ def block_to_df(rxn_block):
                     line2 = rxn_block[idx+iline]
                     line2 = line2.replace('\n', '')
                     all_params = line2.replace('/', ' ').split()
-                    plog_dct[all_params[1]] = '\t'.join(all_params[2:5])
+                    plogstr = '\t'.join(all_params[2:5])
+                    if all_params[1] not in plog_dct.keys():
+                        plog_dct[all_params[1]] = plogstr
+                    else: # duplicate pressure in plog
+                        plog_dct[all_params[1]] += '\t' + plogstr
+                        
                     iline += 1
                     if idx+iline == len(rxn_block):
                         break
@@ -364,7 +369,9 @@ def df_to_block(rxn_df):
             for params in rxn_df.loc[rxn]['DUPLICATE']:
                 rxn_block += rxn_params_to_str(rxn, params)
                 rxn_block += 'DUPLICATE\n'
-
+        
+        rxn_block += '\n'
+        
     return rxn_block
 
 
@@ -379,10 +386,11 @@ def rxn_params_to_str(rxn, params):
 
     if isinstance(params, str):
         # HP limit
-        rxn_str += params + '\n'
+        rxn_str += params + '\n' # safe if expr has more than one P
 
     elif isinstance(params, dict):
-        rxn_str += params['HP'] + '\n'
+        rxn_str += '\t'.join(params['HP'].split('\t')[:3]) + '\n'
+        
         if 'TROE' in list(params.keys()):
             # troe params
             rxn_str += 'LOW/\t' + params['LOW'] + '\t/\n'
@@ -390,8 +398,15 @@ def rxn_params_to_str(rxn, params):
         else:
             # plog params
             for P in list(params.keys())[1:]:
-                rxn_str += 'PLOG/\t' + P + '\t' + params[P] + '\t/\n'
-
+                NPs = int(len(params[P].split('\t'))/3)
+                if NPs > 1:
+                    for i in np.arange(NPs):
+                        istart = i*3
+                        pars = '\t'.join(params[P].split('\t')[istart:istart+3])
+                        rxn_str += 'PLOG/\t' + P + '\t' + pars + '\t/\n'
+                else:
+                    rxn_str += 'PLOG/\t' + P + '\t' + params[P] + '\t/\n'
+    
     return rxn_str
 
 
