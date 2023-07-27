@@ -326,6 +326,7 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
 
     newfile = copy.deepcopy(mech_orig)
 
+    howmany_savedrxns = 0 # check if you saved any at the end
     for idx, row in enumerate(newfile):
 
         if ISOM_EQUIL == 1 and row.find('=>') != -1 and row.strip()[0] != '!':
@@ -339,6 +340,7 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
             # delete all the reactions involving species other than the reactants
             if np.array([reactant == REAC]).any() and np.array([product == REAC]).any():
                 delete = 'NO'
+                howmany_savedrxns += 1
             else:
                 delete = 'YES'
 
@@ -354,6 +356,7 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
                 delete = 'YES'
             else:
                 delete = 'NO'
+                howmany_savedrxns += 1
 
         else:  # any other case (read a reaction or an empty line with no need of deleting anything)
             delete = 'NO'
@@ -389,3 +392,5 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
 
     with open(os.path.join(newpath, 'kin.txt'), mode='x') as inp:
         inp.writelines(newfile)
+        
+    return howmany_savedrxns
