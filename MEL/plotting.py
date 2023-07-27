@@ -47,24 +47,18 @@ class PLOTTING:
         colorsrgb = list(matplotlib.cm.gist_rainbow(np.linspace(0, 1, 8)))
         colorsrgb += list(matplotlib.cm.tab10(np.arange(0, 10)))
         colorsrgb += list(matplotlib.cm.Set3(np.arange(0, 12)))
+        
+        # repeat palette up to length of species
+        colorsrgb *= round(len(colorsrgb)/len(SPECIES)) + 1
         self.palette_series = pd.Series(
             colorsrgb[:len(SPECIES)], index=SPECIES)
         self.palette_series[REAC] = 'black'
 
-        # fontsizes
-        if len(self.T_VECT) > 9:
-            self.fsize_vect = [6, 7, 8]
-        else:
-            self.fsize_vect = [8, 9, 10]
-        # legend label size
-        if len(self.SPECIES) <= 10 and len(self.T_VECT) <= 9:
-            self.legsize = 6
-        elif len(self.SPECIES) <= 10 and len(self.T_VECT) > 9:
-            self.legsize = 5
-        elif len(self.SPECIES) > 10 and len(self.T_VECT) <= 9:
-            self.legsize = 4
-        elif len(self.SPECIES) > 10 and len(self.T_VECT) > 9:
-            self.legsize = 3
+        
+        # fontsizes and legend size and length
+        self.colleg = round(len(SPECIES) / 10)
+        self.fsize_vect = [6, 7, 8]*(len(self.T_VECT) > 9) + [8, 9, 10]*(len(self.T_VECT) <= 9)
+        self.legsize = 6*(len(self.SPECIES) <= 10) + 4*(len(self.SPECIES) > 10) -1*(len(self.T_VECT) > 9)
 
     def plot_exp_profiles(self, N_INIT):
         '''
@@ -142,14 +136,14 @@ class PLOTTING:
             col_plot = col_plot + 1 - self.n_cols*int((Ti % self.n_cols) == 0)
 
         try:
-            axes[0, 0].legend(list(self.SPECIES), loc=4, fontsize=self.legsize)
+            axes[0, 0].legend(list(self.SPECIES), loc=4, fontsize=self.legsize, ncol = self.colleg)
             if row_plot == self.n_rows-1:
                 for cols in np.arange(col_plot, self.n_cols):
                     fig.delaxes(axes[-1, cols])
         except IndexError:
-            axes[0].legend(list(self.SPECIES), loc=4, fontsize=self.legsize)
+            axes[0].legend(list(self.SPECIES), loc=4, fontsize=self.legsize, ncol = self.colleg)
         except TypeError:
-            axx.legend(list(self.SPECIES), loc=4, fontsize=self.legsize)
+            axx.legend(list(self.SPECIES), loc=4, fontsize=self.legsize, ncol = self.colleg)
         # set tight layout
         fig.tight_layout(pad=0.1, w_pad=0.1)
         # save the figure
