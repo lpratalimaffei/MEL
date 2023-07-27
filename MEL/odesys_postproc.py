@@ -3,7 +3,10 @@ import numpy as np
 import pandas as pd
 import shutil
 from . import preprocessing as preproc
-
+from .set_jobs import  setfolder
+import warnings
+# warnings.simplefilter(action='ignore', category=RuntimeWarning) # ignore float division by 0 /other producing nan/inf, then removed
+warnings.filterwarnings('ignore')
 
 class ODE_POSTPROC:
     '''
@@ -25,9 +28,9 @@ class ODE_POSTPROC:
         self.path_to_Exp_Datasets = []
         self.path_to_OS_inputs = []
 
-    def MAKE_BRANCHINGFOLDERS(self, jobtype, REACLUMPED, PRODSLUMPED, T_VECT):
+    def SET_BRANCHINGFOLDERS(self, jobtype, REACLUMPED, PRODSLUMPED, T_VECT):
         '''
-        Makes the subfolder "BF_OUTPUT" to store the data of the branching of the lumped products
+        Set the subfolder "BF_OUTPUT" to store the data of the branching of the lumped products
         It also allocates the dictionary where to store the branchings, which will be written at the end of each single-P simulation
         NB this function is to be called only if PRODSLUMPED contains arrays. if not: raise exception
         '''
@@ -49,11 +52,9 @@ class ODE_POSTPROC:
                 # allocate it in dictionary
                 self.lumped_branching[PRi_L] = df_PRi_L
 
-        # make the folder "Branchings" if not present already
+        # set branching path
         self.branchingpath = os.path.join(
             self.cwd, jobtype, 'BF_OUTPUT', REACLUMPED.index[0])
-        if os.path.exists(self.branchingpath) == False:
-            os.makedirs(self.branchingpath)
 
     def MAKE_FOLDERS(self, fld, P, T, REACLUMPED):
         '''
@@ -63,8 +64,7 @@ class ODE_POSTPROC:
         REAC = REACLUMPED.index[0]
         self.fld = fld
         self.dir_PT = os.path.join(fld, str(P) + 'atm', str(T) + 'K')
-        if os.path.exists(self.dir_PT) == False:
-            os.makedirs(self.dir_PT)
+        _ = setfolder(self.dir_PT)
 
         # Allocate T,P,REAC to "self" for successive use
         self.T = T
@@ -99,12 +99,18 @@ class ODE_POSTPROC:
             n_cols = np.insert(cols_species, 0, [0])
             data = np.genfromtxt(filename, dtype=float,
                                  skip_header=1, usecols=(n_cols))
-            # extract also PV (needed for the total number of moles)
-            cols_PV = np.array([5, 6], dtype=int)
-            data_PV = np.genfromtxt(
-                filename, dtype=float, skip_header=1, usecols=(cols_PV))
-            # lumped reactant: sum the profiles, redefine a new reactant index and name, new species and species bimol series
 
+            # extract also PV (needed for the total number of moles)
+            data_PV = np.genfromtxt(
+                filename, dtype=float, skip_header=1, usecols=(np.array([5, 6], dtype=int)))
+
+            # check if array is 1D - something went wrong with the simulations, give a warning and make it so that the function works anyways
+            if len(data.shape) == 1:
+                print('*Warning: shape of array is 1D - something wrong with the simulation - check convergence / tolerance params')
+                data = np.array([data]*3)
+                data_PV = np.array([data_PV]*3)
+                
+            # lumped reactant: sum the profiles, redefine a new reactant index and name, new species and species bimol series
             if isinstance(i_REAC, np.ndarray):
                 # 0: for the calculation of the derivatives: compute the absolute variation of each isomer
                 dreac_i_dt = abs((-data[2:, i_REAC+1]+data[1:-1, i_REAC+1])/(
@@ -131,7 +137,8 @@ class ODE_POSTPROC:
             else:
                 # compute the derivative of the reactant consumption
                 dreac_dt = (-data[2:, i_REAC+1]+data[1:-1,
-                                                     i_REAC+1])/(data[2:, 0]-data[1:-1, 0])
+                                                    i_REAC+1])/(data[2:, 0]-data[1:-1, 0])
+                # RUNTIMEWARNING
                 # save variables forlater
                 reaclumped = 'NO'
 
@@ -148,8 +155,8 @@ class ODE_POSTPROC:
             if len(i_fin[0]) == 0:
                 #i_fin = np.where(dreac_dt[3:] < dreac_dt[3]*1e-4)
                 # remove infinite values and keep only positive values
-                dreac2_dt = dreac_dt[(
-                    np.isinf(dreac_dt) == False) & (dreac_dt > 0)]
+                dreac2_dt = dreac_dt[(np.isinf(dreac_dt) == False) & (
+                    np.isnan(dreac_dt) == False) & (dreac_dt > 0)]
 
                 if len(dreac2_dt) <= 1:
                     # include also length = 1 otherwise it means that i_in and i_fin will be the same
@@ -215,6 +222,7 @@ class ODE_POSTPROC:
 
         else:
             raise ValueError('OS output file not found')
+        
         self.tW_DF = tW_DF
 
         # save species and bimol series for the following steps
@@ -269,9 +277,9 @@ class ODE_POSTPROC:
             # redefine the product names
             self.PRODS = np.array(PRODSLUMPED.index, dtype='<U16')
             # empty dataframe for the products
-            W_prods_L = pd.DataFrame(columns=self.PRODS)
+            W_prods_L = pd.DataFrame(columns=self.PRODS, dtype=float)
             # empty series for bimolecular species
-            PRODS_L_BIMOL = pd.Series(index=self.PRODS)
+            PRODS_L_BIMOL = pd.Series(index=self.PRODS, dtype=str)
             # lumped products: go over the lumped products and generate W_prods
             # delete the corresponding columns in the dataframe
             for PRi_L in self.PRODS:
@@ -327,7 +335,7 @@ class ODE_POSTPROC:
 
         return tW_DF, self.REACNAME, i_REAC_L, SPECIES_L, SPECIES_SERIES_L, SPECIES_BIMOL_SERIES_L, PRODS_L
 
-    def WRITE_PROFILES(self, PRODS, verbose=None):
+    def WRITE_PROFILES(self, PRODS):
         '''
         Writes single files in Output_to_optiSMOKE/P_reac/T
         With the profile of each species
@@ -342,9 +350,6 @@ class ODE_POSTPROC:
         # first column with the time
         exp_dataset[:, 0::3] = self.t
         # if you have only 1 species to write:
-        if verbose:
-            print(self.W)
-            print(indices_R_prods)
         W_reduced = self.W[indices_R_prods]
         exp_dataset[:, 1::3] = W_reduced
         # third column with the error
@@ -352,6 +357,7 @@ class ODE_POSTPROC:
         # Write the profiles ONLY FOR THE REACTANT AND THE LUMPED PRODUCTS
         header = 'Batch m_SP {} '.format(len(self.PRODS)+1)
         header += '\t\t\t\t\t\t\t\t\t'.join(indices_R_prods)
+
         np.savetxt(os.path.join(self.dir_PT, str(self.T) + '.txt'),
                    exp_dataset, header=header, delimiter='\t', fmt='%.2e', comments='')
         self.path_to_Exp_Datasets.append(os.path.join(
@@ -359,9 +365,9 @@ class ODE_POSTPROC:
         self.path_to_OS_inputs.append(os.path.join(
             str(self.P) + 'atm', str(self.T) + 'K', 'input_OS.dic'))
 
-    def CHECK_PROD_SELECTIVITY(self, profiles_P):
+    def CHECK_PROD_SELECTIVITY(self, profiles_P, min_sel = 0.001):
         '''
-        Check the products which accumulate above 1% for at least one of the T,P investigated
+        Check the products which accumulate above min_sel% for at least one of the T,P investigated
         '''
         PRODS_SEL = pd.Series(np.NaN, index=self.PRODS)
         # max BF will be the starting one of the reactant
@@ -372,15 +378,17 @@ class ODE_POSTPROC:
                 # get the max profile of the reactant
                 max_reac = max(profiles[self.REACNAME])
                 min_reac = min(profiles[self.REACNAME])
-                min_accepted = 0.01
-                # get product selectivity
-                for pr in self.PRODS:
-                    max_bf_pr = max(profiles[pr])
-                    sel_pr = max_bf_pr/(max_reac-min_reac)
-                    if all(sel_pr >= np.array([min_accepted, PRODS_SEL[pr]])):
-                        PRODS_SEL[pr] = sel_pr
-                    elif sel_pr >= min_accepted:
-                        PRODS_SEL[pr] = sel_pr
+                denom = (max_reac-min_reac)
+                if denom > 1e-30: 
+                    # otherwise it means the reactant was not consumed at all and it does not make sense to check the selectivity
+                    # get product selectivity
+                    for pr in self.PRODS:
+                        max_bf_pr = max(profiles[pr])
+                        sel_pr = max_bf_pr/denom
+                        if all(sel_pr >= np.array([min_sel, PRODS_SEL[pr]])):
+                            PRODS_SEL[pr] = sel_pr
+                        elif sel_pr >= min_sel:
+                            PRODS_SEL[pr] = sel_pr
 
         PRODS_SEL = PRODS_SEL.dropna() # drop the NaN values
         PRODS_SEL = PRODS_SEL.sort_values(ascending=False) # order by selectivity
@@ -389,40 +397,39 @@ class ODE_POSTPROC:
             (np.array(PRODS_SEL.index)[:, np.newaxis], np.array(PRODS_SEL.values)[:, np.newaxis]), axis=1, dtype=object)
         # save the accumulating species in the corresponding folder
         np.savetxt(os.path.join(self.fld, 'prods_selectivity.txt'),
-                   prod_sel, header='prod\tmax_sel', delimiter='\t\t', fmt=['%s','%.2f'], comments='')
+                   prod_sel, header= ' '*12 + 'prod' + ' '*3 + 'max_sel', fmt=['%16s','%10.2e'], comments='')
 
-    def WRITE_BRANCHINGS_PRODS(self, PRODS):
+    def WRITE_BRANCHINGS_PRODS(self):
         '''
         This method writes the profiles of the lumped products in the folder "Branchings"
         '''
         # products:
-        if len(self.PRODSLUMPED) != len(PRODS):
-            for PRi_L in self.lumped_branching:
-                # make corresponding subfolder if it does not exist
-                if os.path.isdir(os.path.join(self.branchingpath, PRi_L)) == False:
-                    os.makedirs(os.path.join(self.branchingpath, PRi_L))
-                fld = os.path.join(self.branchingpath, PRi_L,
-                                   str(self.P)+'atm.txt')
-                # concatenate 2 dataframes: write also the values of the temperature
-                # NB for concatenation along rows, the same index is needed!
-                T_DF = pd.DataFrame(
-                    self.lumped_branching[PRi_L].index, index=self.lumped_branching[PRi_L].index, columns=['T[K]'])
-                BRall = pd.concat([T_DF, self.lumped_branching[PRi_L]], axis=1)
-                formats = pd.Series(index=BRall.columns, dtype=str)
-                formats[self.lumped_branching[PRi_L].columns] = '%1.5f'
-                formats['T[K]'] = '%d'
-                formats_list = list(formats.values)
-                head = '\t'.join(BRall.columns)
-                np.savetxt(fld, BRall, fmt=formats_list,
-                           header=head, comments='\t')
+        # self.lumped_branching knows already if prods are lumped
+        # #if len(self.PRODSLUMPED) != len(PRODS):
+        for PRi_L in self.lumped_branching:
+            # make corresponding subfolder if it does not exist
+            _ = setfolder(os.path.join(self.branchingpath, PRi_L))
+            BRfile = os.path.join(self.branchingpath, PRi_L,
+                                str(self.P)+'atm.txt')
+            # concatenate 2 dataframes: write also the values of the temperature
+            # NB for concatenation along rows, the same index is needed!
+            T_DF = pd.DataFrame(
+                self.lumped_branching[PRi_L].index, index=self.lumped_branching[PRi_L].index, columns=['T[K]'])
+            BRall = pd.concat([T_DF, self.lumped_branching[PRi_L]], axis=1)
+            formats = pd.Series(index=BRall.columns, dtype=str)
+            formats[self.lumped_branching[PRi_L].columns] = '%1.5f'
+            formats['T[K]'] = '%d'
+            formats_list = list(formats.values)
+            head = '\t'.join(BRall.columns)
+            np.savetxt(BRfile, BRall, fmt=formats_list,
+                        header=head, comments='\t')
 
     def WRITE_BRANCHINGS_REACS(self):
         # lumped reactant:
         if isinstance(self.REAC, np.ndarray):
             # folder
-            if os.path.isdir(os.path.join(self.branchingpath, self.REACNAME)) == False:
-                os.makedirs(os.path.join(self.branchingpath, self.REACNAME))
-            fld = os.path.join(self.branchingpath,
+            _ = setfolder(os.path.join(self.branchingpath, self.REACNAME))
+            BRfile = os.path.join(self.branchingpath,
                                self.REACNAME, str(self.P)+'atm.txt')
             #fld = self.branchingpath + '/' + self.REACNAME + '_from' + self.REACNAME + '_' + str(self.P) + 'atm.txt'
             # concatenation
@@ -434,7 +441,7 @@ class ODE_POSTPROC:
             formats['T[K]'] = '%d'
             formats_list = list(formats.values)
             head = '\t'.join(BRall.columns)
-            np.savetxt(fld, BRall, fmt=formats_list,
+            np.savetxt(BRfile, BRall, fmt=formats_list,
                        header=head, comments='\t')
             return BRall
 
@@ -444,7 +451,7 @@ class ODE_POSTPROC:
         '''
         # with the new indices, the reactants and products are lumped
         new_indices = np.insert(self.PRODS, 0, self.REACNAME)
-        os.mkdir(os.path.join(self.dir_PT, 'inp'))
+        _ = setfolder(os.path.join(self.dir_PT, 'inp'))
         # Copy the input to OS simulations and substitute the values of interest
         shutil.copyfile(os.path.join(self.cwd, 'inp', 'input_OS_template.dic'), os.path.join(
             self.dir_PT, 'inp', 'input_OS_template.dic'))
@@ -463,3 +470,22 @@ class ODE_POSTPROC:
                    self.path_to_Exp_Datasets, fmt='%s')
         np.savetxt(os.path.join(self.fld, 'Path_to_OS_inputs.txt'),
                    self.path_to_OS_inputs, fmt='%s')
+
+
+def OVERALL_SELECTIVITY(jobfld, fld_list, threshold):
+    tokeep = []
+    for fld in fld_list:
+        with open(os.path.join(fld, 'prods_selectivity.txt')) as selfile:
+            for line in selfile:
+                prod, sel = line.split()
+                if prod != 'prod' and prod not in tokeep and sel >= threshold:
+                    tokeep.append(prod)
+        selfile.close()
+        
+    tokeep.sort()
+    newfile = open(os.path.join(jobfld, 'speciestokeep.txt'), 'w')
+    newfile.write('\n'.join(tokeep))
+    newfile.close()
+                
+        
+        
