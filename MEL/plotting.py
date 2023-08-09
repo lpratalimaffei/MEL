@@ -56,7 +56,7 @@ class PLOTTING:
 
         
         # fontsizes and legend size and length
-        self.colleg = round(len(SPECIES) / 10)
+        self.colleg = round(len(SPECIES) / 10) + 1*(len(SPECIES) < 10)
         self.fsize_vect = [6, 7, 8]*(len(self.T_VECT) > 9) + [8, 9, 10]*(len(self.T_VECT) <= 9)
         self.legsize = 6*(len(self.SPECIES) <= 10) + 4*(len(self.SPECIES) > 10) -1*(len(self.T_VECT) > 9)
 
