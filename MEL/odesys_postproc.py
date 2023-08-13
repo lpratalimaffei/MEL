@@ -146,7 +146,6 @@ class ODE_POSTPROC:
 
             i_in = np.where(data[:, i_REAC+1] <= (1-CUTOFF[0])*N_INIT_REAC)
             i_fin = np.where(data[:, i_REAC+1] <= (1-CUTOFF[1])*N_INIT_REAC)
-            print(i_in, i_fin)
             # if the reactant does not reach the minimum consumption (possible for lumped reactants): set the initial value as 0
             if len(i_in[0]) == 0:
                 i_in = 0
@@ -166,7 +165,6 @@ class ODE_POSTPROC:
                 else:
                     maxderiv = max(dreac2_dt)
                     minderiv = min(dreac2_dt)
-                    print(maxderiv, minderiv)
                     i_in = np.where(dreac_dt == maxderiv)[0][0]
                     if minderiv <= maxderiv*1e-4:
                         cutoff_deriv = dreac2_dt[dreac2_dt < maxderiv*1e-4][0]
@@ -176,7 +174,6 @@ class ODE_POSTPROC:
 
             else:
                 i_fin = i_fin[0][0]
-            print(i_in, i_fin)
             # check that i_fin > i_in, otherwise set i_in to 0
             if i_fin < i_in:
                 i_in = 0
