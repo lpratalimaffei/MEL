@@ -131,8 +131,9 @@ def main():
                 set_sim.rmfolder(os.path.join(cwd, 'mech_tocompile'))
                 set_sim.rmfolder(os.path.join(cwd, 'Output'))
                 # delete simulation files
-                os.remove(os.path.join(cwd, 'OS_output.txt'))
-                os.remove(os.path.join(cwd, 'input_OS.dic'))
+                if os.path.isfile(os.path.join(cwd, 'OS_output.txt')):
+                    os.remove(os.path.join(cwd, 'OS_output.txt'))
+                    os.remove(os.path.join(cwd, 'input_OS.dic'))
 
                 toc = clock()
                 tictoc += '{} - {} : \t\t {:1.2e} \n'.format(jobtype, sim_series['REAC'], toc-tic)    

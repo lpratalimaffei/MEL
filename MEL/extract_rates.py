@@ -297,8 +297,13 @@ def data_names_CKI(cwd):
                                 flag = 1
 
                         if flag == 0:
-                            species_names = np.append(species_names, r1)
-                            species_names_bimol = np.append(species_names_bimol, r2)
+                            if r1 in ['H', 'OH', 'O2', 'HO2', 'O', 'CH3', 'C3H4-A', 'C3H4-P']:
+                                print('*Warning {} found as first reactant - order swapped'.format(r1))
+                                species_names = np.append(species_names, r2)
+                                species_names_bimol = np.append(species_names_bimol, r1)                                
+                            else:
+                                species_names = np.append(species_names, r1)
+                                species_names_bimol = np.append(species_names_bimol, r2)
 
                     if len(x) > 2:
                         print(
@@ -340,7 +345,6 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
             # delete all the reactions involving species other than the reactants
             if np.array([reactant == REAC]).any() and np.array([product == REAC]).any():
                 delete = 'NO'
-                howmany_savedrxns += 1
             else:
                 delete = 'YES'
 
@@ -356,7 +360,6 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
                 delete = 'YES'
             else:
                 delete = 'NO'
-                howmany_savedrxns += 1
 
         else:  # any other case (read a reaction or an empty line with no need of deleting anything)
             delete = 'NO'
@@ -383,6 +386,7 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
                         newfile[idx+iline] = '!' + newfile[idx+iline]
 
         elif delete == 'NO':
+            howmany_savedrxns += 1
             # copy the line as it is
             newfile[idx] = row
 

@@ -146,6 +146,7 @@ class ODE_POSTPROC:
 
             i_in = np.where(data[:, i_REAC+1] <= (1-CUTOFF[0])*N_INIT_REAC)
             i_fin = np.where(data[:, i_REAC+1] <= (1-CUTOFF[1])*N_INIT_REAC)
+            print(i_in, i_fin)
             # if the reactant does not reach the minimum consumption (possible for lumped reactants): set the initial value as 0
             if len(i_in[0]) == 0:
                 i_in = 0
@@ -165,16 +166,17 @@ class ODE_POSTPROC:
                 else:
                     maxderiv = max(dreac2_dt)
                     minderiv = min(dreac2_dt)
+                    print(maxderiv, minderiv)
                     i_in = np.where(dreac_dt == maxderiv)[0][0]
                     if minderiv <= maxderiv*1e-4:
                         cutoff_deriv = dreac2_dt[dreac2_dt < maxderiv*1e-4][0]
-                        i_fin = np.where(dreac_dt == cutoff_deriv)[0][0]
+                        i_fin = np.where(dreac_dt >= cutoff_deriv)[0][-1]
                     elif minderiv > maxderiv*1e-4:
-                        i_fin = np.where(dreac_dt == minderiv)[0][0]
+                        i_fin = np.where(dreac_dt >= minderiv)[0][-1]
 
             else:
                 i_fin = i_fin[0][0]
-
+            print(i_in, i_fin)
             # check that i_fin > i_in, otherwise set i_in to 0
             if i_fin < i_in:
                 i_in = 0
@@ -213,11 +215,15 @@ class ODE_POSTPROC:
                 elif ISOM_EQUIL == 0:
                     Wreac_tot = np.sum(self.Wreac_composition[1:], axis=1)
                     Wreac_tot = Wreac_tot[:, np.newaxis]
-                    dtweight = ((self.t[1:]-self.t[:-1])/self.t[-1])
-                    br_weighted = self.Wreac_composition[1:,
-                                                         :]/Wreac_tot*dtweight
-                    self.lumped_branching_reac.loc[self.T, self.REAC] = np.sum(
-                        br_weighted, axis=0)
+                    if len(self.t) > 0:
+                        dtweight = ((self.t[1:]-self.t[:-1])/self.t[-1])
+                        br_weighted = self.Wreac_composition[1:,
+                                                            :]/Wreac_tot*dtweight
+                        self.lumped_branching_reac.loc[self.T, self.REAC] = np.sum(
+                            br_weighted, axis=0)
+                    else:
+                        # keep initial composition
+                        self.lumped_branching_reac.loc[self.T, self.REAC] = self.Wreac_composition[0, :]
                 # save the reactant composition separately for plotting
 
         else:
