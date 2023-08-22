@@ -123,20 +123,22 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
             if line.find('Temperature-Species Rate Tables:') != -1:
                 check_list = 1
             if ((check_list == 1) and (check_P_curr < check_P)):
+                checks = ['Pressure', '_________', 'Temperature-Species', 'T(K)', '->']
                 # add the check on 'Pressure' in case the values of temperature and pressure are accidentally the same
-                if any(line.find(T) != -1 for T in np.array(T_LIST, dtype=str)) and (line.find('Pressure') == -1):
-                    check_P_curr += 1
-                    rates = [x.strip() for x in line.split()]
-                    # replace '***' values with 0
-                    rates = [x.replace('***', '0') for x in rates]
-                    matrix_list.append(rates[1:-2])  # -2 excluded
-                    capture_list.append(float(rates[-1]))
+                if len(line.split()) > 0 and all([check not in line for check in checks]):
+                    if float(line.split()[0]) in np.array(T_LIST, dtype=float):
+                        check_P_curr += 1
+                        rates = [x.strip() for x in line.split()]
+                        # replace '***' values with 0
+                        rates = [x.replace('***', '0') for x in rates]
+                        matrix_list.append(rates[1:-2])  # -2 excluded
+                        capture_list.append(float(rates[-1]))
             if line.find('Temperature-Pressure Rate Tables:') != -1:
                 check_list = 0  # don't read the file anylonger
     myfile.close()
 
     matrix_float = np.array(matrix_list, dtype=np.float64)
-
+    
     # remove negative values from the matrix
     n_T = len(T_LIST)
     n_P = len(P_LIST)
@@ -235,7 +237,6 @@ def REAC_P(P, reac, P_LIST, T_LIST, species_names, matrix_float):
         ii_reac = np.where(reac_index == 1)[0][0]  # index of the reactant
         ii_in = ii_reac*(n_P)*(n_T)+P_index*(n_T)
         rates_reac = matrix_float[ii_in:ii_in+n_T, :]
-
         return rates_reac
 
 # extract and process CHEMKIN type mechanism ########################à
