@@ -22,10 +22,11 @@ def checkNsubfolders(fld, fldperlevel):
                 fldlist.append(os.path.join(fld, subfld))
         # now the new level to check is the list of subfolders
         flds = fldlist
-        
+
     return CHECK
-                
-def setfolder(fld, filescheck = []):
+
+
+def setfolder(fld, filescheck=[]):
     '''
     Create folder if it does not exist
     and if it does not have a certain list of files or folders in it
@@ -36,13 +37,13 @@ def setfolder(fld, filescheck = []):
         # create folder
         os.makedirs(fld)
         CHECK = 1
-        
+
     else:
         if filescheck:
             allfiles = all([file in os.listdir(fld) for file in filescheck])
-            
+
             if allfiles:
-                CHECK = 0 # do nothing
+                CHECK = 0  # do nothing
             else:
                 rmfolder(fld)
                 os.makedirs(fld)
@@ -50,7 +51,6 @@ def setfolder(fld, filescheck = []):
         else:
             # do nothing
             CHECK = 0
-            
 
     return CHECK
 
@@ -72,7 +72,7 @@ def renamefiles(cwd, fld):
     for F in files:
         F_name, F_format = F.split('.')
         oldname = os.path.join(fld, F)
-        newname = os.path.join(fld, F_name +'_old'+ N + '.' + F_format)
+        newname = os.path.join(fld, F_name + '_old' + N + '.' + F_format)
         os.rename(oldname, newname)
 
 
@@ -205,6 +205,11 @@ def set_simul_loop(cwd, jobtype, job_subdict, mech_dict):
             pseudospecies_file = os.path.join(cwd, 'inp', 'pseudospecies.txt')
             pseudospecies_series, stable_species = readinp.read_pseudospecies(
                 pseudospecies_file)
+            # check that all pseudospecies are available
+            for SP_stable in stable_species:
+                if SP_stable not in SPECIES:
+                    raise(ValueError(
+                        '*Species {} of pseudospecies file is not among the mechanism species - check and retry'.format(SP_stable)))
 
             # remove single species for composition_selection jobtype
             if jobtype == 'composition_selection':
