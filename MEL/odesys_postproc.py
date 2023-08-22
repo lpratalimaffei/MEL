@@ -481,7 +481,7 @@ def OVERALL_SELECTIVITY(jobfld, fld_list, threshold):
         with open(os.path.join(fld, 'prods_selectivity.txt')) as selfile:
             for line in selfile:
                 prod, sel = line.split()
-                if prod != 'prod' and prod not in tokeep and sel >= threshold:
+                if prod != 'prod' and prod not in tokeep and float(sel) >= threshold:
                     tokeep.append(prod)
         selfile.close()
         
