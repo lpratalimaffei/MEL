@@ -620,8 +620,8 @@ class READ_INPUT:
                     if isinstance(subdict['pseudospecies'].loc[SP], np.ndarray):
                         if np.array([[sp == SPECIES for sp in subdict['pseudospecies'].loc[SP]][ii].any() for ii in range(0, len(subdict['pseudospecies'].loc[SP]))]).all() != True:
                             error_list = error_list + \
-                                '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(
-                                    SPECIES=str(SPECIES))
+                                '\nPseudospecies {} not all present in species list. \n \t please select among {} '.format(
+                                    str(subdict['pseudospecies'].loc[SP]), str(SPECIES))
                         # WITHIN EACH GROUP: CHECK THAT PSEUDOSPECIES BELONG TO THE SAME TYPE (I.E. HAVE SAME BIMOL FRAGMENT)
                         i_sp_group = np.where(
                             [sp_group == SPECIES for sp_group in subdict['pseudospecies'].loc[SP]])[1]
@@ -633,8 +633,8 @@ class READ_INPUT:
                         species = subdict['pseudospecies'].loc[SP]
                         if np.array([species == SP_list for SP_list in SPECIES]).any() != True:
                             error_list = error_list + \
-                                '\nNot all species indicated in the set of pseudospecies match the species list. \n \t please select among {SPECIES} '.format(
-                                    SPECIES=str(SPECIES))
+                                '\nPseudospecies {} not in species list; \n \t please select among {} '.format(
+                                    species, str(SPECIES))
 
             # SINGLE_SIMULATIONS
             # check that you don't have products or reactants matching
