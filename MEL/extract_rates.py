@@ -74,16 +74,37 @@ def data_names_mess(cwd):
                 species_names_unimol_frag2 = np.append(
                     species_names_unimol_frag2, '')
 
-            if (line.find('Bimolecular')) != -1 and look_for_species == 1:
+            if 'Bimolecular' in line and look_for_species == 1:
                 look_for_bimol_fragment = 1
                 full_line = [x.strip() for x in line.split()]
+                frags = full_line[1].split('+')
                 species_names_bimol = np.append(
-                    species_names_bimol, full_line[1])
+                    species_names_bimol, frags[0])  # if written as A+B, write only A
 
-            if (line.find('Fragment')) != -1 and look_for_bimol_fragment > 0:
+            if 'Fragment' in line and look_for_bimol_fragment > 0:
                 look_for_bimol_fragment += 1
+                
+                if look_for_bimol_fragment == 2:
+                    full_line = [x.strip() for x in line.split()]
+                    # check that the name of the first fragment corresponds to that of the bimol species
+                    if len(frags) > 1:
+                        if frags[0] != full_line[1]:
+                            print(
+                                '*Warning: bimol species name is {} \
+                                    but first fragment name is {}'.format(frags[0], full_line[1]))
+                            print(
+                                '*Setting {} as second fragment'.format(full_line[1]))
+                            species_names_bimol_frag2 = np.append(
+                                species_names_bimol_frag2, full_line[1])
+                            look_for_bimol_fragment = 0
+                    
                 if look_for_bimol_fragment == 3:
                     full_line = [x.strip() for x in line.split()]
+                    if len(frags) > 1:
+                        if frags[1] != full_line[1]:
+                            print(
+                                '*Warning: bimol species name is {} \
+                                    but fragment name is {}'.format(frags[1], full_line[1]))                            
                     species_names_bimol_frag2 = np.append(
                         species_names_bimol_frag2, full_line[1])
                     look_for_bimol_fragment = 0
@@ -92,13 +113,37 @@ def data_names_mess(cwd):
 
     # write files
     P_LIST = np.unique(np.array(pressures, dtype=np.float32))
-    T_LIST = np.unique(np.array(temperatures, dtype=np.int16))
+    T_LIST = np.array(
+        np.unique(np.array(temperatures, dtype=np.float32)), dtype=np.int16) #convert to float first, in some cases ppl write "500."
 
-    species_names = np.append(species_names_unimol, species_names_bimol)
+    ### checks on bimol species: 
+    # if a name appears in species_names_bimol and also in species_names_bimol_frag2 (in other positions),
+    # then switch the two names to avoid duplicate species
+    # [a, b, c], [d, a, f] => [d, b, c], [a, a, f]
+    # allocate new arrays
+    sp_names_bimol_new = np.array([], dtype='<U16')
+    sp_names_bimol_frag2_new = np.array([], dtype='<U16')
+    # find species that appear multiple times (should not affect rxns of type 2A)
+    sp_bim_tot = np.append(species_names_bimol_frag2, species_names_bimol)
+    vals, count = np.unique(sp_bim_tot, return_counts = True)
+    sp_count = pd.Series(count, index = vals)
+
+    # loop
+    for i, sp_bim in enumerate(species_names_bimol):
+        if sp_count[sp_bim] > 1:
+            # switch
+            sp_names_bimol_new = np.append(sp_names_bimol_new, species_names_bimol_frag2[i])
+            sp_names_bimol_frag2_new = np.append(sp_names_bimol_frag2_new, sp_bim)
+        else:
+            sp_names_bimol_new = np.append(sp_names_bimol_new, sp_bim)
+            sp_names_bimol_frag2_new = np.append(sp_names_bimol_frag2_new, species_names_bimol_frag2[i])            
+            
+    ### final arrays
+    species_names = np.append(species_names_unimol, sp_names_bimol_new)
     species_names_frag2 = np.append(
-        species_names_unimol_frag2, species_names_bimol_frag2)
+        species_names_unimol_frag2, sp_names_bimol_frag2_new)
     # check that bimol fragments have different names
-    if len(list(set(species_names_bimol_frag2))) != len(list(species_names_bimol_frag2)):
+    if len(list(set(sp_names_bimol_frag2_new))) != len(list(sp_names_bimol_frag2_new)):
         print('*Warning: some bimol fragments share the same names. check that they are isomers')
 
     return P_LIST, T_LIST, species_names, species_names_frag2
@@ -123,14 +168,17 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
             if line.find('Temperature-Species Rate Tables:') != -1:
                 check_list = 1
             if ((check_list == 1) and (check_P_curr < check_P)):
+                checks = ['Pressure', '_________',
+                          'Temperature-Species', 'T(K)', '->']
                 # add the check on 'Pressure' in case the values of temperature and pressure are accidentally the same
-                if any(line.find(T) != -1 for T in np.array(T_LIST, dtype=str)) and (line.find('Pressure') == -1):
-                    check_P_curr += 1
-                    rates = [x.strip() for x in line.split()]
-                    # replace '***' values with 0
-                    rates = [x.replace('***', '0') for x in rates]
-                    matrix_list.append(rates[1:-2])  # -2 excluded
-                    capture_list.append(float(rates[-1]))
+                if len(line.split()) > 0 and all([check not in line for check in checks]):
+                    if float(line.split()[0]) in np.array(T_LIST, dtype=float):
+                        check_P_curr += 1
+                        rates = [x.strip() for x in line.split()]
+                        # replace '***' values with 0
+                        rates = [x.replace('***', '0') for x in rates]
+                        matrix_list.append(rates[1:-2])  # -2 excluded
+                        capture_list.append(float(rates[-1]))
             if line.find('Temperature-Pressure Rate Tables:') != -1:
                 check_list = 0  # don't read the file anylonger
     myfile.close()
@@ -235,7 +283,6 @@ def REAC_P(P, reac, P_LIST, T_LIST, species_names, matrix_float):
         ii_reac = np.where(reac_index == 1)[0][0]  # index of the reactant
         ii_in = ii_reac*(n_P)*(n_T)+P_index*(n_T)
         rates_reac = matrix_float[ii_in:ii_in+n_T, :]
-
         return rates_reac
 
 # extract and process CHEMKIN type mechanism ########################à
@@ -278,7 +325,7 @@ def data_names_CKI(cwd):
                     if x[0][0] == '2':
                         x[0] = x[0][1:]
                         x.append(x[0])
-                    
+
                     if len(x) == 1 and np.array([x[0] == SP for SP in species_names]).any() != True:
                         species_names = np.append(species_names, x[0])
                         species_names_bimol = np.append(
@@ -293,12 +340,20 @@ def data_names_CKI(cwd):
                             s1 = species_names[i]
                             s2 = species_names_bimol[i]
                             # set flag to 1 if you find the same set of species
-                            if (r1==s1 and r2==s2) or (r1==s2 and r2==s1):
+                            if (r1 == s1 and r2 == s2) or (r1 == s2 and r2 == s1):
                                 flag = 1
 
                         if flag == 0:
-                            species_names = np.append(species_names, r1)
-                            species_names_bimol = np.append(species_names_bimol, r2)
+                            if r1 in ['H', 'OH', 'O2', 'HO2', 'O', 'CH3', 'C3H4-A', 'C3H4-P']:
+                                print(
+                                    '*Warning {} found as first reactant - order swapped'.format(r1))
+                                species_names = np.append(species_names, r2)
+                                species_names_bimol = np.append(
+                                    species_names_bimol, r1)
+                            else:
+                                species_names = np.append(species_names, r1)
+                                species_names_bimol = np.append(
+                                    species_names_bimol, r2)
 
                     if len(x) > 2:
                         print(
@@ -326,6 +381,7 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
 
     newfile = copy.deepcopy(mech_orig)
 
+    howmany_savedrxns = 0  # check if you saved any at the end
     for idx, row in enumerate(newfile):
 
         if ISOM_EQUIL == 1 and row.find('=>') != -1 and row.strip()[0] != '!':
@@ -380,6 +436,7 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
                         newfile[idx+iline] = '!' + newfile[idx+iline]
 
         elif delete == 'NO':
+            howmany_savedrxns += 1
             # copy the line as it is
             newfile[idx] = row
 
@@ -389,3 +446,5 @@ def copy_CKI_processed(oldpath, newpath, PRODSINKS, ISOM_EQUIL, REAC, PRODS):
 
     with open(os.path.join(newpath, 'kin.txt'), mode='x') as inp:
         inp.writelines(newfile)
+
+    return howmany_savedrxns

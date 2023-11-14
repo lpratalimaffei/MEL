@@ -9,26 +9,24 @@ def CHECK_REACTIVITY(kR_j, T_VECT, T_VECT_MESS):
     CHECK IF THE SELECTED REACTANT IS ACTIVE UNTIL THE SELECTED TEMPERATURE
     '''
     # print(kR_j,np.sum(kR_j,axis=1))
+    flag = False
     REACTIVITY = np.sum(kR_j, axis=1)  # sum by row (each temperature)
     mask_REAC = np.where(sum(np.array([Ti == T_VECT_MESS for Ti in T_VECT])))
     # now you have the reactivity in the selected range of temperature
     REACTIVITY = REACTIVITY[mask_REAC]
     mask_REAC_zero = np.where(REACTIVITY == 0)
     mask_REAC_nzero = np.where(REACTIVITY != 0)
-    if len(mask_REAC_zero[0]) == len(REACTIVITY):
-        Err = ('Error: reactant not active at any of the selected temperatures')
-        flag_exit = 1
+    if len(mask_REAC_nzero[0]) < 2:
+        print('Reactant not active at any of the selected temperatures - pressure will be skipped')
+        flag = True
+        
     elif len(mask_REAC_zero[0] > 0):
         # reduce the range of T accordingly
-        flag_exit = 0
-        Err = (('Warning: temperature range reduced; reactant inactive at {T} K').format(
+        print(('Warning: temperature range reduced; reactant inactive at {T} K').format(
             T=T_VECT[mask_REAC_zero]))
         T_VECT = T_VECT[mask_REAC_nzero]
-    else:
-        flag_exit = 0
-        Err = ''
 
-    return flag_exit, Err, T_VECT
+    return flag, T_VECT
 
 
 def INITIALMOLES(REAC, SPECIES_BIMOL_SERIES, N_INIT):
@@ -197,7 +195,7 @@ class WRITE_MECH_CKI:
         self.i_REAC = i_REAC  # array if lumped reactant
         self.i_PRODS = i_PRODS
         self.SPECIES_BIMOL = SPECIES_BIMOL
-
+        
     def MAKE_CKI(self, PRODSINKS, ISOM_EQUIL):
         '''
         In this function:
@@ -241,9 +239,10 @@ class WRITE_MECH_CKI:
                    CKI_lines['k0'][ii_row] = '{:.2e}'.format(self.k0[S_i, Pr_i])
                    CKI_lines['alpha'][ii_row] = '{:.2f}'.format(
                    self.alpha[S_i, Pr_i])
-                   CKI_lines['EA'][ii_row] = '{:.2f}'.format(self.EA[S_i, Pr_i])
+                   CKI_lines['EA'][ii_row] = '{:.0f}'.format(self.EA[S_i, Pr_i])
                    CKI_lines['comments'][ii_row] = '! ' + self.comments[S_i, Pr_i]
                    # if any of the parameters is nan/inf: comment the reaction
+                   # print(self.comments[S_i, Pr_i])
                    if any([(par==np.nan or par==np.inf) for par in [self.k0[S_i, Pr_i], self.alpha[S_i, Pr_i], self.EA[S_i, Pr_i]]]):
                        CKI_lines['reac_name'][ii_row] = '!' + CKI_lines['reac_name'][ii_row]
                    ii_row += 1
@@ -368,33 +367,53 @@ def COMBINE_CKI(newfld, fldlist):
     '''
     # open new file for writing
     newfile = open(os.path.join(newfld, 'kin.txt'), 'w')
-    # flags for reading
-    flag_elements = np.zeros(len(fldlist))
-    flag_elements[0] = 1
-    # extract useful info from each file
-    i_fld = 0
-    for fld in fldlist:
-        flag_el = flag_elements[i_fld]
+
+    # preallocations
+    elementlines = ''
+    specieslines = ''
+    reactionslines = ''
+    
+    for flag_el, fld in enumerate(fldlist):
         find_end = 0
         find_reac = 0
-        with open(os.path.join(fld, 'kin.txt')) as kin:
+        find_species = 0
+        kinfile = os.path.join(fld, 'kin.txt')
+        # skip if file does not exist and give a warning
+        if not os.path.isfile(kinfile):
+            print('file {} not found - skipped'.format(kinfile))
+            continue
+        
+        with open(kinfile) as kin:
             for line in kin:
-                if line.find('END') != -1:
+                if 'END' in line:
                     find_end += 1
-
-                if flag_el == 1 and find_end < 3:
-                    newfile.write(line)
-
-                elif flag_el == 0 and find_end == 2 and find_reac == 1:
-                    newfile.write(line)
+                    
+                if flag_el == 0 and find_end == 0:
+                    elementlines += line
+                    
+                elif find_end == 1 and find_species == 1:
+                    species = line.split()
+                    for sp in species:
+                        if sp not in specieslines.split('\n'):
+                            specieslines += sp + '\n'
+                            
+                elif find_end == 2 and find_reac == 1:
+                    reactionslines += line
 
                 if line.find('REACTIONS') != -1:
-                    find_reac += 1
-
-        i_fld += 1
-
+                    reactionslines += '\nREACTIONS \n'*(flag_el == 0)
+                    find_reac = 1
+                if line.find('SPECIES') != -1:
+                    specieslines += '\nSPECIES \n'*(flag_el == 0)
+                    find_species = 1
+                    
     # write END at the end of the file
-    newfile.write('\nEND')
+    elementlines += '\nEND\n'
+    specieslines += '\nEND\n'
+    reactionslines += '\nEND\n'
+    newfile.write(elementlines)
+    newfile.write(specieslines)
+    newfile.write(reactionslines)
     newfile.close()
 
 

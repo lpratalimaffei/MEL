@@ -85,12 +85,12 @@ class PROFILES_FROM_CKI:
 
                     ##################### EXTRACT THE OUTPUT ###############################################
                     try:
-                        tW_DF,PV = postproc.EXTRACT_PROFILES(SPECIES_PR,0,N_INIT_REAC,SPECIES_BIMOL_SERIES_NEW,ISOM_EQUIL,CUTOFF)
+                        tW_DF, _ = postproc.EXTRACT_PROFILES(SPECIES_PR,0,N_INIT_REAC,SPECIES_BIMOL_SERIES_NEW,ISOM_EQUIL,CUTOFF)
                     except ValueError as e:
                         print(str(e))
+                        
                     # SAVE PROFILES IN A DICTIONARY FOR LATER POSTPROCESSING AND PLOTTING
                     profiles_P[P][T] = tW_DF
-
             # update Pi
             Pi += 1
 
