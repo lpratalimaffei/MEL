@@ -43,7 +43,7 @@ def INITIALMOLES(REAC, SPECIES_BIMOL_SERIES, N_INIT):
         N_INIT_REAC = N_INIT*0.00001
     else:
         N_INIT_REAC = N_INIT
-
+         
     return N_INIT_REAC
 
 
@@ -472,7 +472,7 @@ class WRITE_OS_INPUT:
                     REAC_ABU_WRITE = ''
                     N_REAC_ABU = ''
                     N_AR = 1-np.sum(REAC_BRANCHING.values)
-
+                    
                 REAC_BRANCHING_WRITE = ''
                 for RR in BR_L_REAC.columns:
                     REAC_BRANCHING_WRITE = REAC_BRANCHING_WRITE + \
@@ -494,7 +494,7 @@ class WRITE_OS_INPUT:
                 else:
                     self.MOLE_FRACTIONS = REAC + ' ' + \
                         str(N_INIT) + ' AR ' + str(1-N_INIT)
-
+            
             self.SPECIES = ' '.join(SPECIES)
 
     def w_input_OS(self):

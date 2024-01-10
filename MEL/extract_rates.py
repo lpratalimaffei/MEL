@@ -184,26 +184,35 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
     myfile.close()
 
     matrix_float = np.array(matrix_list, dtype=np.float64)
-
     # remove negative values from the matrix
     n_T = len(T_LIST)
     n_P = len(P_LIST)
     warnings_neg = ''  # generate list of warnings for negative values
     for ii, row in enumerate(matrix_float):
-        mask_neg = np.where(row < 0)
+        # generate empty df for species if absent
+            
+        mask_neg = np.where(row < 0)[0]
         mask_toohigh = np.where(row > capture_list[ii])
         row[mask_toohigh] = 0
-        for mask_neg_i in mask_neg[0]:
+        
+        for mask_neg_i in mask_neg:
             row[mask_neg_i] = 0
-            R = int(ii/n_T/n_P)
-            P = int((ii-R*n_T*n_P)/n_T)
-            T = ii-R*n_T*n_P-P*n_T
-            warnings_neg = warnings_neg + \
-                'removed negative k_{R} at {T} K and {P} atm, be careful \n'.format(
-                    R=species_names[R], T=T_LIST[T], P=P_LIST[P])
+    # for each pressure, analyze each reaction and set the whole column to 0 if there is more than 1 value equal to 0
+    for P_index, P in enumerate(P_LIST):
+        for ii_reac, R in enumerate(species_names):
+            prods = species_names[species_names != R]
+            ii_in = ii_reac*(n_P)*(n_T)+P_index*(n_T)
+            for ii_prod, Pr in enumerate(prods):
+                rates_TP_iiprod = matrix_float[ii_in:ii_in+n_T, ii_prod]
+                if len(rates_TP_iiprod[rates_TP_iiprod == 0]) > 1:
+                    # if at least two values were neglected: set the whole line to 0
+                    matrix_float[ii_in:ii_in+n_T, ii_prod] = 0
+                    warnings_neg = warnings_neg + \
+                        'removed k({}->{}) at {} atm \n'.format(
+                            R, Pr, P)
 
     np.savetxt('warnings_negval_messrates.txt', [warnings_neg], fmt='%s')
-
+        
     return matrix_float
 
 

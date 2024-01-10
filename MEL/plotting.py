@@ -47,7 +47,8 @@ class PLOTTING:
         colorsrgb = list(matplotlib.cm.gist_rainbow(np.linspace(0, 1, 8)))
         colorsrgb += list(matplotlib.cm.tab10(np.arange(0, 10)))
         colorsrgb += list(matplotlib.cm.Set3(np.arange(0, 12)))
-        
+        while len(colorsrgb) < len(SPECIES):
+            colorsrgb += colorsrgb
         # repeat palette up to length of species
         colorsrgb *= round(len(colorsrgb)/len(SPECIES)) + 1
         self.palette_series = pd.Series(
