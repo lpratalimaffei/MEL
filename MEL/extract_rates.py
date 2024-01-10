@@ -204,8 +204,9 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
             ii_in = ii_reac*(n_P)*(n_T)+P_index*(n_T)
             for ii_prod, Pr in enumerate(prods):
                 rates_TP_iiprod = matrix_float[ii_in:ii_in+n_T, ii_prod]
-                if len(rates_TP_iiprod[rates_TP_iiprod == 0]) > 1:
-                    # if at least two values were neglected: set the whole line to 0
+                if len(rates_TP_iiprod[rates_TP_iiprod == 0]) > round(0.3*len(T_LIST)):
+                    # if at least 1/3 of the temperatures should be neglected:
+                    # set the full column to 0
                     matrix_float[ii_in:ii_in+n_T, ii_prod] = 0
                     warnings_neg = warnings_neg + \
                         'removed k({}->{}) at {} atm \n'.format(
