@@ -175,8 +175,8 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
                     if float(line.split()[0]) in np.array(T_LIST, dtype=float):
                         check_P_curr += 1
                         rates = [x.strip() for x in line.split()]
-                        # replace '***' values with 0
-                        rates = [x.replace('***', '0') for x in rates]
+                        # replace '***' values with nan
+                        rates = [x.replace('***', 'nan') for x in rates]
                         matrix_list.append(rates[1:-2])  # -2 excluded
                         capture_list.append(float(rates[-1]))
             if line.find('Temperature-Pressure Rate Tables:') != -1:
@@ -212,7 +212,9 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
                             R, Pr, P)
 
     np.savetxt('warnings_negval_messrates.txt', [warnings_neg], fmt='%s')
-        
+    #replace nan with 0
+    matrix_float[np.isnan(matrix_float)] = 0
+     
     return matrix_float
 
 
