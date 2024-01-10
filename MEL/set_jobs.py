@@ -5,25 +5,54 @@ import shutil
 from . import read_input as readinp
 
 
-def setfolder(fld):
+def checkNsubfolders(fld, fldperlevel):
     '''
-    Create folder if it does not exist, and return 0
-    If folder exists and is not empty: return 1
+    Check in fld that you have all levels of subfolders required
+    level1: fldperlevel[0]; level2: fldperlevel[1] ...
     '''
-    fld_ex = int(os.path.isdir(fld))
-    if fld_ex == 0:
+    flds = [fld]
+    CHECK = 1
+    for nflds in fldperlevel:
+        fldlist = []
+        for fld in flds:
+            # check N of subdirs
+            CHECK *= (len(os.listdir(fld)) == nflds)
+            # add subdirs
+            for subfld in os.listdir(fld):
+                fldlist.append(os.path.join(fld, subfld))
+        # now the new level to check is the list of subfolders
+        flds = fldlist
+
+    return CHECK
+
+
+def setfolder(fld, filescheck=[]):
+    '''
+    Create folder if it does not exist
+    and if it does not have a certain list of files or folders in it
+    if folder was generated from scratch, return 1
+    '''
+
+    if not os.path.isdir(fld):
         # create folder
         os.makedirs(fld)
-        YE_NO = 0
-    elif fld_ex == 1:
-        # check if it has subfolders
-        sub_fld = len(os.listdir(fld))
-        if sub_fld == 0:
-            YE_NO = 0
-        else:
-            YE_NO = 1
+        CHECK = 1
 
-    return YE_NO
+    else:
+        if filescheck:
+            allfiles = all([file in os.listdir(fld) for file in filescheck])
+
+            if allfiles:
+                CHECK = 0  # do nothing
+            else:
+                rmfolder(fld)
+                os.makedirs(fld)
+                CHECK = 1
+        else:
+            # do nothing
+            CHECK = 0
+
+    return CHECK
 
 
 def rmfolder(fld):
@@ -43,7 +72,7 @@ def renamefiles(cwd, fld):
     for F in files:
         F_name, F_format = F.split('.')
         oldname = os.path.join(fld, F)
-        newname = os.path.join(fld, F_name +'_old'+ N + '.' + F_format)
+        newname = os.path.join(fld, F_name + '_old' + N + '.' + F_format)
         os.rename(oldname, newname)
 
 
@@ -176,6 +205,11 @@ def set_simul_loop(cwd, jobtype, job_subdict, mech_dict):
             pseudospecies_file = os.path.join(cwd, 'inp', 'pseudospecies.txt')
             pseudospecies_series, stable_species = readinp.read_pseudospecies(
                 pseudospecies_file)
+            # check that all pseudospecies are available
+            for SP_stable in stable_species:
+                if SP_stable not in SPECIES:
+                    raise(ValueError(
+                        '*Species {} of pseudospecies file is not among the mechanism species - check and retry'.format(SP_stable)))
 
             # remove single species for composition_selection jobtype
             if jobtype == 'composition_selection':

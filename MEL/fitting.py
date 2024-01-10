@@ -5,7 +5,8 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from scipy.optimize import curve_fit
 from . import preprocessing as preproc
-
+import warnings
+warnings.filterwarnings('ignore')
 
 def arrhenius_fit(T_VECT, k_VECT):
     '''
@@ -134,43 +135,50 @@ class FITTING:
                 Wreac_fordWi, -dWi[:, i_REAC])
             fiterr = model_reac.score(Wreac_fordWi, -dWi[:, i_REAC])
 
-        self.data_P_fits[self.REAC][T] = model_reac.coef_[
-            0]  # save directly the dimensional coefficient
+        self.data_P_fits[self.REAC][T] = model_reac.coef_[0]
+        
+        # save directly the dimensional coefficient
         self.data_P_R2[self.REAC][T] = 'R2 = {:.2f}'.format(fiterr)
         self.data_P_fits_wERR[self.REAC][T] = '{:.4e}({:.2f})'.format(
             model_reac.coef_[0], fiterr)
 
-        # return the quality of the fits in the comment format
-        # these are normalized because they are used to perform simulaions
-        return self.data_P_fits.loc[T][self.PRODS], self.data_P_R2.loc[T][self.PRODS]
-
-    def write_originalk(self, out_fld, verbose=None):
+    def prod_bfs(self):
+        # get product branching fractions at a given P
+        BFS = self.data_P_fits[self.PRODS].values/np.array(self.data_P_fits['sum_k_Pr_i'])[:, np.newaxis]
+        self.BF_P_fits =  pd.DataFrame(BFS, columns = self.PRODS, index = self.data_P_fits.index)        
+        
+    def write_originalk(self, out_fld, verbose = False):
 
         if verbose:
             print(self.data_P_fits)
             print(self.data_P_fits_wERR)
         # Save the profiles in the appropriate folder
-        head = self.data_P_fits.columns
-        head = np.append('T[K]', head)
-        head_err = head[:-1]
+        head = np.append('T[K]', self.data_P_fits.columns)
         # head = head[np.newaxis,:]
-        head = '         '.join(head)
-        head_err = '         '.join(head_err)
+        headbf = ''.join([' '*(14-len(el)) + el for el in head[:-2]])
+        head = ''.join([' '*(14-len(el)) + el for el in head])
+        head_err = ''.join([' '*(14-len(el)) + el for el in head[:-1]])
+        
+        BF_towrite = np.concatenate(
+            (self.T_VECT[:, np.newaxis], self.BF_P_fits.values), axis=1)
         profiles_towrite = np.concatenate(
             (self.T_VECT[:, np.newaxis], self.data_P_fits.values), axis=1)
         profiles_wERR_towrite = np.concatenate(
             (self.T_VECT[:, np.newaxis], self.data_P_fits_wERR.values), axis=1)
         #profiles_final = np.concatenate((header,profiles_towrite),axis=0)
         # save the rates (before fitting) and the corresponding fitting error
+        np.savetxt(os.path.join(out_fld, 'bf.txt'),
+                   BF_towrite, header=headbf, delimiter='\t', fmt='%.2e')
         np.savetxt(os.path.join(out_fld, 'rates.txt'),
                    profiles_towrite, header=head, delimiter='\t', fmt='%.2e')
         np.savetxt(os.path.join(out_fld, 'rates_wERR.txt'),
                    profiles_wERR_towrite, header=head_err, delimiter='\t', fmt='%s')
 
-    def fits_lumped_k(self, cwd, P, SPECIES_BIMOL_SERIES):
+    def fits_lumped_k(self, SPECIES_BIMOL_SERIES, bfthreshold = 0.):
         '''
         Return the dataframes in the current status
         Generate matrices with arrhenius fits and comments
+        BFTHRESHOLD: minimum product branching fraction to keep the rate constant
         '''
 
         # Allocate the matrices of the rate constants
@@ -219,7 +227,13 @@ class FITTING:
                     print('fitting unavailable - probably species are not connected')
                     k0_MAT[0, i_prod], alpha_MAT[0, i_prod], EA_MAT[0, i_prod] = [np.inf]*3
                     comments_MAT[0, i_prod] = 'probably species not connected'
-
+                    
+            # now check max prod BF
+            maxbf = max(self.BF_P_fits[Pr_i])
+            maxbf_idx = np.argmax(self.BF_P_fits[Pr_i])
+            if maxbf < bfthreshold:
+                comments_MAT[0, i_prod] += ' ! LOW BF: MAX IS {:.2e} AT {} K'.format(maxbf, self.T_VECT[maxbf_idx])
+                
    # at this point, call the class WRITE_MECH_CKI from the C_preprocessing module and write the new mech
         # generate the DataFrame with the lines of the mechanism
 
@@ -273,7 +287,9 @@ class FITTING:
             # if fits are nans or infs: comment those lines
             par_all = np.concatenate(
                 [FITS_DICT[P].loc[reac][['k0', 'alpha', 'EA']].values for P in P_VECT])
-            if any([(par == 'nan' or par == 'inf') for par in par_all]):
+            comms = [FITS_DICT[P].loc[reac]['comments'] for P in P_VECT]
+            if (any([(par == 'nan' or par == 'inf') for par in par_all])
+                or all(['LOW BF' in comm for comm in comms])):
                 flag = '!'
                 DF_reac.loc[-1]['reac_name'] = '!' + DF_reac.loc[-1]['reac_name']
             else:
