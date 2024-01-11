@@ -273,17 +273,13 @@ class FITTING:
 
         for reac in reactions:
             # generate the dataframe
-            if len(P_VECT) > 1:
-                DF_reac = pd.DataFrame(
-                    index=np.arange(-1, len(P_VECT)), columns=FITS_DICT[P_VECT[0]].columns)
-            else:
-                DF_reac = pd.DataFrame(
-                    index=np.arange(-1, 0), columns=FITS_DICT[P_VECT[0]].columns)
+            DF_reac = pd.DataFrame(
+                index=np.arange(-1, len(P_VECT) -1*int(len(P_VECT)==0)), columns=FITS_DICT[P_VECT[0]].columns)
 
             # Allocate the first row to the lowest pressure
             DF_reac.loc[-1] = FITS_DICT[P_VECT[0]].loc[reac]
             DF_reac.loc['empty'] = ' '       # add empty line between reactions
-            
+            print(DF_reac.loc[-1])
             # if fits are nans or infs: comment those lines
             k0_all = np.concatenate(
                 [FITS_DICT[P].loc[reac][['k0']].values for P in P_VECT])
@@ -297,6 +293,7 @@ class FITTING:
                 DF_reac.loc[-1][['k0', 'alpha', 'EA']] = [1.0, 1.0, 1.0]
             else:
                 flag = ''
+            print(DF_reac.loc[-1])
             # Scan the pressures and write in PLOG form
             Pi = 0
             # if the P_VECT has only one pressure: don't write in PLOG form
