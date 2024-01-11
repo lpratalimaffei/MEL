@@ -53,7 +53,8 @@ def main():
 
     ################ mechanism reading and checking ##########################
     tic_mechread = clock()
-    mech_dict = extr_rates.readmechanism(input_par['mech_type'], cwd)
+    mech_dict = extr_rates.readmechanism(input_par['mech_type'], cwd, 
+                                         del_allT_whenneg = input_par['del_allT_whenneg'])
     toc_mechread = clock()
 
     # check the consistency of the input: parameters section
