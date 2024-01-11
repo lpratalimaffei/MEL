@@ -290,10 +290,12 @@ class FITTING:
                 flag = '!'
                 DF_reac.loc[-1]['reac_name'] = '!' + DF_reac.loc[-1]['reac_name']
             elif (len(P_VECT) > 1 and any(listinfsnans) and not all(listinfsnans)):
+                # keep the reaction
                 DF_reac.loc[-1][['k0', 'alpha', 'EA']] = [1.0, 1.0, 1.0]
+                DF_reac.loc[-1]['reac_name'] = DF_reac.loc[-1]['reac_name'].replace('!', '')
             else:
                 flag = ''
-            print(DF_reac.loc[-1])
+
             # Scan the pressures and write in PLOG form
             Pi = 0
             # if the P_VECT has only one pressure: don't write in PLOG form
