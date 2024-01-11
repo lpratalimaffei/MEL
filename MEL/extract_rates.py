@@ -7,7 +7,7 @@ import copy
 # function for mech reading
 
 
-def readmechanism(input_type, cwd):
+def readmechanism(input_type, cwd, del_allT_whenneg = False):
     '''
     method to read the mechanism file depending on the input type
     '''
@@ -16,7 +16,7 @@ def readmechanism(input_type, cwd):
         P_LIST, T_LIST, species_names, species_names_bimol_frag2 = data_names_mess(
             os.path.join(cwd, 'inp'))
         # extract matrix of rate constants
-        rates = MATRIX(os.path.join(cwd, 'inp'), P_LIST, T_LIST, species_names)
+        rates = MATRIX(os.path.join(cwd, 'inp'), P_LIST, T_LIST, species_names, del_allT_whenneg = del_allT_whenneg)
         mech_dict = dict(zip(['P_VECT_MESS', 'T_VECT_MESS', 'SPECIES', 'SPECIES_BIMOL', 'rates'], [
                          P_LIST, T_LIST, species_names, species_names_bimol_frag2, rates]))
 
@@ -149,7 +149,7 @@ def data_names_mess(cwd):
     return P_LIST, T_LIST, species_names, species_names_frag2
 
 
-def MATRIX(cwd, P_LIST, T_LIST, species_names):
+def MATRIX(cwd, P_LIST, T_LIST, species_names, del_allT_whenneg = False):
     """
     Extract from rate.out all the rate constants in the form of a list
     """
@@ -175,8 +175,8 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
                     if float(line.split()[0]) in np.array(T_LIST, dtype=float):
                         check_P_curr += 1
                         rates = [x.strip() for x in line.split()]
-                        # replace '***' values with nan
-                        rates = [x.replace('***', 'nan') for x in rates]
+                        # replace '***' values with 0
+                        rates = [x.replace('***', '0') for x in rates]
                         matrix_list.append(rates[1:-2])  # -2 excluded
                         capture_list.append(float(rates[-1]))
             if line.find('Temperature-Pressure Rate Tables:') != -1:
@@ -198,23 +198,23 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names):
         for mask_neg_i in mask_neg:
             row[mask_neg_i] = 0
     # for each pressure, analyze each reaction and set the whole column to 0 if there is more than 1 value equal to 0
+    
     for P_index, P in enumerate(P_LIST):
         for ii_reac, R in enumerate(species_names):
             prods = species_names[species_names != R]
             ii_in = ii_reac*(n_P)*(n_T)+P_index*(n_T)
             for ii_prod, Pr in enumerate(prods):
                 rates_TP_iiprod = matrix_float[ii_in:ii_in+n_T, ii_prod]
-                if len(rates_TP_iiprod[rates_TP_iiprod == 0]) > round(0.25*len(T_LIST)):
-                    # if at least 1/3 of the temperatures should be neglected:
-                    # set the full column to 0
-                    matrix_float[ii_in:ii_in+n_T, ii_prod] = 0
+                if len(rates_TP_iiprod[rates_TP_iiprod == 0]) > 1:
+                    if del_allT_whenneg:
+                        matrix_float[ii_in:ii_in+n_T, ii_prod] = 0
                     warnings_neg = warnings_neg + \
-                        'removed k({}->{}) at {} atm \n'.format(
+                        'neg vals in k({}->{}) at {} atm set to 0\n'.format(
                             R, Pr, P)
 
     np.savetxt('warnings_negval_messrates.txt', [warnings_neg], fmt='%s')
     #replace nan with 0
-    matrix_float[np.isnan(matrix_float)] = 0
+    # matrix_float[np.isnan(matrix_float)] = 0
      
     return matrix_float
 

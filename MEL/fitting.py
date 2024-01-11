@@ -18,7 +18,7 @@ def arrhenius_fit(T_VECT, k_VECT):
         return ln_k0+alpha*np.log(T)-EA/1.987/T
 
     ln_k_VECT = np.log(k_VECT)
-    popt, pcov = curve_fit(ln_k, T_VECT, ln_k_VECT)
+    popt, _ = curve_fit(ln_k, T_VECT, ln_k_VECT)
     # get the model parameters
     k0 = np.exp(popt[0])
     alpha = popt[1]
@@ -283,15 +283,18 @@ class FITTING:
             # Allocate the first row to the lowest pressure
             DF_reac.loc[-1] = FITS_DICT[P_VECT[0]].loc[reac]
             DF_reac.loc['empty'] = ' '       # add empty line between reactions
-
+            
             # if fits are nans or infs: comment those lines
-            par_all = np.concatenate(
-                [FITS_DICT[P].loc[reac][['k0', 'alpha', 'EA']].values for P in P_VECT])
+            k0_all = np.concatenate(
+                [FITS_DICT[P].loc[reac][['k0']].values for P in P_VECT])
             comms = [FITS_DICT[P].loc[reac]['comments'] for P in P_VECT]
-            if (any([(par == 'nan' or par == 'inf') for par in par_all])
+            listinfsnans = [(par == 'nan' or par == 'inf') for par in k0_all]
+            if (all(listinfsnans)
                 or all(['LOW BF' in comm for comm in comms])):
                 flag = '!'
                 DF_reac.loc[-1]['reac_name'] = '!' + DF_reac.loc[-1]['reac_name']
+            elif (len(P_VECT) > 1 and any(listinfsnans) and not all(listinfsnans)):
+                DF_reac.loc[-1][['k0', 'alpha', 'EA']] = [1.0, 1.0, 1.0]
             else:
                 flag = ''
             # Scan the pressures and write in PLOG form
@@ -305,6 +308,9 @@ class FITTING:
                     DF_reac.loc[Pi]['reac_name'] = flag + 'PLOG' + '/' + str(P)
                     DF_reac.loc[Pi]['comments'] = '/ ' + \
                         DF_reac.loc[Pi]['comments']
+                    # if only some P should be commented, the flag will be ''. update the rxn name
+                    if flag == '' and any((par == 'nan' or par == 'inf') for par in DF_reac.loc[Pi][['k0', 'alpha', 'EA']]):
+                        DF_reac.loc[Pi]['reac_name'] = '!' + DF_reac.loc[Pi]['reac_name']
                     # update the value of the pressure
                     Pi += 1
 

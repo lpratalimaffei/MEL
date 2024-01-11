@@ -57,7 +57,8 @@ class READ_INPUT:
         # default vars
         self.verbose = False
         bfthreshold = 0.
-
+        del_allT_whenneg = False
+        
         with open(self.filename) as myfile:
             for line in myfile:
                 # skip empty lines
@@ -124,12 +125,13 @@ class READ_INPUT:
                                     [lower_cutoff, upper_cutoff], dtype=np.float32)
 
                             if line.find('verboseoutput') != -1:
-                                verbose = line.split('=')[1].strip().split('#')[0].strip()
-                                if verbose == 'True':
-                                    self.verbose = True
+                                self.verbose = bool(line.split('=')[1].strip().split('#')[0].strip())
 
                             if 'keeprxns_bfmin' in line:
                                 bfthreshold = float(line.split('=')[1].strip().split('#')[0].strip())
+                              
+                            if 'del_allT_whenneg' in line:
+                                del_allT_whenneg = bool(line.split('=')[1].strip().split('#')[0].strip())  
                                 
                             if line.find('end') != -1:
                                 readinput = 0
@@ -412,9 +414,11 @@ class READ_INPUT:
 
             # input_parameters dictionary
             keys_inputpar = ['opensmoke_folder', 'mech_type', 'P_vect',
-                             'T_vect', 'T_skip', 'units_bimol', 'cutoff', 'verbose', 'bfthreshold']
+                             'T_vect', 'T_skip', 'units_bimol', 'cutoff', 'verbose', 
+                             'bfthreshold', 'del_allT_whenneg']
             values_inputpar = [self.OS_folder, self.inp_type, self.Pvect,
-                               self.Tvect, Tvect_skip, self.units_bimol, self.cutoff, self.verbose, bfthreshold]
+                               self.Tvect, Tvect_skip, self.units_bimol, self.cutoff, 
+                               self.verbose, bfthreshold, del_allT_whenneg]
             input_parameters = dict(zip(keys_inputpar, values_inputpar))
 
             return input_parameters, job_list
