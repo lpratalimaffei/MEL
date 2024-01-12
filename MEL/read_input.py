@@ -117,22 +117,25 @@ class READ_INPUT:
                             if line.find('units_bimol') != -1:
                                 self.units_bimol = line.split('=')[1].strip().split('#')[0].strip()
 
-                            if line.find('cutoff') != -1:
+                            if 'cutoff' in line:
                                 line_cutoff = line.split('=')[1].strip().split('#')[0].strip()
                                 lower_cutoff = re.split('-', line_cutoff)[0].strip()
                                 upper_cutoff = re.split('-', line_cutoff)[1].strip()
                                 self.cutoff = np.array(
                                     [lower_cutoff, upper_cutoff], dtype=np.float32)
 
-                            if line.find('verboseoutput') != -1:
-                                self.verbose = bool(line.split('=')[1].strip().split('#')[0].strip())
+                            if 'verbose_output' in line or 'verboseoutput' in line:
+                                strval = line.split('=')[1].strip().split('#')[0].strip()
+                                self.verbose = bool(False*(strval in ['false', 'False']) + True*(strval in ['True', 'true']))
 
                             if 'keeprxns_bfmin' in line:
                                 bfthreshold = float(line.split('=')[1].strip().split('#')[0].strip())
                               
                             if 'del_allT_whenneg' in line:
-                                del_allT_whenneg = bool(line.split('=')[1].strip().split('#')[0].strip())  
-                                
+                                strval = line.split('=')[1].strip().split('#')[0].strip()
+                                del_allT_whenneg = bool(False*(strval in ['false', 'False']) + True*(strval in ['True', 'true']))
+
+
                             if line.find('end') != -1:
                                 readinput = 0
 
@@ -420,7 +423,6 @@ class READ_INPUT:
                                self.Tvect, Tvect_skip, self.units_bimol, self.cutoff, 
                                self.verbose, bfthreshold, del_allT_whenneg]
             input_parameters = dict(zip(keys_inputpar, values_inputpar))
-
             return input_parameters, job_list
 
         else:
