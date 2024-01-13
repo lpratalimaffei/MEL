@@ -91,6 +91,10 @@ class PLOTTING:
                 # extract the matrix with the profiles
                 tW_DF = profiles_i[T]
                 t = tW_DF['t'].values
+                if len(t) == 0:
+                    kk += 1
+                    continue
+                
                 maxt.append(t[-1])
                 t = t[:, np.newaxis]
                 # plot the species only if present in the list
