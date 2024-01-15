@@ -205,7 +205,7 @@ def MATRIX(cwd, P_LIST, T_LIST, species_names, del_allT_whenneg = False):
             ii_in = ii_reac*(n_P)*(n_T)+P_index*(n_T)
             for ii_prod, Pr in enumerate(prods):
                 rates_TP_iiprod = matrix_float[ii_in:ii_in+n_T, ii_prod]
-                if len(rates_TP_iiprod[rates_TP_iiprod == 0]) > 0.15*len(T_LIST):
+                if len(rates_TP_iiprod[rates_TP_iiprod == 0]) > 1: #0.15*len(T_LIST):
                     if del_allT_whenneg == True:
                         matrix_float[ii_in:ii_in+n_T, ii_prod] = 0
                     warnings_neg = warnings_neg + \

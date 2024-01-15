@@ -157,7 +157,7 @@ def main():
             shutil.copy(os.path.join(fld_list[0], 'therm.txt'), os.path.join(
                 lumpedmech_fld, 'therm.txt'))
             # write kinetics
-            preproc.COMBINE_CKI(lumpedmech_fld, fld_list)
+            preproc.COMBINE_CKI(lumpedmech_fld, fld_list, bfthreshold = input_par['bfthreshold'])
 
         if 'prescreening' in jobtype and key != 'single_simulation':
             # write advice on species to keep according to the selected threshold
