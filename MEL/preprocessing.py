@@ -436,9 +436,9 @@ def COMBINE_CKI(newfld, fldlist, bfthreshold = 0.):
                             if line[0] == '!' and 'inf' not in line:
                                 line = line[1:]
                             reactionslinesnew.append(line)
-                else:        
-                    for line in reactionslines[idx:idx_rxns[i+1]]:
-                        reactionslinesnew.append(line)
+                # else:        
+                #     for line in reactionslines[idx:idx_rxns[i+1]]:
+                #         reactionslinesnew.append(line)
             else:
                 for line in reactionslines[idx:idx_rxns[i+1]]:
                     reactionslinesnew.append(line)
