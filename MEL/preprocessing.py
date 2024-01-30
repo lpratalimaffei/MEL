@@ -416,32 +416,33 @@ def COMBINE_CKI(newfld, fldlist, bfthreshold = 0.):
         idx_rxns = np.where(np.char.find(np.array(reactionslines), '=>') != -1)[0]
         idx_rxns = np.append(idx_rxns, len(reactionslines) -1)
         for i, idx in enumerate(idx_rxns[:-1]):
-            LOWBFS = np.array([float(line.split('LOW BF: MAX IS ')[1].split(' AT')[0]) 
-                               for line in reactionslines[idx:idx_rxns[i+1]] if 'LOW BF' in line])
-            INFS = np.array(['inf' in line for line in reactionslines[idx:idx_rxns[i+1]]], dtype = bool)
-            if len(LOWBFS) > 1:
-                if any(LOWBFS > bfthreshold) and not all(INFS): # any, but not all inf!
-                    # rxn name
-                    rxnname = reactionslines[idx]
-                    if rxnname[0:2] == '!!':
-                        rxnname = rxnname[2:]
-                    elif rxnname[0] == '!':
-                        rxnname = rxnname[1:]
-                    # replace inf. if necessary
-                    rxnname = rxnname.replace('inf', '1.0')
-                    reactionslinesnew.append(rxnname)
-                    for idx_r in range(idx+1, idx_rxns[i+1]):
-                        line = reactionslines[idx_r]
-                        if len(line) > 0:
-                            if line[0] == '!' and 'inf' not in line:
-                                line = line[1:]
-                            reactionslinesnew.append(line)
-                # else:        
-                #     for line in reactionslines[idx:idx_rxns[i+1]]:
-                #         reactionslinesnew.append(line)
-            else:
-                for line in reactionslines[idx:idx_rxns[i+1]]:
-                    reactionslinesnew.append(line)
+            TODEL = []
+            for line in reactionslines[idx:idx_rxns[i+1]-1]:
+                if line[0] != ' ':
+                    if 'inf' in line or 'LOW R2' in line:
+                        TODEL.append(True)
+                    elif 'LOW BF' in line:
+                        TODEL.append(bool(float(line.split('LOW BF: MAX IS ')[1].split(' AT')[0]) < bfthreshold))
+                    else:
+                        TODEL.append(False)
+
+            if not all(TODEL):
+            # if any(LOWBFS > bfthreshold) and not all(INFS): # any, but not all inf!
+                # rxn name
+                rxnname = reactionslines[idx]
+                if rxnname[0:2] == '!!':
+                    rxnname = rxnname[2:]
+                elif rxnname[0] == '!':
+                    rxnname = rxnname[1:]
+                # replace inf. if necessary
+                rxnname = rxnname.replace('inf', '1.0')
+                reactionslinesnew.append(rxnname)
+                for idx_r in range(idx+1, idx_rxns[i+1]):
+                    line = reactionslines[idx_r]
+                    if len(line) > 0:
+                        if line[0] == '!' and 'inf' not in line and 'LOW R2' not in line:
+                            line = line[1:]
+                        reactionslinesnew.append(line)
                     
         reactionslines = reactionslinesnew
                         
