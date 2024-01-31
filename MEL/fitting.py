@@ -275,7 +275,6 @@ class FITTING:
         # generate new dataframes based on the reaction name
         reactions = FITS_DICT[P_VECT[0]]['reac_name'].index
         for reac in reactions:
-            print(reac)
             # generate the dataframe
             DF_reac = pd.DataFrame(
                 index=np.arange(-1, len(P_VECT) -1*int(len(P_VECT)==0)), columns=FITS_DICT[P_VECT[0]].columns)
