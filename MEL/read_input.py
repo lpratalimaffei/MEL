@@ -142,7 +142,7 @@ class READ_INPUT:
                         if readjobs == 1:
                             # read the list of jobs
                             job_ids = ['preproc_irreversible', 'single_simulation', 'prescreening_equilibrium', 'prescreening_allreactive',
-                                       'composition_selection', 'lumping', 'validation']
+                                       'composition_selection', 'lumping', 'validation', 'plot_rates']
 
                             for job in job_ids:
                                 if line.find(job) != -1:
@@ -154,7 +154,7 @@ class READ_INPUT:
                                 # generate the job_list dictionary
                                 job_list = dict.fromkeys(jobid)
                                 # empty subdictionaries for lumping and validation - if they are present in the list
-                                job_ids_empty = ['lumping', 'validation', 'preproc_irreversible']
+                                job_ids_empty = ['lumping', 'validation', 'preproc_irreversible', 'plot_rates']
                                 for job_empty in job_ids_empty:
                                     if job_empty in job_list:
                                         job_list[job_empty] = dict.fromkeys(
@@ -547,7 +547,7 @@ class READ_INPUT:
             if key == 'single_simulation':
                 jobtype = value['simul_type']
             elif key in ['prescreening_equilibrium', 'prescreening_allreactive', 'composition_selection',
-                    'lumping', 'validation', 'preproc_irreversible']:
+                    'lumping', 'validation', 'preproc_irreversible', 'plot_rates']:
                 jobtype = key
             else:
                 print('\nValue Error: dictionary type not recognized')
@@ -601,6 +601,14 @@ class READ_INPUT:
                         error_list = error_list + \
                             '\n validation requires lumped thermo {}, not found!'.format(
                                 lumpedmech_thermfile)
+
+            if jobtype == 'plot_rates':
+                lumpedmech_kinfile = os.path.join(
+                    self.cwd, 'lumpedmech', 'kin.txt')
+                if os.path.isfile(lumpedmech_kinfile) == False:
+                    error_list = error_list + \
+                        '\n plot_rates requires lumped mech {}, not found!'.format(
+                            lumpedmech_kinfile)
 
             # PSEUDOSPECIES: CHECK THAT THEY ARE NOT REPEATED IN EACH GROUP
             if jobtype == 'prescreening_equilibrium' or jobtype == 'prescreening_allreactive':
