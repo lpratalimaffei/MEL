@@ -421,9 +421,7 @@ def run_extract_fittedkin(cwd, OS_folder):
     run preprocessor and extract bw HP kinetics dataframe
     '''
     OS_exe = main_flow.get_OS()
-    exec0 = main_flow.get_libpath()
-    OS_lib = os.path.abspath(os.path.join(OS_folder, os.pardir, 'lib'))
-    exec0 += 'export DYLD_LIBRARY_PATH="' + OS_lib + ':$DYLD_LIBRARY_PATH"; '
+    exec0 = main_flow.get_libpath(OS_folder)
     preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"')
     input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
     output_preproc = os.path.join(".", "mech_tocompile", "preproc_output.txt")
