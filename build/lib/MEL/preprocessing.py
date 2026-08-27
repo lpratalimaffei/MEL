@@ -357,7 +357,7 @@ def WRITE_THERM(cwd, SPECIES_SERIES, SPECIES_BIMOL_SERIES):
     thermo.close()
 
 
-def COMBINE_CKI(newfld, fldlist, bfthreshold = 0.):
+def COMBINE_CKI(newfld, fldlist):
     '''
     In this class: 
     - extract REACTIONS of each submech indicated in the file list between REACTIONS and END
@@ -371,8 +371,7 @@ def COMBINE_CKI(newfld, fldlist, bfthreshold = 0.):
     # preallocations
     elementlines = ''
     specieslines = ''
-    reactionslines = []
-    # reactionslines = ''
+    reactionslines = ''
     
     for flag_el, fld in enumerate(fldlist):
         find_end = 0
@@ -399,54 +398,15 @@ def COMBINE_CKI(newfld, fldlist, bfthreshold = 0.):
                             specieslines += sp + '\n'
                             
                 elif find_end == 2 and find_reac == 1:
-                    reactionslines.append(line)
-                    # reactionslines += line
+                    reactionslines += line
 
                 if line.find('REACTIONS') != -1:
-                    reactionslines.append('\nREACTIONS \n'*(flag_el == 0))
-                    # reactionslines += '\nREACTIONS \n'*(flag_el == 0)
+                    reactionslines += '\nREACTIONS \n'*(flag_el == 0)
                     find_reac = 1
                 if line.find('SPECIES') != -1:
                     specieslines += '\nSPECIES \n'*(flag_el == 0)
                     find_species = 1
-    
-    # check bf threshold and uncomment lines if necessary
-    if bfthreshold > 0:
-        reactionslinesnew = [reactionslines[0]]
-        idx_rxns = np.where(np.char.find(np.array(reactionslines), '=>') != -1)[0]
-        idx_rxns = np.append(idx_rxns, len(reactionslines) -1)
-        for i, idx in enumerate(idx_rxns[:-1]):
-            TODEL = []
-            for line in reactionslines[idx:idx_rxns[i+1]-1]:
-                if line[0] != ' ':
-                    if 'inf' in line or 'LOW R2' in line:
-                        TODEL.append(True)
-                    elif 'LOW BF' in line:
-                        TODEL.append(bool(float(line.split('LOW BF: MAX IS ')[1].split(' AT')[0]) < bfthreshold))
-                    else:
-                        TODEL.append(False)
-
-            if not all(TODEL):
-            # if any(LOWBFS > bfthreshold) and not all(INFS): # any, but not all inf!
-                # rxn name
-                rxnname = reactionslines[idx]
-                if rxnname[0:2] == '!!':
-                    rxnname = rxnname[2:]
-                elif rxnname[0] == '!':
-                    rxnname = rxnname[1:]
-                # replace inf. if necessary
-                rxnname = rxnname.replace('inf', '1.0')
-                reactionslinesnew.append(rxnname)
-                for idx_r in range(idx+1, idx_rxns[i+1]):
-                    line = reactionslines[idx_r]
-                    if len(line) > 0:
-                        if line[0] == '!' and 'inf' not in line and 'LOW R2' not in line:
-                            line = line[1:]
-                        reactionslinesnew.append(line)
                     
-        reactionslines = reactionslinesnew
-                        
-    reactionslines = ''.join(reactionslines)
     # write END at the end of the file
     elementlines += '\nEND\n'
     specieslines += '\nEND\n'

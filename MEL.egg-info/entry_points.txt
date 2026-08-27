@@ -1,0 +1,3 @@
+[console_scripts]
+MEL = MEL.run:main
+

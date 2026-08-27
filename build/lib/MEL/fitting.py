@@ -274,6 +274,7 @@ class FITTING:
         '''
         # generate new dataframes based on the reaction name
         reactions = FITS_DICT[P_VECT[0]]['reac_name'].index
+
         for reac in reactions:
             # generate the dataframe
             DF_reac = pd.DataFrame(
@@ -298,6 +299,7 @@ class FITTING:
                 flag = ''
             else:
                 flag = ''
+
             # Scan the pressures and write in PLOG form
             Pi = 0
             # if the P_VECT has only one pressure: don't write in PLOG form
@@ -314,9 +316,7 @@ class FITTING:
                         DF_reac.loc[Pi]['reac_name'] = '!' + DF_reac.loc[Pi]['reac_name']
                     # update the value of the pressure
                     Pi += 1
-            if len(P_VECT) == 1:
-                # remove index 0 from the dataframe (all NAN)
-                DF_reac = DF_reac[DF_reac.index != 0]
+
             # concatenate values
             if reac == 0:
                 plog_fits_array = DF_reac.values
