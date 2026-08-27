@@ -11,7 +11,7 @@ class PROFILES_FROM_CKI:
         self.path = path    # path where the kin.txt mech is
         self.OS_folder = OS_folder # folder containing OS executables
         self.OS_exe = main_flow.get_OS()
-        self.exec0 = main_flow.get_libpath()
+        self.exec0 = main_flow.get_libpath(OS_folder)
         self.preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + self.OS_exe + '"')
         self.osbatch_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_BatchReactor." + self.OS_exe + '"')
         self.input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
@@ -95,4 +95,3 @@ class PROFILES_FROM_CKI:
             Pi += 1
 
         return profiles_P
-

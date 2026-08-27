@@ -28,22 +28,45 @@ def get_OS():
         OS_exe = 'sh'
     return OS_exe
 
-def get_libpath():
-    checkpath = os.path.expanduser('~')+'/.bash_profile'
-    if sys.platform == 'darwin' and os.path.exists(checkpath):
-    #if sys.platform == 'darwin' and os.path.exists(checkpath):
-        # mac: add libraries
-        my_env = subprocess.check_output('source ' +  checkpath + ' && echo $DYLD_LIBRARY_PATH', shell=True)
-        my_env = str(my_env)[2:-3]
-        exec0 = 'export DYLD_LIBRARY_PATH=' + my_env + '; '
-    #elif sys.platform == 'linux' and os.path.exists(os.path.expanduser('~')+'/.bashrc'):
-    #    my_env = subprocess.check_output('source ' +  os.path.expanduser('~')+'/.bashrc' + ' && echo $LD_LIBRARY_PATH', shell=True)
-    #    my_env = str(my_env)[2:-3]
-    #    exec0 = 'export LD_LIBRARY_PATH=' + my_env + '; '
-    else:
-        exec0 = ''
+def get_libpath(OS_folder=None):
+    if os.name == 'nt':
+        return ''
 
-    return exec0
+    if sys.platform == 'darwin':
+        libvar = 'DYLD_LIBRARY_PATH'
+        shell_profile = os.path.expanduser('~/.bash_profile')
+    elif sys.platform.startswith('linux'):
+        libvar = 'LD_LIBRARY_PATH'
+        shell_profile = os.path.expanduser('~/.bashrc')
+    else:
+        return ''
+
+    libpaths = []
+    if OS_folder is not None:
+        OS_lib = os.path.abspath(os.path.join(OS_folder, os.pardir, 'lib'))
+        if os.path.isdir(OS_lib):
+            libpaths.append(OS_lib)
+
+    libpaths.extend([p for p in os.environ.get(libvar, '').split(':') if p])
+
+    if os.path.exists(shell_profile):
+        cmd = 'source "' + shell_profile + '" >/dev/null 2>&1 && echo ${' + libvar + ':-}'
+        try:
+            shell_env = subprocess.check_output(
+                cmd, shell=True, executable='/bin/bash').decode().strip()
+            libpaths.extend([p for p in shell_env.split(':') if p])
+        except subprocess.CalledProcessError:
+            pass
+
+    libpaths_unique = []
+    for path in libpaths:
+        if path not in libpaths_unique:
+            libpaths_unique.append(path)
+
+    if len(libpaths_unique) == 0:
+        return ''
+
+    return 'export ' + libvar + '="' + ':'.join(libpaths_unique) + ':${' + libvar + ':-}"; '
 
 def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series, opts):
     '''
@@ -88,7 +111,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
 
     ################# OS EXECUTION FOLDERS AND COMMANDS ########################################
     OS_exe = get_OS()
-    exec0 = get_libpath()
+    exec0 = get_libpath(OS_folder)
     preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"')
     osbatch_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_BatchReactor." + OS_exe + '"')
     input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
@@ -583,4 +606,3 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
     np.savetxt(os.path.join(fld, 'clock.txt'), times.values, delimiter='\t', header=header_times, fmt='%1.2e')
 
     return 1
-

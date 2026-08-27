@@ -34,23 +34,29 @@ def run_preproc(cwd, OS_folder, verbose=False):
     # write the mechanism from the blocks
     # convert the reaction block to dataframe
     rxn_rev_HPLIM_df = block_to_df(rxn_rev_HPLIM)
-    write_CKI_blocks(filename, element_block, species_block, rxn_rev_HPLIM)
-    rxn_bw_HPLIM_df = run_extract_fittedkin(cwd, OS_folder)
-    # align labels in the dataframes:
-    rxn_rev_HPLIM_df = align_labels(rxn_bw_HPLIM_df, rxn_rev_HPLIM_df)
-    # it's possible that fittedkinetics swaps the product names for bimolcular reactions
-    if verbose:
-        print('rev HPlim:', rxn_rev_HPLIM_df)
-    rxn_irrev_HPLIM = convert_df_FWBW_to_irrev(
-        rxn_rev_HPLIM_df, rxn_bw_HPLIM_df)
+    if rxn_rev_HPLIM_df.empty:
+        rxn_irrev_HPLIM = ''
+    else:
+        write_CKI_blocks(filename, element_block, species_block, rxn_rev_HPLIM)
+        rxn_bw_HPLIM_df = run_extract_fittedkin(cwd, OS_folder)
+        # align labels in the dataframes:
+        rxn_rev_HPLIM_df = align_labels(rxn_bw_HPLIM_df, rxn_rev_HPLIM_df)
+        # it's possible that fittedkinetics swaps the product names for bimolcular reactions
+        if verbose:
+            print('rev HPlim:', rxn_rev_HPLIM_df)
+        rxn_irrev_HPLIM = convert_df_FWBW_to_irrev(
+            rxn_rev_HPLIM_df, rxn_bw_HPLIM_df)
 
     # 2. preproc for pressure dependent reactions: at each P, set the rate as the high P limit
     #    Then read the backward reaction from the processed mechanism
     rxn_rev_PDEP_df = block_to_df(rxn_rev_PDEP)
-    rxn_bw_PDEP_df = pdep_torev(
-        cwd, OS_folder, filename, element_block, species_block, rxn_rev_PDEP_df)
-    rxn_rev_PDEP_df = align_labels(rxn_bw_PDEP_df, rxn_rev_PDEP_df)
-    rxn_irrev_PDEP = convert_df_FWBW_to_irrev(rxn_rev_PDEP_df, rxn_bw_PDEP_df)
+    if rxn_rev_PDEP_df.empty:
+        rxn_irrev_PDEP = ''
+    else:
+        rxn_bw_PDEP_df = pdep_torev(
+            cwd, OS_folder, filename, element_block, species_block, rxn_rev_PDEP_df)
+        rxn_rev_PDEP_df = align_labels(rxn_bw_PDEP_df, rxn_rev_PDEP_df)
+        rxn_irrev_PDEP = convert_df_FWBW_to_irrev(rxn_rev_PDEP_df, rxn_bw_PDEP_df)
     blocks_all_irrev = rxn_irrev + rxn_irrev_HPLIM + rxn_irrev_PDEP
 
     # write the final mechanism: preproc_irreversible/kin_irr.CKI
@@ -415,7 +421,7 @@ def run_extract_fittedkin(cwd, OS_folder):
     run preprocessor and extract bw HP kinetics dataframe
     '''
     OS_exe = main_flow.get_OS()
-    exec0 = main_flow.get_libpath()
+    exec0 = main_flow.get_libpath(OS_folder)
     preproc_exe = os.path.join('"' + OS_folder, "OpenSMOKEpp_CHEMKIN_PreProcessor." + OS_exe + '"')
     input_preproc = os.path.join(os.path.join(".", "mech_tocompile", "input_preproc.dic"))    
     output_preproc = os.path.join(".", "mech_tocompile", "preproc_output.txt")
@@ -444,7 +450,8 @@ def pdep_torev(cwd, OS_folder, filename, element_block, species_block, rxn_rev_P
     rxn_rev_PDEP_df = align_labels(rxn_bw_HP_df, rxn_rev_PDEP_df)
     # preallocate dataframe for p dependent reactions
     rxn_bw_PDEP_df = pd.DataFrame(index=rxn_rev_PDEP_df.index, columns=rxn_rev_PDEP_df.columns, dtype=object)
-    rxn_bw_PDEP_df[rxn_rev_PDEP_df.columns] = np.array([None, None, None, []], dtype=object)
+    for rxn in rxn_bw_PDEP_df.index:
+        rxn_bw_PDEP_df.loc[rxn] = [None, None, None, []]
 
     # for each reaction: derive pressure dependent backward rate constants
     for rxn in rxn_bw_PDEP_df.index:

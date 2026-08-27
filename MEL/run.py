@@ -11,6 +11,7 @@ from time import perf_counter as clock
 from MEL import license_message
 from MEL import main_flow as sim
 from MEL import preproc_irreversible as preproc_irr
+from MEL import plot_rates
 from MEL import read_input as readinp
 from MEL import extract_rates as extr_rates
 from MEL import preprocessing as preproc
@@ -82,7 +83,7 @@ def main():
         if key == 'single_simulation':
             jobtype = value['simul_type']
         elif key in ['prescreening_equilibrium', 'prescreening_allreactive', 'composition_selection',
-                     'lumping', 'validation', 'preproc_irreversible']:
+                     'lumping', 'validation', 'preproc_irreversible', 'plot_rates']:
             jobtype = key
 
         # call subdictionaries
@@ -97,6 +98,15 @@ def main():
             opts = ['', '']
 
         print('\nstarting task: ' + key + '\n')
+
+        if jobtype == 'plot_rates':
+            tic = clock()
+            plot_info = plot_rates.plot_all(cwd)
+            toc = clock()
+            print('rates PDF: ' + plot_info['rates_pdf'])
+            print('branching fractions PDF: ' + plot_info['bf_pdf'])
+            tictoc += '{} - {} : \t\t {:1.2e} \n'.format(jobtype, '', toc-tic)
+            continue
 
         # set rest of input parameters (except reac/prod) based on simulation type
         input_par_jobtype = inp_instr.set_inputparam_job(jobtype)
@@ -158,6 +168,9 @@ def main():
                 lumpedmech_fld, 'therm.txt'))
             # write kinetics
             preproc.COMBINE_CKI(lumpedmech_fld, fld_list, bfthreshold = input_par['bfthreshold'])
+            plot_info = plot_rates.plot_all(cwd)
+            print('rates PDF: ' + plot_info['rates_pdf'])
+            print('branching fractions PDF: ' + plot_info['bf_pdf'])
 
         if 'prescreening' in jobtype and key != 'single_simulation':
             # write advice on species to keep according to the selected threshold
