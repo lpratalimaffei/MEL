@@ -270,6 +270,8 @@ def plot_all(cwd, tmin=500.0, tmax=2500.0, nT=250, min_bf=1e-3):
     if not os.path.isfile(kin_path):
         raise FileNotFoundError("plot_rates requires lumpedmech/kin.txt, not found: " + kin_path)
 
+    import matplotlib
+    matplotlib.use("Agg", force=True)
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     from matplotlib.lines import Line2D

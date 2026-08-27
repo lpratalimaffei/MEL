@@ -372,7 +372,7 @@ class ODE_POSTPROC:
         '''
         Check the products which accumulate above min_sel% for at least one of the T,P investigated
         '''
-        PRODS_SEL = pd.Series(np.NaN, index=self.PRODS)
+        PRODS_SEL = pd.Series(np.nan, index=self.PRODS)
         # max BF will be the starting one of the reactant
         for P in profiles_P.keys():
             profiles_T = profiles_P[P]
