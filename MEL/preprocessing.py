@@ -47,7 +47,51 @@ def INITIALMOLES(REAC, SPECIES_BIMOL_SERIES, N_INIT):
     return N_INIT_REAC
 
 
-def BRANCHING_LUMPEDREAC(cwd, REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT):
+def DEFAULT_BRANCHING(REAC, T_VECT, active_T_by_reac=None, energies=None):
+    """
+    Build default branching fractions for a lumped reactant.
+
+    If energies are provided, use Boltzmann weights at each temperature.
+    Otherwise use a uniform composition among the active isomers.
+    """
+    T_VECT = np.array(T_VECT)
+    REAC = np.array(REAC)
+    weights = np.zeros((len(T_VECT), len(REAC)))
+    R_KCAL = 0.00198720425864083
+
+    for iT, T in enumerate(T_VECT):
+        active = []
+        for rr in REAC:
+            if active_T_by_reac is None:
+                active.append(rr)
+            else:
+                rr_active_T = np.array(active_T_by_reac[rr])
+                if np.array([T == Ti for Ti in rr_active_T]).any():
+                    active.append(rr)
+
+        if len(active) == 0:
+            active = list(REAC)
+
+        if energies is not None and np.array([rr in energies.index for rr in active]).all():
+            E = np.array([energies[rr] for rr in active], dtype=float)
+            E = E - np.min(E)
+            active_weights = np.exp(-E / (R_KCAL * T))
+        else:
+            if energies is not None:
+                missing = [rr for rr in active if rr not in energies.index]
+                if missing:
+                    print('Warning: MESS energies not found for {}; uniform initial BF used at {} K'.format(
+                        missing, T))
+            active_weights = np.ones(len(active))
+
+        active_weights = active_weights / np.sum(active_weights)
+        for rr, weight in zip(active, active_weights):
+            weights[iT, np.where(REAC == rr)[0][0]] = weight
+
+    return pd.DataFrame(weights, index=T_VECT, columns=REAC)
+
+
+def BRANCHING_LUMPEDREAC(cwd, REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT, initial_bf=None):
     '''
     This method extracts at every pressure the branching fractions of the inlet reactant species
     Warnings may be given by:
@@ -64,21 +108,32 @@ def BRANCHING_LUMPEDREAC(cwd, REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT
 
     if (os.path.isfile(fld) == False) and (os.path.isfile(fld_out) == False):
 
-        warnings = warnings + \
-            '\nWarning: Branching fractions not found: initial BFs randomly generated from normal distribution '
-        # you need the equilibrium composition: start from a random composition of isomers
-        rand_comp = abs(np.random.randn(len(T_VECT), len(REAC)))
-        # in case some of the selected reactants are inactive at the selected temperature: set the BF to 0
-        mask = np.zeros(rand_comp.shape)
-        rr_idx = 0
-        for rr in REAC:
-            mask[:T_VECT_rr_len[rr], rr_idx] = 1
-            rr_idx += 1
-        rand_comp = rand_comp*mask  # multiply elements
-        rand_comp = rand_comp/np.sum(rand_comp, axis=1).reshape(len(T_VECT), 1)
-        # divide by the sum of each column to normalize
-        BR_L_REAC = pd.DataFrame(rand_comp, index=np.array(
-            T_VECT), columns=np.array(REAC))
+        if initial_bf is not None:
+            warnings = warnings + \
+                '\nWarning: Branching fractions not found: initial BFs generated from default composition '
+            BR_L_REAC = initial_bf.loc[T_VECT, REAC]
+        else:
+            warnings = warnings + \
+                '\nWarning: Branching fractions not found: initial BFs randomly generated from normal distribution '
+            # you need the equilibrium composition: start from a random composition of isomers
+            rand_comp = abs(np.random.randn(len(T_VECT), len(REAC)))
+            # in case some of the selected reactants are inactive at the selected temperature: set the BF to 0
+            mask = np.zeros(rand_comp.shape)
+            rr_idx = 0
+            for rr in REAC:
+                active_T = np.array(T_VECT_rr_len[rr])
+                if active_T.ndim == 0:
+                    mask[:active_T, rr_idx] = 1
+                else:
+                    for iT, T in enumerate(T_VECT):
+                        if np.array([T == Ti for Ti in active_T]).any():
+                            mask[iT, rr_idx] = 1
+                rr_idx += 1
+            rand_comp = rand_comp*mask  # multiply elements
+            rand_comp = rand_comp/np.sum(rand_comp, axis=1).reshape(len(T_VECT), 1)
+            # divide by the sum of each column to normalize
+            BR_L_REAC = pd.DataFrame(rand_comp, index=np.array(
+                T_VECT), columns=np.array(REAC))
 
     else:
         # rename fld=fld_out if fld does not exist

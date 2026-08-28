@@ -149,6 +149,54 @@ def data_names_mess(cwd):
     return P_LIST, T_LIST, species_names, species_names_frag2
 
 
+def species_energies_mess(cwd):
+    """
+    Extract species energies from me_ktp.inp.
+
+    Unimolecular wells are read from ZeroEnergy labels.
+    Bimolecular wells are read from GroundEnergy labels.
+    Energies are assumed to be in kcal/mol, as in standard MESS inputs.
+    """
+    energies = {}
+    current_species = None
+    current_type = None
+    with open(os.path.join(cwd, 'me_ktp.inp')) as myfile:
+        for raw in myfile:
+            line = raw.strip()
+            if not line or line.startswith('!'):
+                continue
+            line = line.split('!')[0].strip()
+            if not line:
+                continue
+            words = line.split()
+            keyword = words[0]
+            if keyword == 'Well' and len(words) > 1:
+                current_species = words[1]
+                current_type = 'well'
+                continue
+            if keyword == 'Bimolecular' and len(words) > 1:
+                current_species = words[1].split('+')[0]
+                current_type = 'bimolecular'
+                continue
+            if keyword == 'End':
+                continue
+
+            if current_species is None:
+                continue
+            if current_type == 'bimolecular' and keyword.startswith('GroundEnergy'):
+                try:
+                    energies[current_species] = float(words[1])
+                except (IndexError, ValueError):
+                    pass
+            elif current_type == 'well' and keyword.startswith('ZeroEnergy'):
+                try:
+                    energies[current_species] = float(words[1])
+                except (IndexError, ValueError):
+                    pass
+
+    return pd.Series(energies, dtype=float)
+
+
 def MATRIX(cwd, P_LIST, T_LIST, species_names, del_allT_whenneg = False):
     """
     Extract from rate.out all the rate constants in the form of a list

@@ -97,10 +97,16 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
         SPECIES = mech_dict['SPECIES']
         SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
         rates = mech_dict['rates']
+        if jobtype == 'composition_selection':
+            SPECIES_ENERGIES = extr_rates.species_energies_mess(
+                os.path.join(cwd, 'inp'))
+        else:
+            SPECIES_ENERGIES = None
 
     elif input_type == 'CKI':
         SPECIES = mech_dict['SPECIES']
         SPECIES_BIMOL = mech_dict['SPECIES_BIMOL']
+        SPECIES_ENERGIES = None
 
     ################ DERIVE REACTANTS AND PRODUCTS FROM THE INPUT DICTIONARY #####################
     fld = sim_series['fld']
@@ -206,14 +212,14 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 # IN CASE OF A LUMPED REACTANT: DERIVE A TOTAL RATE CONSTANT WITH A LOOP
                 kR_j = np.zeros((len(T_VECT_MESS), len(SPECIES)-1))
                 # STORE REACTIVITY OF EACH REACTANT TO SELECT BF APPROPRIATELY
-                T_VECT_rr_len = pd.Series(index=REAC, dtype=int)
+                T_VECT_rr_len = {}
 
                 for rr in REAC:
                     kR_j_rr = extr_rates.REAC_P(
                         P, rr, P_VECT_MESS, T_VECT_MESS, SPECIES, rates)
                     _, T_VECT_rr = preproc.CHECK_REACTIVITY(
                         kR_j_rr, T_VECT, T_VECT_MESS)
-                    T_VECT_rr_len[rr] = len(T_VECT_rr)
+                    T_VECT_rr_len[rr] = np.array(T_VECT_rr)
                     kR_j += kR_j_rr
 
             elif isinstance(REAC, str):
@@ -231,8 +237,7 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
                 continue
 
         elif input_type == 'CKI' and isinstance(REAC, np.ndarray):
-            T_VECT_rr_len = pd.Series(
-                len(T_VECT)*np.ones(REAC.shape), index=REAC, dtype=int)
+            T_VECT_rr_len = {rr: np.array(T_VECT) for rr in REAC}
 
         # PRE PROCESSING FOR LUMPED REACTANTS AND PRODUCTS   ##################
 
@@ -241,8 +246,12 @@ def main_simul(cwd, jobtype, input_par, input_par_jobtype, mech_dict, sim_series
 
         if isinstance(REAC, np.ndarray):
             try:
+                BF_INIT = None
+                if jobtype == 'composition_selection':
+                    BF_INIT = preproc.DEFAULT_BRANCHING(
+                        REAC, T_VECT, T_VECT_rr_len, SPECIES_ENERGIES)
                 BR_L_REAC, T_VECT = preproc.BRANCHING_LUMPEDREAC(os.path.join(
-                    cwd, jobtype), REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT)
+                    cwd, jobtype), REACLUMPED, REAC, T_VECT, T_VECT_rr_len, P, P_VECT, initial_bf=BF_INIT)
             except ValueError as e:
                 print('error while extracting the branching fractions of ' +
                       REACLUMPED.index[0] + ': ' + str(e))

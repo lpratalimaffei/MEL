@@ -35,6 +35,34 @@ def read_pseudospecies(pseudospecies_file):
     return pseudospecies_series, stable_species
 
 
+def _composition_key(components):
+    if isinstance(components, np.ndarray):
+        return tuple(sorted(list(components)))
+    return tuple([components])
+
+
+def _resolve_pseudospecies_token(token, pseudospecies_series=None):
+    if pseudospecies_series is not None and token in pseudospecies_series.index:
+        return token, pseudospecies_series.loc[token]
+
+    if len(token.split('+')) > 1:
+        components = np.array(token.split('+'), dtype=str)
+        if pseudospecies_series is not None:
+            target = _composition_key(components)
+            for name in pseudospecies_series.index:
+                if _composition_key(pseudospecies_series.loc[name]) == target:
+                    return name, pseudospecies_series.loc[name]
+        return token.split('+')[0] + '_L', components
+
+    return token, token
+
+
+def _components_to_species_list(components):
+    if isinstance(components, np.ndarray):
+        return [str(component) for component in components]
+    return [components]
+
+
 class READ_INPUT:
 
     def __init__(self, cwd, inputfile):
@@ -258,6 +286,11 @@ class READ_INPUT:
                             if line.find('single_simulation') != -1 and any('single_simulation' == x for x in jobid):
                                 read_single_simul = 1
                                 simul_type = ''
+                                pseudospecies_file = os.path.join(self.cwd, 'inp', 'pseudospecies.txt')
+                                if os.path.isfile(pseudospecies_file):
+                                    single_pseudospecies_defs, _ = read_pseudospecies(pseudospecies_file)
+                                else:
+                                    single_pseudospecies_defs = None
 
                             if read_single_simul == 1:
 
@@ -276,27 +309,26 @@ class READ_INPUT:
                                     pseudospecies_components = []
 
                                     for PS in pseudospecies:
-                                        if len(PS.split('+')) == 1 and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection') and PS != 'all':
+                                        PS_name, PS_components = _resolve_pseudospecies_token(PS, single_pseudospecies_defs)
+                                        if isinstance(PS_components, str) and len(PS_components.split('+')) == 1 and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection') and PS != 'all':
                                             # error: you cannot have single pseudospecies for isomer equilibrium simulations
                                             errorlist = errorlist + \
                                                 '\nsubdictionary prescreening_equilibrium/composition_selection: cannot have single isomers'
 
-                                        elif len(PS.split('+')) == 1 and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection') and PS == 'all':
+                                        elif PS == 'all' and (simul_type == 'prescreening_equilibrium' or simul_type == 'composition_selection'):
                                             pseudospecies_names.append(PS)
                                             pseudospecies_components.append(PS)
 
-                                        elif len(PS.split('+')) == 1 and simul_type == 'prescreening_allreactive':
+                                        elif isinstance(PS_components, str) and len(PS_components.split('+')) == 1 and simul_type == 'prescreening_allreactive':
                                             # append it also in the lumped products
-                                            pseudospecies_names.append(PS)
-                                            pseudospecies_components.append(PS)
+                                            pseudospecies_names.append(PS_name)
+                                            pseudospecies_components.append(PS_components)
 
-                                        elif len(PS.split('+')) > 1:
-                                            # append the first name, modified, to the list of pseudospecies
-                                            pseudospecies_names.append(
-                                                PS.split('+')[0] + '_L')
+                                        else:
+                                            # append the pseudospecies name read from inp/pseudospecies.txt when possible
+                                            pseudospecies_names.append(PS_name)
                                             # append the array of products to Prods_Lumped_array:
-                                            pseudospecies_components.append(
-                                                np.array(PS.split('+'), dtype=str))
+                                            pseudospecies_components.append(PS_components)
 
                                     # dataframe with pseudospecies
                                     pseudospecies_df = pd.Series(
@@ -322,15 +354,8 @@ class READ_INPUT:
                                 # read reactants and products
                                 if line.find('Reac ') != -1:
                                     Reac = re.split('\[|\]', line)[1].strip()
-                                    # if the reactant is lumped: generate an array
-                                    if len(Reac.split('+')) > 1:
-                                        self.Reac = np.array(
-                                            Reac.split('+'), dtype=str)
-                                        reaclumped = self.Reac[0] + '_L'
-                                    else:
-                                        # the reactant is just 1 so you don't need to do anything
-                                        self.Reac = Reac
-                                        reaclumped = Reac
+                                    reaclumped, self.Reac = _resolve_pseudospecies_token(
+                                        Reac, single_pseudospecies_defs)
 
                                 if line.find('Prod ') != -1:
                                     line_Prod = re.split('\[|\]', line)[1].strip()
@@ -342,21 +367,21 @@ class READ_INPUT:
                                     Prods_Lumped_array = []
                                     # if you have lumped products: generate a series and allocate the products to a new list
                                     for Pr in Prod:
-                                        if len(Pr.split('+')) == 1:
+                                        Pr_name, Pr_components = _resolve_pseudospecies_token(
+                                            Pr, single_pseudospecies_defs)
+                                        if isinstance(Pr_components, str):
                                             # single product: append it directly to the list
-                                            self.Prod.append(Pr)
+                                            self.Prod.append(Pr_components)
                                             # append it also in the lumped products
-                                            Prods_Lumped.append(Pr)
-                                            Prods_Lumped_array.append(Pr)
+                                            Prods_Lumped.append(Pr_name)
+                                            Prods_Lumped_array.append(Pr_components)
 
-                                        elif len(Pr.split('+')) > 1:
-                                            # append the first name, modified, to the list of lumped species
-                                            Prods_Lumped.append(
-                                                Pr.split('+')[0] + '_L')
+                                        else:
+                                            # append the pseudospecies name read from inp/pseudospecies.txt when possible
+                                            Prods_Lumped.append(Pr_name)
                                             # append the array of products to Prods_Lumped_array:
-                                            Prods_Lumped_array.append(
-                                                np.array(Pr.split('+'), dtype=str))
-                                            for Pr_L in Pr.split('+'):
+                                            Prods_Lumped_array.append(Pr_components)
+                                            for Pr_L in _components_to_species_list(Pr_components):
                                                 # append the products to the array of products
                                                 self.Prod.append(Pr_L)
 
@@ -412,7 +437,7 @@ class READ_INPUT:
         if not errorlist:
             # np.savetxt('pseudospecies_prova.txt',pseudospecies_df,delimiter='\t',fmt='%s')
             # units bimol: if the input is MESS, set molec by default
-            if self.inp_type == 'MESS' and (self.units_bimol != 'molec' or self.units_bimol != 'mol'):
+            if self.inp_type == 'MESS':
                 self.units_bimol = 'molec'
 
             # input_parameters dictionary
